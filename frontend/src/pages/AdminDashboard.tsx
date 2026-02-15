@@ -600,11 +600,11 @@ const AdminDashboard: React.FC = () => {
                 </motion.button>
                 
                 {/* Logo */}
-                <div className="bg-white/95 px-3 py-1.5 rounded-lg shadow-lg">
+                <div className="bg-white/95 px-4 py-2 rounded-lg shadow-lg">
                   <img 
                     src="/Asset 5.png" 
                     alt="Logo" 
-                    className="h-7 w-auto object-contain"
+                    className="h-10 w-auto object-contain"
                   />
                 </div>
 
