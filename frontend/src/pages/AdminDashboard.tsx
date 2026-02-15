@@ -1096,11 +1096,11 @@ const AdminDashboard: React.FC = () => {
                   <div className="flex items-center gap-3 w-full sm:w-auto">
                     {/* Category Filter */}
                     <div className="flex items-center gap-2 flex-1 sm:flex-initial">
-                      <Filter className="w-4 h-4 text-gray-500" />
+                      <Filter className="w-4 h-4 text-amber-600" />
                       <select
                         value={filterCategory}
                         onChange={(e) => setFilterCategory(e.target.value)}
-                        className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-sm"
+                        className="px-4 py-2.5 bg-white border-2 border-amber-200 rounded-xl hover:border-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-600 transition-all text-sm font-medium text-gray-700 cursor-pointer shadow-sm hover:shadow-md"
                         aria-label="Filter by category"
                       >
                         <option value="all">All Categories</option>
@@ -1114,7 +1114,7 @@ const AdminDashboard: React.FC = () => {
 
                     {/* Sort Options */}
                     <div className="flex items-center gap-2 flex-1 sm:flex-initial">
-                      <ArrowUpDown className="w-4 h-4 text-gray-500" />
+                      <ArrowUpDown className="w-4 h-4 text-amber-600" />
                       <select
                         value={`${sortBy}-${sortOrder}`}
                         onChange={(e) => {
@@ -1122,7 +1122,7 @@ const AdminDashboard: React.FC = () => {
                           setSortBy(field);
                           setSortOrder(order);
                         }}
-                        className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-sm"
+                        className="px-4 py-2.5 bg-white border-2 border-amber-200 rounded-xl hover:border-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-600 transition-all text-sm font-medium text-gray-700 cursor-pointer shadow-sm hover:shadow-md"
                         aria-label="Sort products"
                       >
                         <option value="date-desc">Newest First</option>
@@ -2174,7 +2174,7 @@ const AdminDashboard: React.FC = () => {
                     <select
                       value={productCategory}
                       onChange={(e) => setProductCategory(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
+                      className="w-full px-4 py-3 bg-white border-2 border-amber-200 rounded-xl hover:border-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-600 transition-all text-base font-medium text-gray-700 cursor-pointer shadow-sm hover:shadow-md"
                       aria-label="Product category"
                       title="Select product category"
                     >
