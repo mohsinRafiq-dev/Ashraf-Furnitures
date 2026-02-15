@@ -460,18 +460,18 @@ const AdminDashboard: React.FC = () => {
           x: { type: 'tween', duration: 0.3 },
           width: { type: 'tween', duration: 0.3 }
         }}
-        className="fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-2xl z-50"
+        className="fixed left-0 top-0 h-full bg-white shadow-2xl z-50 border-r border-gray-200"
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-4 lg:p-6 flex items-center justify-between border-b border-slate-700/50">
+          <div className="p-4 lg:p-6 flex items-center justify-between border-b border-gray-200">
             {(!sidebarCollapsed || isMobile) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="flex items-center gap-3"
               >
-                <div className="bg-white/95 px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg shadow-md">
+                <div className="px-3 py-1.5 lg:px-4 lg:py-2">
                   <img 
                     src="/Asset 5.png" 
                     alt="Logo" 
@@ -488,7 +488,7 @@ const AdminDashboard: React.FC = () => {
                   setSidebarCollapsed(!sidebarCollapsed);
                 }
               }}
-              className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors text-white"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-700"
               aria-label="Toggle sidebar"
               title="Toggle sidebar"
             >
@@ -509,7 +509,7 @@ const AdminDashboard: React.FC = () => {
               }}
               whileHover={{ scale: 1.05, x: 5 }}
               whileTap={{ scale: 0.95 }}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-300 hover:bg-slate-700/50 border border-slate-700/30"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-700 hover:bg-amber-50 border border-gray-200 hover:border-amber-300"
             >
               <Home className="w-5 h-5 flex-shrink-0" />
               {(!sidebarCollapsed || isMobile) && (
@@ -518,7 +518,7 @@ const AdminDashboard: React.FC = () => {
             </motion.button>
 
             {/* Divider */}
-            <div className="border-t border-slate-700/30 my-4" />
+            <div className="border-t border-gray-200 my-4" />
 
             {navItems.map((item) => (
               <motion.button
@@ -535,7 +535,7 @@ const AdminDashboard: React.FC = () => {
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   activeTab === item.id
                     ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg'
-                    : 'text-slate-300 hover:bg-slate-700/50'
+                    : 'text-gray-700 hover:bg-amber-50 hover:text-amber-700'
                 }`}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -547,15 +547,15 @@ const AdminDashboard: React.FC = () => {
           </nav>
 
           {/* User Section */}
-          <div className="p-4 border-t border-slate-700/50">
-            <div className={`flex items-center gap-3 p-3 bg-slate-700/30 rounded-xl ${(sidebarCollapsed && !isMobile) ? 'justify-center' : ''}`}>
+          <div className="p-4 border-t border-gray-200">
+            <div className={`flex items-center gap-3 p-3 bg-amber-50 rounded-xl border border-amber-200 ${(sidebarCollapsed && !isMobile) ? 'justify-center' : ''}`}>
               <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <User className="w-5 h-5 text-white" />
               </div>
               {(!sidebarCollapsed || isMobile) && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{user?.name || 'Admin'}</p>
-                  <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'Admin'}</p>
+                  <p className="text-xs text-gray-600 truncate">{user?.email}</p>
                 </div>
               )}
             </div>
