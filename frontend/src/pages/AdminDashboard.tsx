@@ -608,13 +608,15 @@ const AdminDashboard: React.FC = () => {
                   />
                 </div>
 
-                {/* Notification Bell (Optional) */}
+                {/* Logout Button */}
                 <motion.button
                   whileTap={{ scale: 0.95 }}
-                  className="p-2.5 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl transition-all text-white shadow-lg relative"
-                  aria-label="Notifications"
+                  onClick={handleLogout}
+                  className="p-2.5 bg-white/20 backdrop-blur-sm hover:bg-red-500/80 rounded-xl transition-all text-white shadow-lg"
+                  aria-label="Sign out"
+                  title="Sign out"
                 >
-                  <LayoutDashboard className="w-5 h-5" />
+                  <LogOut className="w-5 h-5" />
                 </motion.button>
               </div>
 
