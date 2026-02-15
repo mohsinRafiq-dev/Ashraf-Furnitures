@@ -1,0 +1,7 @@
+ASHRAF FURNITURES - NEW DEPLOYMENT
+Version: 2.0
+Date: February 15, 2026
+Repository: https://github.com/mohsinRafiq-dev/Ashraf-Furnitures.git
+Status: Fresh deployment from new repository
+
+This file confirms you are viewing the NEW serverless version.

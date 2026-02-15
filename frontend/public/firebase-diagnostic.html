@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Auth Diagnostic</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 5px;
+        }
+        .error { color: #ff0000; }
+        .success { color: #00ff00; }
+        .warning { color: #ffaa00; }
+        .info { color: #00aaff; }
+        h2 { color: #00ffff; }
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+        .log {
+            background: #000;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid #00ff00;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Firebase Authentication Diagnostic Tool</h1>
+    
+    <div class="section">
+        <h2>📋 Checklist</h2>
+        <div id="checklist"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Actions</h2>
+        <button onclick="checkFirebaseConfig()">1. Check Firebase Config</button>
+        <button onclick="checkGoogleProvider()">2. Check Google Provider</button>
+        <button onclick="testSignInRedirect()">3. Test Sign-In Redirect</button>
+        <button onclick="checkRedirectResult()">4. Check Redirect Result</button>
+        <button onclick="clearAuth()">5. Clear Auth State</button>
+    </div>
+
+    <div class="section">
+        <h2>📝 Console Output</h2>
+        <div id="output" class="log"></div>
+    </div>
+
+    <div class="section">
+        <h2>🎯 Instructions</h2>
+        <ol>
+            <li>Click each button in order (1-4)</li>
+            <li>Read the console output carefully</li>
+            <li>If button 3 redirects you to Google, sign in and come back</li>
+            <li>After coming back, click button 4 to check the result</li>
+        </ol>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getAuth, 
+            GoogleAuthProvider, 
+            signInWithRedirect, 
+            getRedirectResult,
+            signOut
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Get env vars from your .env file (you'll need to paste them here)
+        const firebaseConfig = {
+            apiKey: "AIzaSyC8Wvoo3sZ-Tl5secmYTdwcL9Hr-o-8B9g",
+            authDomain: "furniture-mart-10426.firebaseapp.com",
+            projectId: "furniture-mart-10426",
+            storageBucket: "furniture-mart-10426.firebasestorage.app",
+            messagingSenderId: "558910695708",
+            appId: "1:558910695708:web:e458180e179f0aebf3b2d9",
+            measurementId: "G-B1B7E08BZB"
+        };
+
+        let app, auth;
+
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            output.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+            console.log(`[${type.toUpperCase()}]`, message);
+        }
+
+        window.checkFirebaseConfig = function() {
+            log('=== CHECKING FIREBASE CONFIG ===', 'info');
+            
+            try {
+                app = initializeApp(firebaseConfig);
+                log('✓ Firebase initialized successfully', 'success');
+                log(`Project ID: ${firebaseConfig.projectId}`, 'info');
+                log(`Auth Domain: ${firebaseConfig.authDomain}`, 'info');
+                
+                auth = getAuth(app);
+                log('✓ Firebase Auth initialized', 'success');
+                
+                return true;
+            } catch (error) {
+                log(`✗ Firebase initialization failed: ${error.message}`, 'error');
+                return false;
+            }
+        };
+
+        window.checkGoogleProvider = function() {
+            log('=== CHECKING GOOGLE PROVIDER ===', 'info');
+            
+            if (!auth) {
+                log('✗ Firebase Auth not initialized. Run step 1 first.', 'error');
+                return;
+            }
+
+            try {
+                const provider = new GoogleAuthProvider();
+                log('✓ GoogleAuthProvider created successfully', 'success');
+                log('Provider details:', 'info');
+                log(`  - Provider ID: ${provider.providerId}`, 'info');
+                return true;
+            } catch (error) {
+                log(`✗ Failed to create GoogleAuthProvider: ${error.message}`, 'error');
+                return false;
+            }
+        };
+
+        window.testSignInRedirect = async function() {
+            log('=== TESTING SIGN-IN REDIRECT ===', 'warning');
+            
+            if (!auth) {
+                log('✗ Firebase Auth not initialized. Run step 1 first.', 'error');
+                return;
+            }
+
+            try {
+                const provider = new GoogleAuthProvider();
+                log('⏳ Calling signInWithRedirect()...', 'info');
+                log('📍 You will be redirected to Google in a moment...', 'warning');
+                
+                await signInWithRedirect(auth, provider);
+                
+                log('✓ signInWithRedirect() completed', 'success');
+                log('🔄 Redirecting to Google...', 'info');
+            } catch (error) {
+                log(`✗ signInWithRedirect() failed: ${error.message}`, 'error');
+                log(`Error code: ${error.code}`, 'error');
+                
+                if (error.code === 'auth/operation-not-allowed') {
+                    log('⚠️  Google Sign-In is not enabled in Firebase Console!', 'error');
+                    log('Go to: https://console.firebase.google.com/project/furniture-mart-10426/authentication/providers', 'warning');
+                    log('Enable the Google provider', 'warning');
+                }
+            }
+        };
+
+        window.checkRedirectResult = async function() {
+            log('=== CHECKING REDIRECT RESULT ===', 'info');
+            
+            if (!auth) {
+                log('✗ Firebase Auth not initialized. Run step 1 first.', 'error');
+                return;
+            }
+
+            try {
+                log('⏳ Calling getRedirectResult()...', 'info');
+                const result = await getRedirectResult(auth);
+                
+                if (result) {
+                    log('✓ Redirect result found!', 'success');
+                    log(`User email: ${result.user.email}`, 'success');
+                    log(`User UID: ${result.user.uid}`, 'info');
+                    log(`Display name: ${result.user.displayName}`, 'info');
+                    log('', 'info');
+                    log('🎉 Google Sign-In is working!', 'success');
+                } else {
+                    log('⚠️  No redirect result found', 'warning');
+                    log('This means either:', 'info');
+                    log('  1. You haven\'t clicked "Test Sign-In" yet', 'info');
+                    log('  2. The redirect was already consumed', 'info');
+                    log('  3. Google Sign-In is not enabled in Firebase', 'warning');
+                }
+            } catch (error) {
+                log(`✗ getRedirectResult() failed: ${error.message}`, 'error');
+                log(`Error code: ${error.code}`, 'error');
+            }
+        };
+
+        window.clearAuth = async function() {
+            log('=== CLEARING AUTH STATE ===', 'warning');
+            
+            if (!auth) {
+                log('✗ Firebase Auth not initialized.', 'error');
+                return;
+            }
+
+            try {
+                await signOut(auth);
+                log('✓ Signed out successfully', 'success');
+                log('You can now test sign-in again', 'info');
+            } catch (error) {
+                log(`✗ Sign out failed: ${error.message}`, 'error');
+            }
+        };
+
+        // Auto-check on page load
+        window.addEventListener('load', () => {
+            log('🚀 Diagnostic tool loaded', 'success');
+            log('Click buttons in order: 1 → 2 → 3 → (sign in) → 4', 'info');
+            log('', 'info');
+            
+            // Auto-run initial checks
+            setTimeout(() => {
+                checkFirebaseConfig();
+                checkGoogleProvider();
+            }, 500);
+
+            // Check for redirect result automatically
+            setTimeout(() => {
+                checkRedirectResult();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
