@@ -63,6 +63,7 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [searchQuery, setSearchQuery] = useState('');
   
   // New features state
@@ -104,6 +105,22 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Handle window resize to ensure proper sidebar behavior
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      
+      // Close mobile menu when resizing to desktop
+      if (!mobile) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const loadData = async () => {
@@ -436,10 +453,10 @@ const AdminDashboard: React.FC = () => {
       <motion.aside
         initial={false}
         animate={{
-          x: mobileMenuOpen ? 0 : '-100%',
+          x: isMobile ? (mobileMenuOpen ? 0 : '-100%') : 0,
           width: sidebarCollapsed ? '5rem' : '16rem'
         }}
-        className="fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-2xl z-50 lg:translate-x-0"
+        className="fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-2xl z-50"
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
