@@ -454,14 +454,18 @@ const AdminDashboard: React.FC = () => {
         initial={false}
         animate={{
           x: isMobile ? (mobileMenuOpen ? 0 : '-100%') : 0,
-          width: sidebarCollapsed ? '5rem' : '16rem'
+          width: isMobile ? '16rem' : (sidebarCollapsed ? '5rem' : '16rem')
+        }}
+        transition={{
+          x: { type: 'tween', duration: 0.3 },
+          width: { type: 'tween', duration: 0.3 }
         }}
         className="fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-2xl z-50"
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="p-4 lg:p-6 flex items-center justify-between border-b border-slate-700/50">
-            {!sidebarCollapsed && (
+            {(!sidebarCollapsed || isMobile) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -478,9 +482,10 @@ const AdminDashboard: React.FC = () => {
             )}
             <button
               onClick={() => {
-                setSidebarCollapsed(!sidebarCollapsed);
-                if (window.innerWidth < 1024) {
+                if (isMobile) {
                   setMobileMenuOpen(false);
+                } else {
+                  setSidebarCollapsed(!sidebarCollapsed);
                 }
               }}
               className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors text-white"
@@ -498,7 +503,7 @@ const AdminDashboard: React.FC = () => {
               onClick={() => {
                 navigate('/');
                 // Close mobile menu when navigating home on mobile
-                if (window.innerWidth < 1024) {
+                if (isMobile) {
                   setMobileMenuOpen(false);
                 }
               }}
@@ -507,7 +512,7 @@ const AdminDashboard: React.FC = () => {
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-300 hover:bg-slate-700/50 border border-slate-700/30"
             >
               <Home className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
+              {(!sidebarCollapsed || isMobile) && (
                 <span className="font-medium">Go to Home</span>
               )}
             </motion.button>
@@ -521,7 +526,7 @@ const AdminDashboard: React.FC = () => {
                 onClick={() => {
                   setActiveTab(item.id);
                   // Close mobile menu when switching tabs on mobile
-                  if (window.innerWidth < 1024) {
+                  if (isMobile) {
                     setMobileMenuOpen(false);
                   }
                 }}
@@ -534,7 +539,7 @@ const AdminDashboard: React.FC = () => {
                 }`}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
-                {!sidebarCollapsed && (
+                {(!sidebarCollapsed || isMobile) && (
                   <span className="font-medium">{item.label}</span>
                 )}
               </motion.button>
@@ -543,11 +548,11 @@ const AdminDashboard: React.FC = () => {
 
           {/* User Section */}
           <div className="p-4 border-t border-slate-700/50">
-            <div className={`flex items-center gap-3 p-3 bg-slate-700/30 rounded-xl ${sidebarCollapsed ? 'justify-center' : ''}`}>
+            <div className={`flex items-center gap-3 p-3 bg-slate-700/30 rounded-xl ${(sidebarCollapsed && !isMobile) ? 'justify-center' : ''}`}>
               <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <User className="w-5 h-5 text-white" />
               </div>
-              {!sidebarCollapsed && (
+              {(!sidebarCollapsed || isMobile) && (
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">{user?.name || 'Admin'}</p>
                   <p className="text-xs text-slate-400 truncate">{user?.email}</p>
@@ -559,7 +564,7 @@ const AdminDashboard: React.FC = () => {
               className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              {!sidebarCollapsed && <span className="text-sm">Logout</span>}
+              {(!sidebarCollapsed || isMobile) && <span className="text-sm">Logout</span>}
             </button>
           </div>
         </div>
