@@ -579,11 +579,11 @@ const AdminDashboard: React.FC = () => {
           className="lg:hidden mb-6"
         >
           {/* Main Header Card */}
-          <div className="relative bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
             {/* Decorative Background Pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
-              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
+            <div className="absolute inset-0 opacity-5">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-orange-500 rounded-full translate-y-12 -translate-x-12"></div>
             </div>
 
             {/* Content */}
@@ -593,14 +593,14 @@ const AdminDashboard: React.FC = () => {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setMobileMenuOpen(true)}
-                  className="p-2.5 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl transition-all text-white shadow-lg"
+                  className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all text-gray-700 shadow-sm"
                   aria-label="Open menu"
                 >
                   <Menu className="w-6 h-6" />
                 </motion.button>
                 
                 {/* Logo */}
-                <div className="bg-white/95 px-4 py-2 rounded-lg shadow-lg">
+                <div className="px-4 py-2">
                   <img 
                     src="/Asset 5.png" 
                     alt="Logo" 
@@ -612,7 +612,7 @@ const AdminDashboard: React.FC = () => {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleLogout}
-                  className="p-2.5 bg-white/20 backdrop-blur-sm hover:bg-red-500/80 rounded-xl transition-all text-white shadow-lg"
+                  className="p-2.5 bg-red-50 hover:bg-red-100 rounded-xl transition-all text-red-600 shadow-sm"
                   aria-label="Sign out"
                   title="Sign out"
                 >
@@ -625,20 +625,20 @@ const AdminDashboard: React.FC = () => {
                 {/* User Profile */}
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-br from-white to-amber-50 rounded-xl flex items-center justify-center shadow-lg">
+                    <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center shadow-sm">
                       <User className="w-6 h-6 text-amber-600" />
                     </div>
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
                   </div>
                   <div>
-                    <p className="text-white font-bold text-base">{user?.name || 'Admin'}</p>
-                    <p className="text-white/80 text-xs font-medium">Administrator</p>
+                    <p className="text-gray-900 font-bold text-base">{user?.name || 'Admin'}</p>
+                    <p className="text-gray-500 text-xs font-medium">Administrator</p>
                   </div>
                 </div>
 
                 {/* Active Tab Indicator */}
-                <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl">
-                  <p className="text-white text-xs font-semibold uppercase tracking-wide">
+                <div className="bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl">
+                  <p className="text-amber-700 text-xs font-semibold uppercase tracking-wide">
                     {navItems.find(item => item.id === activeTab)?.label}
                   </p>
                 </div>
