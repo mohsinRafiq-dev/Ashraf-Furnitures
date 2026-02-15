@@ -118,14 +118,6 @@ export const loginWithEmail = async ({ email, password }: LoginCredentials): Pro
     const userCredential: UserCredential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = userCredential.user;
 
-    // Validate admin email if restriction is set
-    const allowedAdminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-    if (allowedAdminEmail && email !== allowedAdminEmail) {
-      await signOut(auth);
-      await createAuditLog('login_attempt', email, 'blocked', `Email not allowed. Only ${allowedAdminEmail} can login`);
-      throw new Error(`Access denied. Only ${allowedAdminEmail} can login.`);
-    }
-
     // Get admin data from Firestore
     const adminData = await getAdminData(firebaseUser.uid);
 
