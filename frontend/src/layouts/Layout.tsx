@@ -30,7 +30,7 @@ export default function MainLayout({ children }: LayoutProps) {
   const cartItemCount = getTotalItems();
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
       {/* Header */}
       <Header
         mobileMenuOpen={mobileMenuOpen}
