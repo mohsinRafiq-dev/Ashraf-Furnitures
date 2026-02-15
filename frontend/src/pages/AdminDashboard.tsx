@@ -1103,9 +1103,9 @@ const AdminDashboard: React.FC = () => {
                         className="px-4 py-2.5 bg-white border-2 border-amber-200 rounded-xl hover:border-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-600 transition-all text-sm font-medium text-gray-700 cursor-pointer shadow-sm hover:shadow-md"
                         aria-label="Filter by category"
                       >
-                        <option value="all">All Categories</option>
+                        <option value="all" className="bg-white hover:bg-amber-50 py-2">All Categories</option>
                         {categories.map((cat) => (
-                          <option key={cat.id} value={cat.name}>
+                          <option key={cat.id} value={cat.name} className="bg-white hover:bg-amber-50 py-2">
                             {cat.name}
                           </option>
                         ))}
@@ -1125,14 +1125,14 @@ const AdminDashboard: React.FC = () => {
                         className="px-4 py-2.5 bg-white border-2 border-amber-200 rounded-xl hover:border-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-600 transition-all text-sm font-medium text-gray-700 cursor-pointer shadow-sm hover:shadow-md"
                         aria-label="Sort products"
                       >
-                        <option value="date-desc">Newest First</option>
-                        <option value="date-asc">Oldest First</option>
-                        <option value="name-asc">Name (A-Z)</option>
-                        <option value="name-desc">Name (Z-A)</option>
-                        <option value="price-asc">Price (Low-High)</option>
-                        <option value="price-desc">Price (High-Low)</option>
-                        <option value="stock-asc">Stock (Low-High)</option>
-                        <option value="stock-desc">Stock (High-Low)</option>
+                        <option value="date-desc" className="bg-white hover:bg-amber-50 py-2">Newest First</option>
+                        <option value="date-asc" className="bg-white hover:bg-amber-50 py-2">Oldest First</option>
+                        <option value="name-asc" className="bg-white hover:bg-amber-50 py-2">Name (A-Z)</option>
+                        <option value="name-desc" className="bg-white hover:bg-amber-50 py-2">Name (Z-A)</option>
+                        <option value="price-asc" className="bg-white hover:bg-amber-50 py-2">Price (Low-High)</option>
+                        <option value="price-desc" className="bg-white hover:bg-amber-50 py-2">Price (High-Low)</option>
+                        <option value="stock-asc" className="bg-white hover:bg-amber-50 py-2">Stock (Low-High)</option>
+                        <option value="stock-desc" className="bg-white hover:bg-amber-50 py-2">Stock (High-Low)</option>
                       </select>
                     </div>
                   </div>
@@ -2178,9 +2178,9 @@ const AdminDashboard: React.FC = () => {
                       aria-label="Product category"
                       title="Select product category"
                     >
-                      <option value="">Select category</option>
+                      <option value="" className="bg-white hover:bg-amber-50 py-2">Select category</option>
                       {categories.map((cat) => (
-                        <option key={cat.id} value={cat.name}>
+                        <option key={cat.id} value={cat.name} className="bg-white hover:bg-amber-50 py-2">
                           {cat.name}
                         </option>
                       ))}
