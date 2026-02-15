@@ -478,7 +478,13 @@ const AdminDashboard: React.FC = () => {
           <nav className="flex-1 px-4 py-6 space-y-2">
             {/* Home Button */}
             <motion.button
-              onClick={() => navigate('/')}
+              onClick={() => {
+                navigate('/');
+                // Close mobile menu when navigating home on mobile
+                if (window.innerWidth < 1024) {
+                  setMobileMenuOpen(false);
+                }
+              }}
               whileHover={{ scale: 1.05, x: 5 }}
               whileTap={{ scale: 0.95 }}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-slate-300 hover:bg-slate-700/50 border border-slate-700/30"
@@ -495,7 +501,13 @@ const AdminDashboard: React.FC = () => {
             {navItems.map((item) => (
               <motion.button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  // Close mobile menu when switching tabs on mobile
+                  if (window.innerWidth < 1024) {
+                    setMobileMenuOpen(false);
+                  }
+                }}
                 whileHover={{ scale: 1.05, x: 5 }}
                 whileTap={{ scale: 0.95 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
