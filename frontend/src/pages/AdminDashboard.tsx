@@ -625,8 +625,18 @@ const AdminDashboard: React.FC = () => {
                 {/* User Profile */}
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center shadow-sm">
-                      <User className="w-6 h-6 text-amber-600" />
+                    <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm border-2 border-amber-200">
+                      {user?.photoURL ? (
+                        <img 
+                          src={user.photoURL} 
+                          alt={user.name || 'Admin'} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                          <User className="w-6 h-6 text-amber-600" />
+                        </div>
+                      )}
                     </div>
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
                   </div>
