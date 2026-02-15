@@ -16,6 +16,7 @@ export interface User {
   name: string;
   role: AdminRole;
   avatar?: string;
+  photoURL?: string;
 }
 
 export interface AuthState {
