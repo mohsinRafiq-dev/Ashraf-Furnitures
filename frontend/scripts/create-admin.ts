@@ -67,7 +67,7 @@ const db = getFirestore(app);
 
 const createAdmin = async () => {
   // Get values from environment or use defaults
-  const email = process.env.EMAIL || 'admin@yourstore.com';
+  const email = process.env.EMAIL || 'admin@ashraffurnitures.com';
   const password = process.env.PASSWORD || 'Admin@123456';
   const name = process.env.NAME || 'Admin User';
   const role = process.env.ROLE || 'admin';
