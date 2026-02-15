@@ -572,28 +572,132 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content */}
       <main className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} p-4 sm:p-6 lg:p-8`}>
-        {/* Mobile Header with Menu Button */}
-        <div className="lg:hidden mb-4 flex items-center justify-between bg-white rounded-xl shadow-lg p-4">
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="p-2 hover:bg-amber-50 rounded-lg transition-colors text-gray-700"
-            aria-label="Open menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
+        {/* Enhanced Mobile Header */}
+        <motion.div 
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="lg:hidden mb-6"
+        >
+          {/* Main Header Card */}
+          <div className="relative bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-2xl shadow-2xl overflow-hidden">
+            {/* Decorative Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white rounded-full translate-y-12 -translate-x-12"></div>
             </div>
-            <span className="text-sm font-medium text-gray-700">{user?.name || 'Admin'}</span>
+
+            {/* Content */}
+            <div className="relative p-4">
+              {/* Top Row: Menu & Logo */}
+              <div className="flex items-center justify-between mb-4">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="p-2.5 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl transition-all text-white shadow-lg"
+                  aria-label="Open menu"
+                >
+                  <Menu className="w-6 h-6" />
+                </motion.button>
+                
+                {/* Logo */}
+                <div className="bg-white/95 px-3 py-1.5 rounded-lg shadow-lg">
+                  <img 
+                    src="/Asset 5.png" 
+                    alt="Logo" 
+                    className="h-7 w-auto object-contain"
+                  />
+                </div>
+
+                {/* Notification Bell (Optional) */}
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  className="p-2.5 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-xl transition-all text-white shadow-lg relative"
+                  aria-label="Notifications"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                </motion.button>
+              </div>
+
+              {/* Bottom Row: User Info & Active Tab */}
+              <div className="flex items-center justify-between">
+                {/* User Profile */}
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-gradient-to-br from-white to-amber-50 rounded-xl flex items-center justify-center shadow-lg">
+                      <User className="w-6 h-6 text-amber-600" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white shadow-sm"></div>
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-base">{user?.name || 'Admin'}</p>
+                    <p className="text-white/80 text-xs font-medium">Administrator</p>
+                  </div>
+                </div>
+
+                {/* Active Tab Indicator */}
+                <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-xl">
+                  <p className="text-white text-xs font-semibold uppercase tracking-wide">
+                    {navItems.find(item => item.id === activeTab)?.label}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+
+          {/* Quick Stats Bar (Optional) */}
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <motion.div 
+              whileTap={{ scale: 0.97 }}
+              className="bg-white rounded-xl p-3 shadow-md"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Package className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Products</p>
+                  <p className="text-sm font-bold text-gray-900">{products.length}</p>
+                </div>
+              </div>
+            </motion.div>
+            
+            <motion.div 
+              whileTap={{ scale: 0.97 }}
+              className="bg-white rounded-xl p-3 shadow-md"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <FolderOpen className="w-4 h-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Categories</p>
+                  <p className="text-sm font-bold text-gray-900">{categories.length}</p>
+                </div>
+              </div>
+            </motion.div>
+            
+            <motion.div 
+              whileTap={{ scale: 0.97 }}
+              className="bg-white rounded-xl p-3 shadow-md"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="w-4 h-4 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Views</p>
+                  <p className="text-sm font-bold text-gray-900">{productAnalytics.reduce((sum, p) => sum + p.views, 0)}</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
 
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 lg:mb-8"
+          className="mb-6 lg:mb-8 hidden lg:block"
         >
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
             {navItems.find(item => item.id === activeTab)?.label}
