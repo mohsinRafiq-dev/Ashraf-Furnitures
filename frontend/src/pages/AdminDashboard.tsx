@@ -62,6 +62,7 @@ const AdminDashboard: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   // New features state
@@ -418,32 +419,53 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50">
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
       <motion.aside
         initial={false}
-        animate={{ width: sidebarCollapsed ? '5rem' : '16rem' }}
-        className="fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-2xl z-50"
+        animate={{
+          x: mobileMenuOpen ? 0 : '-100%',
+          width: sidebarCollapsed ? '5rem' : '16rem'
+        }}
+        className="fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-2xl z-50 lg:translate-x-0"
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 flex items-center justify-between border-b border-slate-700/50">
+          <div className="p-4 lg:p-6 flex items-center justify-between border-b border-slate-700/50">
             {!sidebarCollapsed && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="flex items-center gap-3"
               >
-                <div className="bg-white/95 px-4 py-2 rounded-lg shadow-md">
+                <div className="bg-white/95 px-3 py-1.5 lg:px-4 lg:py-2 rounded-lg shadow-md">
                   <img 
                     src="/Asset 5.png" 
                     alt="Logo" 
-                    className="h-10 w-auto max-w-full object-contain"
+                    className="h-8 lg:h-10 w-auto max-w-full object-contain"
                   />
                 </div>
               </motion.div>
             )}
             <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onClick={() => {
+                setSidebarCollapsed(!sidebarCollapsed);
+                if (window.innerWidth < 1024) {
+                  setMobileMenuOpen(false);
+                }
+              }}
               className="p-2 hover:bg-slate-700/50 rounded-lg transition-colors text-white"
               aria-label="Toggle sidebar"
               title="Toggle sidebar"
@@ -515,17 +537,34 @@ const AdminDashboard: React.FC = () => {
       </motion.aside>
 
       {/* Main Content */}
-      <main className={`transition-all duration-300 ${sidebarCollapsed ? 'ml-20' : 'ml-64'} p-8`}>
+      <main className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'} p-4 sm:p-6 lg:p-8`}>
+        {/* Mobile Header with Menu Button */}
+        <div className="lg:hidden mb-4 flex items-center justify-between bg-white rounded-xl shadow-lg p-4">
+          <button
+            onClick={() => setMobileMenuOpen(true)}
+            className="p-2 hover:bg-amber-50 rounded-lg transition-colors text-gray-700"
+            aria-label="Open menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm font-medium text-gray-700">{user?.name || 'Admin'}</span>
+          </div>
+        </div>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 lg:mb-8"
         >
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
             {navItems.find(item => item.id === activeTab)?.label}
           </h1>
-          <p className="text-gray-600 mt-2">Welcome back, {user?.name || 'Admin'}</p>
+          <p className="text-sm sm:text-base text-gray-600 mt-2">Welcome back, {user?.name || 'Admin'}</p>
         </motion.div>
 
         <AnimatePresence mode="wait">
@@ -1009,11 +1048,11 @@ const AdminDashboard: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-2xl shadow-lg p-12 text-center border border-gray-100"
+                  className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 text-center border border-gray-100"
                 >
-                  <Package className="w-20 h-20 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-                  <p className="text-gray-500 mb-6">
+                  <Package className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+                  <p className="text-sm sm:text-base text-gray-500 mb-6">
                     {searchQuery || filterCategory !== 'all' 
                       ? 'Try adjusting your filters or search query' 
                       : 'Start by creating your first product'}
@@ -1133,18 +1172,18 @@ const AdminDashboard: React.FC = () => {
                       transition={{ delay: index * 0.03 }}
                       className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl transition-all"
                     >
-                      <div className="flex items-center gap-6 p-6">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 sm:p-6">
                         {/* Selection Checkbox */}
                         <input
                           type="checkbox"
                           checked={selectedProducts.includes(product.id || '')}
                           onChange={() => product.id && handleSelectProduct(product.id)}
-                          className="w-5 h-5 text-amber-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                          className="w-5 h-5 text-amber-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer flex-shrink-0"
                           aria-label={`Select ${product.name}`}
                         />
 
                         {/* Product Image */}
-                        <div className="relative w-32 h-32 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl overflow-hidden flex-shrink-0">
+                        <div className="relative w-full sm:w-24 lg:w-32 h-32 sm:h-24 lg:h-32 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl overflow-hidden flex-shrink-0">
                           {product.images && product.images[0] ? (
                             <img
                               src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url}
@@ -1164,11 +1203,11 @@ const AdminDashboard: React.FC = () => {
                         </div>
 
                         {/* Product Details */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0 w-full">
+                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-bold text-gray-900 text-lg">{product.name}</h3>
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                <h3 className="font-bold text-gray-900 text-base sm:text-lg">{product.name}</h3>
                                 {product.featured && (
                                   <span className="px-2 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
                                     <Star className="w-3 h-3 fill-current" />
@@ -1181,22 +1220,22 @@ const AdminDashboard: React.FC = () => {
                                 <p className="text-xs text-gray-400 mt-1">SKU: {product.sku}</p>
                               )}
                             </div>
-                            <p className="text-3xl font-bold text-amber-600">${product.price}</p>
+                            <p className="text-2xl sm:text-3xl font-bold text-amber-600 flex-shrink-0">${product.price}</p>
                           </div>
                           
                           {product.description && (
                             <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
                           )}
 
-                          <div className="flex items-center gap-4">
-                            <span className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 ${
+                          <div className="flex flex-wrap items-center gap-3 mb-3 sm:mb-0">
+                            <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1 ${
                               (product.stock || 0) === 0 
                                 ? 'bg-red-100 text-red-600'
                                 : (product.stock || 0) < 10 
                                 ? 'bg-yellow-100 text-yellow-700' 
                                 : 'bg-green-100 text-green-600'
                             }`}>
-                              <ShoppingBag className="w-4 h-4" />
+                              <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
                               Stock: {product.stock || 0}
                             </span>
                             {product.createdAt && (
@@ -1247,14 +1286,14 @@ const AdminDashboard: React.FC = () => {
               className="space-y-6"
             >
               {/* Toolbar */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-900">All Categories</h2>
+              <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">All Categories</h2>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={openAddCategoryModal}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all"
                   >
                     <Plus className="w-5 h-5" />
                     Add Category
@@ -1276,11 +1315,11 @@ const AdminDashboard: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-2xl shadow-lg p-12 text-center border border-gray-100"
+                  className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 text-center border border-gray-100"
                 >
-                  <FolderOpen className="w-20 h-20 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No categories yet</h3>
-                  <p className="text-gray-500 mb-6">Create your first category to organize products</p>
+                  <FolderOpen className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No categories yet</h3>
+                  <p className="text-sm sm:text-base text-gray-500 mb-6">Create your first category to organize products</p>
                   <button
                     onClick={openAddCategoryModal}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all"
@@ -1363,13 +1402,13 @@ const AdminDashboard: React.FC = () => {
               className="space-y-6"
             >
               {/* Analytics Header */}
-              <div className="flex items-center justify-between">
-                <h2 className="text-3xl font-bold text-gray-900">Analytics & Insights</h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Analytics & Insights</h2>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={loadData}
-                  className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Refresh Data
@@ -1784,7 +1823,7 @@ const AdminDashboard: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto"
             onClick={() => setShowCategoryModal(false)}
           >
             <motion.div
@@ -1792,30 +1831,30 @@ const AdminDashboard: React.FC = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto my-8"
             >
-              <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-orange-600 text-white p-6 flex items-center justify-between">
-                <h2 className="text-2xl font-bold">
+              <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-orange-600 text-white p-4 sm:p-6 flex items-center justify-between z-10">
+                <h2 className="text-xl sm:text-2xl font-bold">
                   {editingCategory ? 'Edit Category' : 'New Category'}
                 </h2>
                 <button
                   onClick={() => setShowCategoryModal(false)}
-                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0"
                   aria-label="Close modal"
                   title="Close"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Category Name *</label>
                   <input
                     type="text"
                     value={categoryName}
                     onChange={(e) => setCategoryName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
                     placeholder="e.g. Living Room"
                   />
                 </div>
@@ -1825,7 +1864,7 @@ const AdminDashboard: React.FC = () => {
                   <textarea
                     value={categoryDescription}
                     onChange={(e) => setCategoryDescription(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
                     rows={3}
                     placeholder="Brief description..."
                   />
@@ -1846,7 +1885,7 @@ const AdminDashboard: React.FC = () => {
                       type="text"
                       value={categoryColor}
                       onChange={(e) => setCategoryColor(e.target.value)}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
                       placeholder="#f59e0b"
                       title="Color hex code"
                     />
@@ -1858,7 +1897,7 @@ const AdminDashboard: React.FC = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-xl hover:border-amber-500 transition-colors">
                     <label className="flex flex-col items-center justify-center py-6 cursor-pointer">
                       <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-600">Click to upload image</span>
+                      <span className="text-sm text-gray-600 text-center px-4">Click to upload image</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -1874,10 +1913,10 @@ const AdminDashboard: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     onClick={() => setShowCategoryModal(false)}
-                    className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all"
+                    className="w-full sm:flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all text-base"
                   >
                     Cancel
                   </button>
@@ -1885,7 +1924,7 @@ const AdminDashboard: React.FC = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleSaveCategory}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg font-semibold transition-all"
+                    className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg font-semibold transition-all text-base"
                   >
                     <Save className="w-5 h-5" />
                     Save Category
@@ -1904,7 +1943,7 @@ const AdminDashboard: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto"
             onClick={() => setShowProductModal(false)}
           >
             <motion.div
@@ -1912,30 +1951,30 @@ const AdminDashboard: React.FC = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto my-8"
             >
-              <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-orange-600 text-white p-6 flex items-center justify-between">
-                <h2 className="text-2xl font-bold">
+              <div className="sticky top-0 bg-gradient-to-r from-amber-600 to-orange-600 text-white p-4 sm:p-6 flex items-center justify-between z-10">
+                <h2 className="text-xl sm:text-2xl font-bold">
                   {editingProduct ? 'Edit Product' : 'New Product'}
                 </h2>
                 <button
                   onClick={() => setShowProductModal(false)}
-                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0"
                   aria-label="Close modal"
                   title="Close"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-4 sm:p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Product Name *</label>
                   <input
                     type="text"
                     value={productName}
                     onChange={(e) => setProductName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
                     placeholder="e.g. Modern Sofa"
                   />
                 </div>
@@ -1945,13 +1984,13 @@ const AdminDashboard: React.FC = () => {
                   <textarea
                     value={productDescription}
                     onChange={(e) => setProductDescription(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
                     rows={3}
                     placeholder="Product description..."
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Price *</label>
                     <div className="relative">
@@ -1960,7 +1999,7 @@ const AdminDashboard: React.FC = () => {
                         type="number"
                         value={productPrice}
                         onChange={(e) => setProductPrice(Number(e.target.value))}
-                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
                         min="0"
                         step="0.01"
                       />
@@ -1973,19 +2012,19 @@ const AdminDashboard: React.FC = () => {
                       type="number"
                       value={productStock}
                       onChange={(e) => setProductStock(Number(e.target.value))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
                       min="0"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
                     <select
                       value={productCategory}
                       onChange={(e) => setProductCategory(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
                       aria-label="Product category"
                       title="Select product category"
                     >
@@ -2004,7 +2043,7 @@ const AdminDashboard: React.FC = () => {
                       type="text"
                       value={productSku}
                       onChange={(e) => setProductSku(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
                       placeholder="SKU-001"
                     />
                   </div>
@@ -2015,7 +2054,7 @@ const AdminDashboard: React.FC = () => {
                   <div className="border-2 border-dashed border-gray-300 rounded-xl hover:border-amber-500 transition-colors">
                     <label className="flex flex-col items-center justify-center py-6 cursor-pointer">
                       <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-600">Click to upload image</span>
+                      <span className="text-sm text-gray-600 text-center px-4">Click to upload image</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -2027,7 +2066,7 @@ const AdminDashboard: React.FC = () => {
                     </label>
                   </div>
                   {productImage && (
-                    <img src={productImage} alt="Preview" className="mt-3 w-full h-64 object-cover rounded-xl" />
+                    <img src={productImage} alt="Preview" className="mt-3 w-full h-48 sm:h-64 object-cover rounded-xl" />
                   )}
                 </div>
 
@@ -2037,17 +2076,17 @@ const AdminDashboard: React.FC = () => {
                     id="featured"
                     checked={productFeatured}
                     onChange={(e) => setProductFeatured(e.target.checked)}
-                    className="w-5 h-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                    className="w-5 h-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500 flex-shrink-0"
                   />
                   <label htmlFor="featured" className="text-sm font-semibold text-gray-700 cursor-pointer">
                     Mark as Featured Product
                   </label>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 pt-4">
                   <button
                     onClick={() => setShowProductModal(false)}
-                    className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all"
+                    className="w-full sm:flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-all text-base"
                   >
                     Cancel
                   </button>
@@ -2055,7 +2094,7 @@ const AdminDashboard: React.FC = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleSaveProduct}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg font-semibold transition-all"
+                    className="w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg font-semibold transition-all text-base"
                   >
                     <Save className="w-5 h-5" />
                     Save Product
