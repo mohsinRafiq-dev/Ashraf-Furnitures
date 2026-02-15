@@ -31,7 +31,7 @@ const DebugAuth: React.FC = () => {
         adminDocExists: adminSnap.exists(),
         adminDocData: adminSnap.exists() ? adminSnap.data() : null,
         collectionPath: `admins/${user.uid}`,
-        troubleshooting: []
+        troubleshooting: [] as Array<{ issue: string; solution: string; action: string }>
       };
 
       // Add troubleshooting tips

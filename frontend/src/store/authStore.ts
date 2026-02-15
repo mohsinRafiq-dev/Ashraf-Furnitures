@@ -51,7 +51,7 @@ const adminUserToUser = (adminUser: AdminUser): User => ({
 // Flag to prevent multiple simultaneous initializations
 let isInitializing = false;
 let hasInitialized = false;
-let tokenRefreshInterval: NodeJS.Timeout | null = null;
+let tokenRefreshInterval: number | null = null;
 
 /**
  * Setup automatic token refresh

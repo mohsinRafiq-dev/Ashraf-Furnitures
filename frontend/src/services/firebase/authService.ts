@@ -11,7 +11,6 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  signInWithRedirect,
   getRedirectResult,
   sendPasswordResetEmail,
   updatePassword,
