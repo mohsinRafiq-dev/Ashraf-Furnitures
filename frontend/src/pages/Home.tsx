@@ -178,18 +178,16 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50 to-white overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 overflow-hidden">
       {/* Hero Section */}
       <HeroSection animationsReady={splashComplete} />
 
       {/* Category List Section */}
-      <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
-        <CategoryList
-          categories={categories}
-          isLoading={loadingCategories}
-          animationsReady={splashComplete}
-        />
-      </div>
+      <CategoryList
+        categories={categories}
+        isLoading={loadingCategories}
+        animationsReady={splashComplete}
+      />
 
       {/* Trust Section - Why Choose Us */}
       <motion.section
@@ -265,30 +263,12 @@ export default function Home() {
         animate={splashComplete ? "visible" : "hidden"}
         className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
       >
-        {/* Rich Background Decorations */}
-        <div className="absolute inset-0 overflow-hidden hidden sm:block">
-          {/* Top Right Accent */}
-          <div className="absolute -top-60 -right-60 w-96 h-96 bg-gradient-to-b from-amber-200/60 via-amber-100/40 to-transparent rounded-full opacity-50 blur-3xl" />
-
-          {/* Bottom Left Accent */}
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-gradient-to-tr from-orange-100/50 via-amber-100/30 to-transparent rounded-full opacity-45 blur-3xl" />
-
-          {/* Center Glow */}
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-r from-amber-100/30 via-orange-100/20 to-transparent rounded-full opacity-40 blur-3xl" />
-
-          {/* Animated Grid Pattern */}
-          <motion.div
-            className="absolute inset-0 opacity-10"
-            animate={{ backgroundPosition: ["0 0", "50px 50px"] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            style={{
-              backgroundImage:
-                "linear-gradient(45deg, rgba(217,119,6,0.5) 25%, transparent 25%, transparent 75%, rgba(217,119,6,0.5) 75%, rgba(217,119,6,0.5)), linear-gradient(45deg, rgba(217,119,6,0.5) 25%, transparent 25%, transparent 75%, rgba(217,119,6,0.5) 75%, rgba(217,119,6,0.5))",
-              backgroundSize: "50px 50px",
-              backgroundPosition: "0 0",
-            }}
-          />
-        </div>
+        {/* Background Orbs */}
+        <motion.div
+          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/20 rounded-full blur-3xl hidden sm:block"
+          animate={{ y: [0, 50, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
 
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Header with Premium Badge */}
@@ -556,35 +536,11 @@ export default function Home() {
         viewport={{ once: true }}
         className="relative py-12 sm:py-16 lg:py-24 mb-20 sm:mb-28 lg:mb-40 px-3 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
       >
-        {/* Animated Pattern Overlay - Enhanced */}
+        {/* Background Orbs */}
         <motion.div
-          className="absolute inset-0 opacity-30"
-          animate={{
-            backgroundPosition: ["0% 0%", "100% 100%"],
-          }}
-          transition={{ duration: 5, repeat: Infinity, repeatType: "reverse" }}
-          style={{
-            backgroundImage:
-              "linear-gradient(45deg, rgba(217,119,6,0.15) 25%, transparent 25%, transparent 75%, rgba(217,119,6,0.15) 75%, rgba(217,119,6,0.15))",
-            backgroundSize: "60px 60px",
-          }}
-        />
-
-        {/* Floating Gradient Orbs */}
-        <motion.div
-          className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/40 rounded-full blur-3xl"
-          animate={{ y: [0, 30, 0], x: [0, 20, 0] }}
+          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/20 rounded-full blur-3xl hidden sm:block"
+          animate={{ y: [0, 50, 0] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-orange-200/30 to-amber-200/30 rounded-full blur-3xl"
-          animate={{ y: [0, -30, 0], x: [0, -20, 0] }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 1,
-          }}
         />
 
         <div className="max-w-4xl mx-auto relative z-10 text-center">
