@@ -375,7 +375,7 @@ const Login: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading || isRateLimited}
                 className="w-full bg-gray-900/50 border border-gray-700 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="admin@furniture-mart.com"
+                placeholder="admin@ashraffurnitures.com"
                 required
               />
             </div>
