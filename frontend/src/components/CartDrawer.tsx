@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "../store/cartStore";
 import { Link } from "react-router-dom";
+import { formatPrice } from "../utils/formatPrice";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -145,7 +146,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                             {item.name}
                           </h3>
                           <p className="text-amber-600 font-bold mt-1">
-                            ${item.price.toFixed(2)}
+                            {formatPrice(item.price)}
                           </p>
 
                           {/* Quantity Controls */}
@@ -200,7 +201,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal</span>
-                    <span>${totalPrice.toFixed(2)}</span>
+                    <span>{formatPrice(totalPrice)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Shipping</span>
@@ -210,7 +211,7 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <div className="flex justify-between text-lg font-bold text-gray-900">
                     <span>Total</span>
                     <span className="text-amber-600">
-                      ${totalPrice.toFixed(2)}
+                      {formatPrice(totalPrice)}
                     </span>
                   </div>
                 </div>

@@ -5,6 +5,7 @@ import { Button } from "./ui/Button";
 import { useCartStore } from "../store";
 import { WishlistButton } from "./WishlistButton";
 import { Eye, ShoppingCart } from "lucide-react";
+import { formatPrice } from "../utils/formatPrice";
 
 interface ProductCardProps {
   id: string;
@@ -216,11 +217,11 @@ const ProductCard = ({
             className="flex items-baseline gap-2"
           >
             <span className="text-2xl font-bold text-amber-600">
-              ${price.toFixed(2)}
+              {formatPrice(price)}
             </span>
             {originalPrice && originalPrice > price && (
               <span className="text-sm text-gray-500 line-through">
-                ${originalPrice.toFixed(2)}
+                {formatPrice(originalPrice)}
               </span>
             )}
           </motion.div>
