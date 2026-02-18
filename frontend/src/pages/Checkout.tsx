@@ -4,6 +4,9 @@ import { useCartStore } from "../store/cartStore";
 import { useNavigate } from "react-router-dom";
 import { Check, AlertCircle, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { formatPrice } from "../utils/formatPrice";
+import { sendWhatsAppOrder } from "../utils/whatsapp";
+import { WhatsAppIcon } from "../components/WhatsAppIcon";
 
 interface CheckoutFormData {
   firstName: string;
@@ -578,6 +581,18 @@ export default function Checkout() {
                   <>Place Order</>
                 )}
               </motion.button>
+
+              {/* WhatsApp Order Button */}
+              <motion.button
+                type="button"
+                onClick={() => sendWhatsAppOrder(items, grandTotal)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full py-2.5 sm:py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 text-sm sm:text-base"
+              >
+                <WhatsAppIcon className="w-5 sm:w-6 h-5 sm:h-6" />
+                Order via WhatsApp
+              </motion.button>
             </form>
           </div>
 
@@ -613,17 +628,16 @@ export default function Checkout() {
                       </p>
                     </div>
                     <p className="font-semibold text-gray-900 text-xs sm:text-sm">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatPrice(item.price * item.quantity)}
                     </p>
                   </div>
                 ))}
               </div>
 
-              {/* Price Breakdown */}
               <div className="space-y-2 sm:space-y-3 pt-4 sm:pt-6 border-t border-gray-200">
                 <div className="flex justify-between text-xs sm:text-sm text-gray-700">
                   <span>Subtotal</span>
-                  <span>${totalPrice.toFixed(2)}</span>
+                  <span>{formatPrice(totalPrice)}</span>
                 </div>
 
                 <div className="flex justify-between text-xs sm:text-sm text-gray-700">
@@ -632,14 +646,14 @@ export default function Checkout() {
                     {shippingCost === 0 ? (
                       <span className="text-green-600 font-semibold">FREE</span>
                     ) : (
-                      `$${shippingCost.toFixed(2)}`
+                      formatPrice(shippingCost)
                     )}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-xs sm:text-sm text-gray-700">
                   <span>Tax</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span>{formatPrice(tax)}</span>
                 </div>
 
                 <div className="h-px bg-gray-200" />
@@ -647,7 +661,7 @@ export default function Checkout() {
                 <div className="flex justify-between text-base sm:text-lg font-bold text-gray-900">
                   <span>Total</span>
                   <span className="text-amber-600">
-                    ${grandTotal.toFixed(2)}
+                    {formatPrice(grandTotal)}
                   </span>
                 </div>
 

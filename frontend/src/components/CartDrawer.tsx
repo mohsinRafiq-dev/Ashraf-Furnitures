@@ -3,6 +3,8 @@ import { X, Plus, Minus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "../store/cartStore";
 import { Link } from "react-router-dom";
 import { formatPrice } from "../utils/formatPrice";
+import { sendWhatsAppOrder } from "../utils/whatsapp";
+import { WhatsAppIcon } from "./WhatsAppIcon";
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -12,6 +14,16 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, getTotalPrice, getTotalItems } =
     useCartStore();
+
+  const handleWhatsAppOrder = () => {
+    const orderItems = items.map(item => ({
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+    }));
+    sendWhatsAppOrder(orderItems, getTotalPrice());
+    onClose();
+  };
 
   const drawerVariants = {
     hidden: { x: "100%", opacity: 0 },
@@ -226,6 +238,16 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                     <ShoppingBag className="w-5 h-5" />
                     Proceed to Checkout
                   </Link>
+                  
+                  {/* WhatsApp Order Button */}
+                  <button
+                    onClick={handleWhatsAppOrder}
+                    className="w-full py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <WhatsAppIcon className="w-6 h-6" />
+                    Order via WhatsApp
+                  </button>
+                  
                   <button
                     onClick={onClose}
                     className="w-full py-3 border-2 border-gray-200 text-gray-900 font-semibold rounded-lg hover:border-amber-600 hover:text-amber-600 transition-colors"

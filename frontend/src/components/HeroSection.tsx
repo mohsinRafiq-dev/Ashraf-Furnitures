@@ -425,7 +425,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           <div className="w-px h-6 sm:h-8 bg-white/20" />
           <div className="text-center">
             <div className="text-lg sm:text-2xl font-bold text-amber-400">
-              10K+
+              100K+
             </div>
             <div className="text-xs sm:text-sm">Products</div>
           </div>

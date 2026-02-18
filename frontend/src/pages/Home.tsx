@@ -534,7 +534,7 @@ export default function Home() {
         whileInView={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
-        className="relative py-12 sm:py-16 lg:py-24 mb-20 sm:mb-28 lg:mb-40 px-3 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
+        className="relative py-12 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
       >
         {/* Background Orbs */}
         <motion.div

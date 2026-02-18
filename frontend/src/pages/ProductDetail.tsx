@@ -3,6 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getProductById } from "../services/firebase/productService";
 import { trackProductView } from "../services/firebase/analyticsService";
+import { formatPrice } from "../utils/formatPrice";
+import { sendProductInquiry } from "../utils/whatsapp";
+import { WhatsAppIcon } from "../components/WhatsAppIcon";
 import {
   ArrowLeft,
   ShoppingCart,
@@ -355,7 +358,7 @@ export default function ProductDetail() {
               className="flex items-baseline gap-2 sm:gap-4 py-3 sm:py-4 border-y border-gray-200"
             >
               <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-amber-600">
-                ${product.price.toFixed(2)}
+                {formatPrice(product.price)}
               </p>
             </motion.div>
 
@@ -491,6 +494,16 @@ export default function ProductDetail() {
                 <ShoppingCart className="w-4 sm:w-6 h-4 sm:h-6" />
                 <span className="hidden sm:inline">Add to Cart</span>
                 <span className="sm:hidden">Add</span>({quantity})
+              </motion.button>
+              <motion.button
+                onClick={() => sendProductInquiry(product.name, product.price)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-3 sm:px-6 py-2.5 sm:py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-2 shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl text-xs sm:text-base"
+                title="Order via WhatsApp"
+              >
+                <WhatsAppIcon className="w-5 sm:w-7 h-5 sm:h-7" />
+                <span className="hidden sm:inline">WhatsApp</span>
               </motion.button>
             </motion.div>
 

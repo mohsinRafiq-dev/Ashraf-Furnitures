@@ -6,6 +6,8 @@ import { useCartStore } from "../store";
 import { WishlistButton } from "./WishlistButton";
 import { Eye, ShoppingCart } from "lucide-react";
 import { formatPrice } from "../utils/formatPrice";
+import { sendProductInquiry } from "../utils/whatsapp";
+import { WhatsAppIcon } from "./WhatsAppIcon";
 
 interface ProductCardProps {
   id: string;
@@ -226,17 +228,18 @@ const ProductCard = ({
             )}
           </motion.div>
 
-          {/* Add to Cart Button */}
+          {/* Action Buttons - Add to Cart & WhatsApp */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ delay: 0.25 }}
+            className="flex gap-2"
           >
             <Button
               onClick={handleAddToCart}
               disabled={!inStock || isAdding}
               variant={inStock ? "primary" : "secondary"}
-              className="w-full py-2.5 rounded-xl font-semibold transition-all duration-200"
+              className="flex-1 py-2.5 rounded-xl font-semibold transition-all duration-200"
               size="sm"
             >
               {isAdding ? (
@@ -254,6 +257,17 @@ const ProductCard = ({
               ) : (
                 "Out of Stock"
               )}
+            </Button>
+            
+            {/* WhatsApp Order Button */}
+            <Button
+              onClick={() => sendProductInquiry(name, price)}
+              variant="secondary"
+              className="py-2.5 px-4 rounded-xl font-semibold bg-green-500 hover:bg-green-600 text-white border-none transition-all duration-200"
+              size="sm"
+              title="Order via WhatsApp"
+            >
+              <WhatsAppIcon className="w-5 h-5" />
             </Button>
           </motion.div>
         </div>

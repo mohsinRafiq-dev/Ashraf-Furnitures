@@ -17,6 +17,7 @@ import {
   Search,
   Info,
   Heart,
+  MapPin,
 } from "lucide-react";
 
 interface LayoutProps {
@@ -744,25 +745,55 @@ function Footer() {
           <motion.div variants={itemVariants} className="space-y-4">
             <h3 className="text-xl font-bold text-amber-700">Contact</h3>
             <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-3 text-gray-700 hover:text-amber-600 transition group">
-                <Mail className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
-                <div>
-                  <p className="font-semibold">Email</p>
-                  <p className="font-medium">info@ashraff.com</p>
-                </div>
+              <li className="flex items-start gap-3 text-gray-700 group">
+                <a
+                  href="mailto:hajiashraffurnitures@gmail.com"
+                  className="flex items-start gap-3 hover:text-amber-600 transition"
+                >
+                  <Mail className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
+                  <div>
+                    <p className="font-semibold">Email</p>
+                    <p className="font-medium">hajiashraffurnitures@gmail.com</p>
+                  </div>
+                </a>
               </li>
-              <li className="flex items-start gap-3 text-gray-700 hover:text-amber-600 transition group">
-                <Phone className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
-                <div>
-                  <p className="font-semibold">Phone</p>
-                  <p className="font-medium">1-800-FURNITURE</p>
-                </div>
+              <li className="flex items-start gap-3 text-gray-700 group">
+                <a
+                  href="tel:+923006554776"
+                  className="flex items-start gap-3 hover:text-amber-600 transition"
+                >
+                  <Phone className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
+                  <div>
+                    <p className="font-semibold">Phone</p>
+                    <p className="font-medium">+92 300 6554776</p>
+                  </div>
+                </a>
+              </li>
+              <li className="flex items-start gap-3 text-gray-700 group">
+                <a
+                  href="https://www.google.com/maps/place/Haji+Ashraf's+Furniture+Mart/@31.1578298,72.6843131,17z/data=!3m1!4b1!4m6!3m5!1s0x392301ef4c5e4363:0x1e03b4a6a09684b8!8m2!3d31.1578298!4d72.686888!16s%2Fg%2F11v9vr_r60"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-3 hover:text-amber-600 transition"
+                >
+                  <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
+                  <div>
+                    <p className="font-semibold">Location</p>
+                    <p className="font-medium text-xs leading-relaxed">
+                      Painsra Road, Near Shell Petrol Pump<br />
+                      Gojra, Pakistan
+                    </p>
+                  </div>
+                </a>
               </li>
               <li className="flex items-start gap-3 text-gray-700 group">
                 <Clock className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
                 <div>
                   <p className="font-semibold">Hours</p>
-                  <p className="font-medium">24/7 Service</p>
+                  <p className="font-medium text-xs leading-relaxed">
+                    Mon-Thu & Sat-Sun: 8AM-9PM<br />
+                    <span className="text-red-600">Friday: Closed</span>
+                  </p>
                 </div>
               </li>
             </ul>

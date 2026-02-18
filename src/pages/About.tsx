@@ -251,9 +251,16 @@ const About: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-center"
             >
-              <Phone className="w-8 h-8 mx-auto mb-3" />
-              <h3 className="font-bold mb-2">Phone</h3>
-              <p className="text-amber-50 text-sm">+1 (555) 123-4567</p>
+              <a 
+                href="tel:+923006554776"
+                className="inline-block hover:opacity-80 transition-opacity"
+              >
+                <Phone className="w-8 h-8 mx-auto mb-3" />
+                <h3 className="font-bold mb-2">Phone</h3>
+                <p className="text-amber-50 text-sm">
+                  +92 300 6554776
+                </p>
+              </a>
             </motion.div>
 
             <motion.div
@@ -263,9 +270,16 @@ const About: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="text-center"
             >
-              <Mail className="w-8 h-8 mx-auto mb-3" />
-              <h3 className="font-bold mb-2">Email</h3>
-              <p className="text-amber-50 text-sm">info@furnituremart.com</p>
+              <a 
+                href="mailto:hajiashraffurnitures@gmail.com"
+                className="inline-block hover:opacity-80 transition-opacity"
+              >
+                <Mail className="w-8 h-8 mx-auto mb-3" />
+                <h3 className="font-bold mb-2">Email</h3>
+                <p className="text-amber-50 text-sm">
+                  hajiashraffurnitures@gmail.com
+                </p>
+              </a>
             </motion.div>
 
             <motion.div

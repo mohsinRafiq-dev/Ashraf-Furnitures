@@ -10,14 +10,16 @@ import {
   Clock,
   Facebook,
   Instagram,
-  Twitter,
   Home,
   Package,
   LayoutGrid,
   Search,
   Info,
   Heart,
+  MapPin,
 } from "lucide-react";
+import { WhatsAppIcon } from "../components/WhatsAppIcon";
+import { TikTokIcon } from "../components/TikTokIcon";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -436,6 +438,17 @@ function Footer() {
               <motion.a
                 whileHover={{ scale: 1.2, rotate: 5 }}
                 whileTap={{ scale: 0.9 }}
+                href="https://wa.me/923457571471"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center hover:shadow-lg hover:shadow-amber-500/50 transition-shadow text-white"
+                title="Contact us on WhatsApp"
+              >
+                <WhatsAppIcon className="w-6 h-6" />
+              </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.2, rotate: 5 }}
+                whileTap={{ scale: 0.9 }}
                 href="#"
                 className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center hover:shadow-lg hover:shadow-amber-500/50 transition-shadow text-white"
               >
@@ -455,7 +468,7 @@ function Footer() {
                 href="#"
                 className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center hover:shadow-lg hover:shadow-amber-500/50 transition-shadow text-white"
               >
-                <Twitter className="w-5 h-5" />
+                <TikTokIcon className="w-5 h-5" />
               </motion.a>
             </div>
           </motion.div>
@@ -568,25 +581,69 @@ function Footer() {
           <motion.div variants={itemVariants} className="space-y-4">
             <h3 className="text-xl font-bold text-amber-700">Contact</h3>
             <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-3 text-gray-700 hover:text-amber-600 transition group">
-                <Mail className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
-                <div>
-                  <p className="font-semibold">Email</p>
-                  <p className="font-medium">info@ashraff.com</p>
-                </div>
+              <li className="flex items-start gap-3 text-gray-700 group">
+                <a
+                  href="mailto:hajiashraffurnitures@gmail.com"
+                  className="flex items-start gap-3 hover:text-amber-600 transition"
+                >
+                  <Mail className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
+                  <div>
+                    <p className="font-semibold">Email</p>
+                    <p className="font-medium">hajiashraffurnitures@gmail.com</p>
+                  </div>
+                </a>
               </li>
-              <li className="flex items-start gap-3 text-gray-700 hover:text-amber-600 transition group">
-                <Phone className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
-                <div>
-                  <p className="font-semibold">Phone</p>
-                  <p className="font-medium">1-800-FURNITURE</p>
-                </div>
+              <li className="flex items-start gap-3 text-gray-700 group">
+                <a
+                  href="tel:+923006554776"
+                  className="flex items-start gap-3 hover:text-amber-600 transition"
+                >
+                  <Phone className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
+                  <div>
+                    <p className="font-semibold">Phone</p>
+                    <p className="font-medium">+92 300 6554776</p>
+                  </div>
+                </a>
+              </li>
+              <li className="flex items-start gap-3 text-gray-700 group">
+                <a
+                  href="https://wa.me/923457571471"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-3 hover:text-amber-600 transition"
+                >
+                  <WhatsAppIcon className="w-6 h-6 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
+                  <div>
+                    <p className="font-semibold">WhatsApp</p>
+                    <p className="font-medium">+92 345 7571471</p>
+                  </div>
+                </a>
+              </li>
+              <li className="flex items-start gap-3 text-gray-700 group">
+                <a
+                  href="https://www.google.com/maps/place/Haji+Ashraf's+Furniture+Mart/@31.1578298,72.6843131,17z/data=!3m1!4b1!4m6!3m5!1s0x392301ef4c5e4363:0x1e03b4a6a09684b8!8m2!3d31.1578298!4d72.686888!16s%2Fg%2F11v9vr_r60"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-3 hover:text-amber-600 transition"
+                >
+                  <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
+                  <div>
+                    <p className="font-semibold">Location</p>
+                    <p className="font-medium text-xs leading-relaxed">
+                      Painsra Road, Near Shell Petrol Pump<br />
+                      Gojra, Pakistan
+                    </p>
+                  </div>
+                </a>
               </li>
               <li className="flex items-start gap-3 text-gray-700 group">
                 <Clock className="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-600 group-hover:text-orange-600 transition-colors" />
                 <div>
                   <p className="font-semibold">Hours</p>
-                  <p className="font-medium">24/7 Service</p>
+                  <p className="font-medium text-xs leading-relaxed">
+                    Mon-Thu & Sat-Sun: 8AM-9PM<br />
+                    <span className="text-red-600">Friday: Closed</span>
+                  </p>
                 </div>
               </li>
             </ul>

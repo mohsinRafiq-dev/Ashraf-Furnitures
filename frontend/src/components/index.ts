@@ -6,3 +6,4 @@ export { default as ImageCarousel } from './ImageCarousel';
 export { default as VariantSelector } from './VariantSelector';
 export { default as SpecsTable } from './SpecsTable';
 export { default as SearchInput } from './SearchInput';
+export { WhatsAppIcon } from './WhatsAppIcon';
