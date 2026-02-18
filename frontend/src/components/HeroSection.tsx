@@ -15,10 +15,11 @@ interface HeroSectionProps {
 }
 
 const BACKGROUND_IMAGES = [
+  "/hero-new.png",
+  "/2.png",
+  "/3.png",
   "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&h=600&fit=crop",
   "https://images.unsplash.com/photo-1550355291-bbee04a92027?w=1200&h=600&fit=crop",
-  "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=1200&h=600&fit=crop",
-  "https://images.unsplash.com/photo-1579428018ba4-e8a0e346e773?w=1200&h=600&fit=crop",
 ];
 
 const containerVariants = {
@@ -192,11 +193,10 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           <motion.button
             key={index}
             onClick={() => setCurrentImageIndex(index)}
-            className={`transition-all rounded-full ${
-              index === currentImageIndex
-                ? "bg-amber-500 w-8 h-2"
-                : "bg-white/40 w-2 h-2 hover:bg-white/60"
-            }`}
+            className={`transition-all rounded-full ${index === currentImageIndex
+              ? "bg-amber-500 w-8 h-2"
+              : "bg-white/40 w-2 h-2 hover:bg-white/60"
+              }`}
             whileHover={{ scale: 1.3 }}
             whileTap={{ scale: 0.85 }}
           />
