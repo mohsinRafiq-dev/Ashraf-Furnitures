@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Heart,
@@ -66,8 +66,16 @@ const About: React.FC = () => {
     },
   };
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Hero Section */}
       <motion.section
         initial={{ opacity: 0 }}
@@ -82,7 +90,7 @@ const About: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-center"
           >
-            <h1 className="text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
               About Furniture Mart
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -164,7 +172,7 @@ const About: React.FC = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="h-96 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center"
+              className="h-56 md:h-96 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center"
             >
               <span className="text-8xl">🛋️</span>
             </motion.div>
@@ -197,7 +205,7 @@ const About: React.FC = () => {
                 <motion.div
                   key={idx}
                   variants={itemVariants}
-                  className="p-6 bg-gray-50 rounded-xl hover:shadow-lg transition-shadow hover:bg-amber-50"
+                  className="p-6 bg-amber-50 md:bg-gray-50 rounded-xl hover:shadow-lg transition-shadow"
                 >
                   <Icon className="w-12 h-12 text-amber-600 mb-4" />
                   <h3 className="text-xl font-bold text-gray-900 mb-2">

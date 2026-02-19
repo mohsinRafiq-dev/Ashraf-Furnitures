@@ -187,8 +187,8 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           />
         ))}
 
-      {/* Background Image Indicators */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-3 z-10">
+      {/* Background Image Indicators (hidden on small screens to avoid overlap) */}
+      <div className="hidden sm:flex absolute top-8 left-1/2 -translate-x-1/2 gap-3 z-10">
         {BACKGROUND_IMAGES.map((_, index) => (
           <motion.button
             key={index}
@@ -213,11 +213,11 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
         {/* Top Badge */}
         <motion.div
           variants={itemVariants}
-          className="inline-block mb-4 sm:mb-6"
+          className="inline-block mb-6 sm:mb-6 pt-1 sm:pt-0 z-20"
         >
-          <div className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-amber-500/20 border border-amber-500/50 rounded-full backdrop-blur-sm">
+          <div className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-amber-500/20 border border-amber-500/50 rounded-full backdrop-blur-sm">
             <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-            <span className="text-xs sm:text-sm font-semibold text-amber-400">
+            <span className="text-lg sm:text-xl font-semibold text-amber-400">
               ✨ Special Offer - Up to 50% Off
             </span>
           </div>
@@ -225,7 +225,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
 
         {/* Headline with Character Animation */}
         <motion.div variants={headlineVariants} className="mb-4 sm:mb-6">
-          <h1 className="text-3xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-2 sm:mb-4 leading-tight">
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-2 sm:mb-4 leading-tight">
             Find Your Perfect
             <motion.span
               className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 pb-[10px]"
@@ -243,7 +243,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           variants={itemVariants}
           className="mb-8 sm:mb-10 max-w-2xl mx-auto px-2 sm:px-0"
         >
-          <p className="text-xs sm:text-base lg:text-lg xl:text-2xl text-gray-200 leading-relaxed font-light">
+          <p className="text-lg sm:text-lg lg:text-xl xl:text-2xl text-gray-200 leading-relaxed font-light">
             Browse through our categories and discover pieces that match your
             style
           </p>
@@ -259,7 +259,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
             <motion.button
               whileHover="hover"
               whileTap={{ scale: 0.92 }}
-              className="group relative px-6 sm:px-12 py-2.5 sm:py-4 text-sm sm:text-lg font-bold text-white overflow-hidden rounded-lg sm:rounded-xl transition-all duration-300 w-full sm:w-auto"
+              className="group relative px-6 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-bold text-white overflow-hidden rounded-lg sm:rounded-xl transition-all duration-300 w-full sm:w-auto"
             >
               {/* Animated Background Gradient */}
               <motion.div
@@ -323,7 +323,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
             <motion.button
               whileHover="hover"
               whileTap={{ scale: 0.92 }}
-              className="group relative px-6 sm:px-12 py-2.5 sm:py-4 text-sm sm:text-lg font-bold text-amber-600 overflow-hidden rounded-lg sm:rounded-xl border-2 border-amber-400 transition-all duration-300 backdrop-blur-md w-full sm:w-auto hover:bg-amber-400/10"
+              className="group relative px-6 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-bold text-amber-600 overflow-hidden rounded-lg sm:rounded-xl border-2 border-amber-400 transition-all duration-300 backdrop-blur-md w-full sm:w-auto hover:bg-amber-400/10"
             >
               {/* Animated Border Glow */}
               <motion.div
@@ -380,6 +380,19 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           </Link>
         </motion.div>
 
+        {/* Mobile background indicators - placed under CTAs to avoid overlap with the top badge */}
+        <div className="flex sm:hidden justify-center gap-3 mt-4 mb-4 z-10">
+          {BACKGROUND_IMAGES.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => setCurrentImageIndex(index)}
+              aria-label={`Show background ${index + 1}`}
+              className={`transition-all rounded-full focus:outline-none focus:ring-2 focus:ring-amber-300 ${index === currentImageIndex ? 'bg-amber-500 w-10 h-2' : 'bg-white/40 w-3 h-3'}`}
+            />
+          ))}
+        </div>
+
         {/* Feature Badges with Icons */}
         <motion.div
           variants={itemVariants}
@@ -398,7 +411,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
             >
               <motion.div
                 variants={badgeVariants}
-                className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-1.5 sm:py-3 backdrop-blur-md bg-white/10 hover:bg-white/15 border border-white/20 rounded-full transition-all text-xs sm:text-sm"
+                className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 backdrop-blur-md bg-white/10 hover:bg-white/15 border border-white/20 rounded-full transition-all text-lg sm:text-sm"
               >
                 <motion.div className="text-amber-400 group-hover:text-amber-300 w-4 sm:w-5 h-4 sm:h-5 flex items-center justify-center">
                   {feature.icon}
@@ -414,27 +427,27 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
         {/* Trust Indicators */}
         <motion.div
           variants={itemVariants}
-          className="flex gap-3 sm:gap-8 justify-center items-center text-white/70 px-2 flex-wrap"
+          className="flex gap-4 sm:gap-8 justify-center items-center text-white/70 px-2 flex-wrap"
         >
           <div className="text-center">
-            <div className="text-lg sm:text-2xl font-bold text-amber-400">
+            <div className="text-3xl sm:text-4xl font-bold text-amber-400">
               50K+
             </div>
-            <div className="text-xs sm:text-sm">Happy Customers</div>
+            <div className="text-base sm:text-sm">Happy Customers</div>
           </div>
           <div className="w-px h-6 sm:h-8 bg-white/20" />
           <div className="text-center">
-            <div className="text-lg sm:text-2xl font-bold text-amber-400">
+            <div className="text-3xl sm:text-4xl font-bold text-amber-400">
               100K+
             </div>
-            <div className="text-xs sm:text-sm">Products</div>
+            <div className="text-base sm:text-sm">Products</div>
           </div>
           <div className="w-px h-6 sm:h-8 bg-white/20" />
           <div className="text-center">
-            <div className="text-lg sm:text-2xl font-bold text-amber-400">
+            <div className="text-3xl sm:text-4xl font-bold text-amber-400">
               4.9★
             </div>
-            <div className="text-xs sm:text-sm">Rating</div>
+            <div className="text-base sm:text-sm">Rating</div>
           </div>
         </motion.div>
       </motion.div>

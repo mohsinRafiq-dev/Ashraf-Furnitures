@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Heart,
@@ -113,8 +113,17 @@ const About: React.FC = () => {
     },
   };
 
+  // Mobile detection to apply mobile-only styles & reduced animations
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 overflow-x-hidden">
       {/* Hero Section */}
       <motion.section
         initial={{ opacity: 0 }}
@@ -131,7 +140,7 @@ const About: React.FC = () => {
               opacity: [0.1, 0.2, 0.1],
             }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 rounded-full blur-3xl"
+            className="hidden md:block absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-amber-400 to-orange-500 rounded-full blur-3xl"
           />
           <motion.div
             animate={{
@@ -140,9 +149,12 @@ const About: React.FC = () => {
               opacity: [0.1, 0.2, 0.1],
             }}
             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-            className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-orange-400 to-amber-500 rounded-full blur-3xl"
+            className="hidden md:block absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-orange-400 to-amber-500 rounded-full blur-3xl"
           />
         </div>
+
+        {/* Mobile warm overlay to make small-screen feel warmer */}
+        <div className="md:hidden absolute inset-0 pointer-events-none bg-gradient-to-b from-amber-50/90 via-amber-100/60 to-white/0" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -156,7 +168,7 @@ const About: React.FC = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ duration: 0.5, delay: 0.4, type: "spring" }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-lg mb-6"
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full shadow-lg mb-6 ${isMobile ? 'bg-amber-50 text-amber-900' : 'bg-white/80 backdrop-blur-sm text-gray-800'}`}
             >
               <Star className="w-5 h-5 text-amber-600" />
               <span className="font-semibold text-gray-800">
@@ -207,7 +219,7 @@ const About: React.FC = () => {
                   whileHover={{ scale: 1.05, y: -5 }}
                   className="relative group"
                 >
-                  <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-amber-100 hover:border-amber-300">
+                  <div className="bg-amber-50 md:bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-amber-100 hover:border-amber-300">
                     <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     <Icon className="w-10 h-10 sm:w-12 sm:h-12 text-amber-600 mx-auto mb-3 relative z-10" />
                     <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 relative z-10">
@@ -266,7 +278,7 @@ const About: React.FC = () => {
                   <div className={`flex-1 ${idx % 2 === 0 ? 'lg:text-right' : 'lg:text-left'}`}>
                     <motion.div
                       whileHover={{ scale: 1.02 }}
-                      className="bg-white rounded-xl p-6 shadow-lg border-2 border-amber-200 hover:border-amber-400 transition-all"
+                      className="bg-amber-50 md:bg-white rounded-xl p-6 shadow-lg border-2 border-amber-200 hover:border-amber-400 transition-all"
                     >
                       <div className="inline-block px-4 py-1 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-full text-sm font-bold mb-3">
                         {milestone.year}
@@ -300,7 +312,7 @@ const About: React.FC = () => {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
-        className="py-16 sm:py-20 lg:py-24 bg-white/50 backdrop-blur-sm"
+        className="py-16 sm:py-20 bg-amber-50/60 md:bg-white/50 backdrop-blur-sm"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -320,10 +332,10 @@ const About: React.FC = () => {
                     rotate: [0, 5, 0],
                   }}
                   transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -inset-4 bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl blur-2xl opacity-30"
+                  className="hidden md:block absolute -inset-4 bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl blur-2xl opacity-30"
                 />
                 
-                <div className="relative bg-white rounded-3xl p-4 shadow-2xl border-4 border-amber-200">
+                <div className="relative bg-amber-50 md:bg-white rounded-3xl p-4 shadow-2xl border-4 border-amber-200">
                   <img
                     src="/Abu.png"
                     alt="Haji Muhammad Ashraf - Our Founder"
@@ -512,10 +524,10 @@ const About: React.FC = () => {
                     rotate: [0, -5, 0],
                   }}
                   transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -inset-4 bg-gradient-to-br from-orange-400 to-amber-500 rounded-3xl blur-2xl opacity-30"
+                  className="hidden md:block absolute -inset-4 bg-gradient-to-br from-orange-400 to-amber-500 rounded-3xl blur-2xl opacity-30"
                 />
                 
-                <div className="relative bg-white rounded-3xl p-4 shadow-2xl border-4 border-orange-200">
+                <div className="relative bg-amber-50 md:bg-white rounded-3xl p-4 shadow-2xl border-4 border-orange-200">
                   <img
                     src="/Papa.JPG"
                     alt="Muhammad Rafiq - Continuing the Legacy"
@@ -570,7 +582,7 @@ const About: React.FC = () => {
                   whileHover={{ y: -10, scale: 1.02 }}
                   className="relative group"
                 >
-                  <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-amber-100 hover:border-amber-300 h-full">
+                  <div className="bg-amber-50 md:bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-amber-100 hover:border-amber-300 h-full">
                     <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     
                     <div className="relative z-10">
@@ -610,7 +622,7 @@ const About: React.FC = () => {
           >
             <div className="max-w-4xl mx-auto">
               <motion.div
-                animate={{ rotate: [0, 10, -10, 0] }}
+                animate={isMobile ? { rotate: [0, 4, -4, 0] } : { rotate: [0, 10, -10, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 className="inline-block mb-6"
               >
@@ -695,7 +707,7 @@ const About: React.FC = () => {
               transition={{ duration: 0.6 }}
               className="lg:col-span-2 relative group"
             >
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[400px] sm:h-[500px] lg:h-[600px] border border-amber-200/50">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl h-64 sm:h-[500px] lg:h-[600px] border border-amber-200/50">
                 <iframe
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3381.0234!2d72.6843131!3d31.1578298!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x392301ef4c5e4363:0x1e03b4a6a09684b8!2sHaji%20Ashraf's%20Furniture%20Mart!5e0!3m2!1sen!2s!4v1708272000000!5m2!1sen!2s"
                   width="100%"
