@@ -8,6 +8,8 @@ import {
   Truck,
   ArrowRight,
   Search,
+  Award,
+  Wrench,
 } from "lucide-react";
 
 interface HeroSectionProps {
@@ -133,9 +135,9 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
   const particleCount = isMobile ? 8 : 15;
 
   const features = [
-    { icon: <Truck className="w-5 h-5" />, label: "Free Shipping" },
-    { icon: <Shield className="w-5 h-5" />, label: "Secure Payment" },
-    { icon: <Zap className="w-5 h-5" />, label: "Fast Delivery" },
+    { icon: <Award className="w-5 h-5" />, label: "Handcrafted Quality" },
+    { icon: <Wrench className="w-5 h-5" />, label: "Made-to-Order" },
+    { icon: <Shield className="w-5 h-5" />, label: "Warranty & Support" },
   ];
 
   return (
