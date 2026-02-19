@@ -10,9 +10,7 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
-  Check,
   Award,
-  Truck,
   Wrench,
   ShieldCheck,
 } from "lucide-react";

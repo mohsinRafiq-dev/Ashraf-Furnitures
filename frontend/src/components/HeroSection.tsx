@@ -3,9 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
   ChevronDown,
-  Zap,
   Shield,
-  Truck,
   ArrowRight,
   Search,
   Award,
