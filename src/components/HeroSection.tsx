@@ -238,7 +238,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
 
         {/* Headline with Character Animation */}
         <motion.div variants={headlineVariants} className="mb-4 sm:mb-6">
-          <h1 className="text-3xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-2 sm:mb-4 leading-tight">
+          <h1 className="text-6xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-2 sm:mb-4 leading-tight">
             Find Your Perfect
             <motion.span
               className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 pb-[10px]"
@@ -256,7 +256,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           variants={itemVariants}
           className="mb-8 sm:mb-10 max-w-2xl mx-auto px-2 sm:px-0"
         >
-          <p className="text-xs sm:text-base lg:text-lg xl:text-2xl text-gray-200 leading-relaxed font-light">
+          <p className="text-xl sm:text-base lg:text-lg xl:text-2xl text-gray-200 leading-relaxed font-light">
             Browse through our categories and discover pieces that match your
             style
           </p>
