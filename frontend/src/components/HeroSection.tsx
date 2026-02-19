@@ -220,7 +220,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           <div className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-amber-500/20 border border-amber-500/50 rounded-full backdrop-blur-sm">
             <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
             <span className="text-lg sm:text-xl font-semibold text-amber-400">
-              ✨ Special Offer - Up to 50% Off
+              Family-owned since 1982
             </span>
           </div>
         </motion.div>
