@@ -177,13 +177,13 @@ const About: React.FC = () => {
               <Star className="w-5 h-5 text-amber-600" />
             </motion.div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-gray-900 mb-6">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6">
               A Legacy of
               <span className="block bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 bg-clip-text text-transparent">
                 Craftsmanship & Trust
               </span>
             </h1>
-            <p className="text-lg sm:text-xl lg:text-2xl text-gray-700 max-w-4xl mx-auto mb-8 leading-relaxed">
+            <p className="text-xl sm:text-xl lg:text-2xl text-gray-700 max-w-4xl mx-auto mb-8 leading-relaxed">
               For over <strong>42 years</strong>, Ashraf Furnitures has been the cornerstone of quality home furnishings.
               From a humble beginning by our founder to becoming a household name,
               our journey is built on trust, dedication, and the love of thousands of satisfied families.
@@ -222,7 +222,7 @@ const About: React.FC = () => {
                   <div className="bg-amber-50 md:bg-white rounded-2xl p-6 sm:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-amber-100 hover:border-amber-300">
                     <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     <Icon className="w-10 h-10 sm:w-12 sm:h-12 text-amber-600 mx-auto mb-3 relative z-10" />
-                    <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 relative z-10">
+                    <p className="text-4xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 relative z-10">
                       {stat.value}
                     </p>
                     <p className="text-sm sm:text-base text-gray-600 font-medium relative z-10">
@@ -339,7 +339,7 @@ const About: React.FC = () => {
                   <img
                     src="/Abu.png"
                     alt="Haji Muhammad Ashraf - Our Founder"
-                    className="w-full h-[400px] sm:h-[500px] object-contain rounded-2xl"
+                    className="w-full h-56 sm:h-[500px] object-contain rounded-2xl"
                   />
                   
                   {/* Decorative Badge */}
@@ -531,7 +531,7 @@ const About: React.FC = () => {
                   <img
                     src="/Papa.JPG"
                     alt="Muhammad Rafiq - Continuing the Legacy"
-                    className="w-full h-[400px] sm:h-[500px] object-contain rounded-2xl"
+                    className="w-full h-56 sm:h-[500px] object-contain rounded-2xl"
                   />
                   
                   {/* Decorative Badge */}
@@ -634,13 +634,13 @@ const About: React.FC = () => {
                 <span className="block text-amber-600">Our Beloved Customers</span>
               </h2>
 
-              <p className="text-lg sm:text-xl text-gray-700 leading-relaxed mb-8">
+              <p className="text-xl sm:text-xl text-gray-700 leading-relaxed mb-8">
                 Over <strong>50,000 families</strong> have trusted us to furnish their homes and create spaces filled with
                 warmth, comfort, and memories. From young couples furnishing their first home to grandparents passing down
                 our furniture to the next generation, we've been honored to be part of countless life stories.
               </p>
 
-              <p className="text-lg sm:text-xl text-gray-700 leading-relaxed mb-8">
+              <p className="text-xl sm:text-xl text-gray-700 leading-relaxed mb-8">
                 Every positive review, every smile, every family that returns to us after years – these are the true
                 measures of our success. Haji Muhammad Ashraf's dream was to build trust that lasts generations, and today, we're proud
                 to serve the children and grandchildren of our earliest customers.

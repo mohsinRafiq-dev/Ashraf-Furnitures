@@ -90,10 +90,10 @@ const About: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-center"
           >
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">
               About Furniture Mart
             </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto">
               Your one-stop destination for premium quality furniture and home
               decor solutions since 2008.
             </p>
