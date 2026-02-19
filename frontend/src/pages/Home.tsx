@@ -13,6 +13,8 @@ import {
   Check,
   Award,
   Truck,
+  Wrench,
+  ShieldCheck,
 } from "lucide-react";
 import { getCategories } from "../services/firebase/categoryService";
 import { getProducts } from "../services/firebase/productService";
@@ -199,25 +201,7 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {/* Free Shipping */}
-            <motion.div
-              whileHover={{ y: -5 }}
-              className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
-            >
-              <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
-                <Truck className="w-6 h-6 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                  Free Shipping
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600">
-                  On orders over $50
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Quality Guarantee */}
+            {/* Handcrafted Quality */}
             <motion.div
               whileHover={{ y: -5 }}
               className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
@@ -227,28 +211,46 @@ export default function Home() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                  Quality Guarantee
+                  Handcrafted Quality
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600">
-                  Premium materials guaranteed
+                  Built to last — premium craftsmanship
                 </p>
               </div>
             </motion.div>
 
-            {/* Easy Returns */}
+            {/* Made-to-Order */}
             <motion.div
               whileHover={{ y: -5 }}
               className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
             >
               <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
-                <Check className="w-6 h-6 text-amber-600" />
+                <Wrench className="w-6 h-6 text-amber-600" />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                  Easy Returns
+                  Made-to-Order
                 </h3>
                 <p className="text-xs sm:text-sm text-gray-600">
-                  30-day return policy
+                  Custom sizes & finishes available
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Warranty & Support */}
+            <motion.div
+              whileHover={{ y: -5 }}
+              className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
+            >
+              <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
+                <ShieldCheck className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                  Warranty & Support
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Limited warranty & aftercare
                 </p>
               </div>
             </motion.div>
