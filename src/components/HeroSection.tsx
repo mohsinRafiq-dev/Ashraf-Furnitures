@@ -223,6 +223,19 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           </div>
         </motion.div>
 
+        {/* Mobile background indicators (top) - visible only on small screens */}
+        <div className="flex sm:hidden justify-center gap-3 mt-3 mb-4 z-10">
+          {BACKGROUND_IMAGES.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => setCurrentImageIndex(index)}
+              aria-label={`Show background ${index + 1}`}
+              className={`transition-all rounded-full focus:outline-none focus:ring-2 focus:ring-amber-300 ${index === currentImageIndex ? 'bg-amber-500 w-10 h-2' : 'bg-white/40 w-3 h-3'}`}
+            />
+          ))}
+        </div>
+
         {/* Headline with Character Animation */}
         <motion.div variants={headlineVariants} className="mb-4 sm:mb-6">
           <h1 className="text-3xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-2 sm:mb-4 leading-tight">
@@ -380,18 +393,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           </Link>
         </motion.div>
 
-        {/* Mobile background indicators - placed under CTAs to avoid overlap with the top badge */}
-        <div className="flex sm:hidden justify-center gap-3 mt-4 mb-4 z-10">
-          {BACKGROUND_IMAGES.map((_, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => setCurrentImageIndex(index)}
-              aria-label={`Show background ${index + 1}`}
-              className={`transition-all rounded-full focus:outline-none focus:ring-2 focus:ring-amber-300 ${index === currentImageIndex ? 'bg-amber-500 w-10 h-2' : 'bg-white/40 w-3 h-3'}`}
-            />
-          ))}
-        </div>
+
 
         {/* Feature Badges with Icons */}
         <motion.div
