@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { X, Upload, AlertCircle, CheckCircle } from "lucide-react";
+import { X, Upload, AlertCircle, CheckCircle, ZoomIn, ZoomOut } from "lucide-react";
+import Cropper from "react-easy-crop";
 
 export interface Product {
   id: string;
@@ -49,6 +50,66 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [success, setSuccess] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Cropper state
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropImage, setCropImage] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+  const onCropComplete = (_: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const createImage = (url: string, pixelCrop: any): Promise<HTMLCanvasElement> => {
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.addEventListener("load", () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = pixelCrop.width;
+        canvas.height = pixelCrop.height;
+        const ctx = canvas.getContext("2d");
+
+        if (ctx) {
+          ctx.drawImage(
+            image,
+            pixelCrop.x,
+            pixelCrop.y,
+            pixelCrop.width,
+            pixelCrop.height,
+            0,
+            0,
+            pixelCrop.width,
+            pixelCrop.height
+          );
+        }
+
+        resolve(canvas);
+      });
+      image.src = url;
+    });
+  };
+
+  const getCroppedImage = async () => {
+    if (!cropImage || !croppedAreaPixels) return;
+
+    try {
+      const canvas = await createImage(cropImage, croppedAreaPixels);
+      const croppedBase64 = canvas.toDataURL("image/jpeg", 0.95);
+
+      setImagePreview(croppedBase64);
+      setFormData((prev) => ({ ...prev, image: croppedBase64 }));
+      setShowCropModal(false);
+      setCropImage(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setError("");
+    } catch (err) {
+      setError("Failed to crop image");
+      console.error(err);
+    }
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -67,11 +128,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
       const reader = new FileReader();
       reader.onload = (event) => {
         const imageData = event.target?.result as string;
-        setImagePreview(imageData);
-        setFormData((prev) => ({
-          ...prev,
-          image: imageData,
-        }));
+        // Open crop modal instead of directly setting preview
+        setCropImage(imageData);
+        setShowCropModal(true);
         setError("");
       };
       reader.readAsDataURL(file);
@@ -230,17 +289,122 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="col-span-2 md:col-span-1 bg-gray-800 rounded-lg p-4 flex items-center justify-center"
+                  className="col-span-2 md:col-span-1 bg-gray-800 rounded-lg p-4 flex flex-col items-center justify-center gap-3"
                 >
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="max-w-full max-h-48 rounded-lg object-cover"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full rounded-lg overflow-hidden"
+                  >
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full max-h-48 object-cover"
+                    />
+                  </button>
+
+                  <div className="flex gap-2 w-full">
+                    <button
+                      type="button"
+                      onClick={() => { setCropImage(imagePreview ?? null); setShowCropModal(true); }}
+                      className="px-3 py-2 bg-gray-700/50 text-gray-200 rounded-lg border border-gray-700 hover:bg-gray-700/70 transition-colors text-sm"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex-1 px-3 py-2 bg-gray-700/50 text-gray-200 rounded-lg border border-gray-700 hover:bg-gray-700/70 transition-colors text-sm"
+                    >
+                      Change Image
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setFormData((prev) => ({ ...prev, image: "" }));
+                      }}
+                      className="px-3 py-2 bg-red-600/10 text-red-400 rounded-lg border border-red-600/30 hover:bg-red-600/20 transition-colors text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </motion.div>
               )}
             </div>
           </div>
+
+          {/* Crop Modal */}
+          {showCropModal && cropImage && (
+            <div
+              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+              onClick={() => {
+                setShowCropModal(false);
+                setCropImage(null);
+              }}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gray-900 border border-gray-700/50 rounded-xl p-6 w-full max-w-2xl shadow-2xl"
+              >
+                <h3 className="text-2xl font-bold text-white mb-4">Crop Image</h3>
+
+                <div
+                  className="relative w-full bg-gray-800 rounded-lg overflow-hidden mb-4"
+                  style={{ height: "400px" }}
+                >
+                  {cropImage && (
+                    <Cropper
+                      image={cropImage}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={4 / 3}
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Zoom</label>
+                    <div className="flex items-center gap-3">
+                      <ZoomOut className="w-4 h-4 text-gray-400" />
+                      <input
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="0.1"
+                        value={zoom}
+                        onChange={(e) => setZoom(parseFloat(e.target.value))}
+                        className="flex-1"
+                      />
+                      <ZoomIn className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowCropModal(false);
+                        setCropImage(null);
+                      }}
+                      className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={getCroppedImage}
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg transition-colors font-medium"
+                    >
+                      Crop & Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Product Name */}
           <div className="space-y-2">

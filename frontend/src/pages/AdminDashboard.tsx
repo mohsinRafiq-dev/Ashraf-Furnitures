@@ -32,8 +32,11 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  ZoomOut,
+  ZoomIn,
   Home
 } from 'lucide-react';
+import Cropper from 'react-easy-crop';
 import { 
   getProducts, 
   createProduct, 
@@ -92,6 +95,31 @@ const AdminDashboard: React.FC = () => {
   const [productSku, setProductSku] = useState('');
   const [productImage, setProductImage] = useState('');
   const [productFeatured, setProductFeatured] = useState(false);
+
+  // Cropper state
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropTarget, setCropTarget] = useState<'product' | 'category' | null>(null);
+  const [cropImage, setCropImage] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const cropContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const [minZoom, setMinZoom] = useState(0.1);
+
+  const onMediaLoaded = (mediaSize: { width: number; height: number }) => {
+    // compute a zoom that fits the whole image inside the crop area so user sees image fully zoomed out
+    const container = cropContainerRef.current;
+    if (!container) return;
+    const { width: cw, height: ch } = container.getBoundingClientRect();
+    const fitZoom = Math.min(cw / mediaSize.width, ch / mediaSize.height);
+
+    // use fitZoom when smaller than 1 so the full image is visible; otherwise keep 1
+    const initialZoom = Math.min(1, fitZoom || 1);
+    setZoom(initialZoom);
+
+    // allow zooming out further than the initial fit; keep a reasonable lower bound
+    setMinZoom(0.05);
+  };
   
   // Analytics state
   const [productAnalytics, setProductAnalytics] = useState<Array<{
@@ -290,16 +318,79 @@ const AdminDashboard: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // warn on very large images but allow them (we downscale output)
+    if (file.size > 15 * 1024 * 1024) {
+      toast('Large image detected — it will be resized after cropping to avoid memory issues');
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64 = reader.result as string;
-      if (isProduct) {
-        setProductImage(base64);
-      } else {
-        setCategoryImage(base64);
-      }
+      // Open crop modal and set target (will be cropped before saving)
+      setCropImage(base64);
+      setCropTarget(isProduct ? 'product' : 'category');
+      setShowCropModal(true);
     };
     reader.readAsDataURL(file);
+  };
+
+  // Cropper helpers
+  const onCropComplete = (_: any, croppedArea: any) => {
+    setCroppedAreaPixels(croppedArea);
+  };
+
+  const createImage = (url: string, pixelCrop: any): Promise<HTMLCanvasElement> => {
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.addEventListener('load', () => {
+        // Limit the output size to avoid OOM for very large images
+        const MAX_OUTPUT = 2000; // max output width/height in px
+        const outW = pixelCrop.width;
+        const outH = pixelCrop.height;
+        const scale = Math.min(1, MAX_OUTPUT / Math.max(outW, outH));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(outW * scale);
+        canvas.height = Math.round(outH * scale);
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(
+            image,
+            pixelCrop.x,
+            pixelCrop.y,
+            pixelCrop.width,
+            pixelCrop.height,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+        }
+        resolve(canvas);
+      });
+      image.src = url;
+    });
+  };
+
+  const getCroppedImage = async () => {
+    if (!cropImage || !croppedAreaPixels || !cropTarget) return;
+    try {
+      const canvas = await createImage(cropImage, croppedAreaPixels);
+      const croppedBase64 = canvas.toDataURL('image/jpeg', 0.95);
+      if (cropTarget === 'product') setProductImage(croppedBase64);
+      else setCategoryImage(croppedBase64);
+
+      // Reset crop state
+      setShowCropModal(false);
+      setCropImage(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setCropTarget(null);
+      toast.success('Image cropped');
+    } catch (err) {
+      console.error('Crop error:', err);
+      toast.error('Failed to crop image');
+    }
   };
 
   const handleLogout = async () => {
@@ -2255,6 +2346,80 @@ const AdminDashboard: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Image Crop Modal */}
+      <AnimatePresence>
+        {showCropModal && cropImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+            onClick={() => { setShowCropModal(false); setCropImage(null); setCropTarget(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-gray-900 border border-gray-700/50 rounded-xl p-6 w-full max-w-2xl shadow-2xl"
+            >
+              <h3 className="text-2xl font-bold text-white mb-4">Crop Image</h3>
+
+              <div ref={cropContainerRef} className="relative w-full bg-gray-800 rounded-lg overflow-hidden mb-4" style={{ height: '400px' }}>
+                {cropImage && (
+                  <Cropper
+                    image={cropImage}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={4 / 3}
+                    onCropChange={setCrop}
+                    onCropComplete={onCropComplete}
+                    onZoomChange={setZoom}
+                    restrictPosition={false}
+                    onMediaLoaded={onMediaLoaded}
+                  />
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Zoom</label>
+                  <div className="flex items-center gap-3">
+                    <ZoomOut className="w-4 h-4 text-gray-400" />
+                    <input
+                      type="range"
+                      min={minZoom}
+                      max={4}
+                      step="0.05"
+                      value={zoom}
+                      onChange={(e) => setZoom(parseFloat(e.target.value))}
+                      className="flex-1"
+                    />
+                    <ZoomIn className="w-4 h-4 text-gray-400" />
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowCropModal(false); setCropImage(null); setCropTarget(null); }}
+                    className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={getCroppedImage}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-lg transition-colors font-medium"
+                  >
+                    Crop & Save
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
