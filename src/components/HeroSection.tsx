@@ -213,11 +213,11 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
         {/* Top Badge */}
         <motion.div
           variants={itemVariants}
-          className="inline-block mb-6 sm:mb-6 pt-1 sm:pt-0 z-20"
+          className="inline-block mb-4 sm:mb-6"
         >
           <div className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-amber-500/20 border border-amber-500/50 rounded-full backdrop-blur-sm">
             <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-            <span className="text-lg sm:text-xl font-semibold text-amber-400">
+            <span className="text-xs sm:text-sm font-semibold text-amber-400">
               Family-owned since 1982
             </span>
           </div>
@@ -225,7 +225,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
 
         {/* Headline with Character Animation */}
         <motion.div variants={headlineVariants} className="mb-4 sm:mb-6">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold text-white mb-2 sm:mb-4 leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold text-white mb-2 sm:mb-4 leading-tight">
             Find Your Perfect
             <motion.span
               className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-orange-400 pb-[10px]"
@@ -243,7 +243,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
           variants={itemVariants}
           className="mb-8 sm:mb-10 max-w-2xl mx-auto px-2 sm:px-0"
         >
-          <p className="text-lg sm:text-lg lg:text-xl xl:text-2xl text-gray-200 leading-relaxed font-light">
+          <p className="text-xs sm:text-base lg:text-lg xl:text-2xl text-gray-200 leading-relaxed font-light">
             Browse through our categories and discover pieces that match your
             style
           </p>
@@ -259,7 +259,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
             <motion.button
               whileHover="hover"
               whileTap={{ scale: 0.92 }}
-              className="group relative px-6 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-bold text-white overflow-hidden rounded-lg sm:rounded-xl transition-all duration-300 w-full sm:w-auto"
+              className="group relative px-6 sm:px-12 py-2.5 sm:py-4 text-sm sm:text-lg font-bold text-white overflow-hidden rounded-lg sm:rounded-xl transition-all duration-300 w-full sm:w-auto"
             >
               {/* Animated Background Gradient */}
               <motion.div
@@ -323,7 +323,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
             <motion.button
               whileHover="hover"
               whileTap={{ scale: 0.92 }}
-              className="group relative px-6 sm:px-12 py-5 sm:py-6 text-lg sm:text-xl font-bold text-amber-600 overflow-hidden rounded-lg sm:rounded-xl border-2 border-amber-400 transition-all duration-300 backdrop-blur-md w-full sm:w-auto hover:bg-amber-400/10"
+              className="group relative px-6 sm:px-12 py-2.5 sm:py-4 text-sm sm:text-lg font-bold text-amber-600 overflow-hidden rounded-lg sm:rounded-xl border-2 border-amber-400 transition-all duration-300 backdrop-blur-md w-full sm:w-auto hover:bg-amber-400/10"
             >
               {/* Animated Border Glow */}
               <motion.div
@@ -411,7 +411,7 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
             >
               <motion.div
                 variants={badgeVariants}
-                className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 backdrop-blur-md bg-white/10 hover:bg-white/15 border border-white/20 rounded-full transition-all text-lg sm:text-sm"
+                className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 backdrop-blur-md bg-white/10 hover:bg-white/15 border border-white/20 rounded-full transition-all text-xs sm:text-sm"
               >
                 <motion.div className="text-amber-400 group-hover:text-amber-300 w-4 sm:w-5 h-4 sm:h-5 flex items-center justify-center">
                   {feature.icon}
