@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==================== PRODUCTION SECURITY RULES ====================
+    // ✅ Secure rules with proper authentication and authorization
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isActive == true &&
+             get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isLocked == false;
+    }
+    
+    function isValidEmail() {
+      return isSignedIn() && request.auth.token.email == 'hajiashraffurnitures@gmail.com';
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // ==================== Products Collection ====================
+    match /products/{productId} {
+      // Public read access
+      allow read: if true;
+      
+      // Only authenticated admin with correct email can write
+      allow create, update, delete: if isAdmin() && isValidEmail();
+    }
+    
+    // ==================== Categories Collection ====================
+    match /categories/{categoryId} {
+      // Public read access
+      allow read: if true;
+      
+      // Only authenticated admin with correct email can write
+      allow create, update, delete: if isAdmin() && isValidEmail();
+    }
+    
+    // ==================== Admins Collection ====================
+    match /admins/{userId} {
+      // Admins can only read their own data
+      allow read: if isOwner(userId) && isValidEmail();
+      
+      // Only the specific admin email can write (with restrictions)
+      allow update: if isOwner(userId) && isValidEmail() &&
+                      // Prevent changing critical fields
+                      request.resource.data.email == resource.data.email &&
+                      request.resource.data.role == resource.data.role;
+      
+      // No create or delete - admins must be created through Firebase console
+      allow create, delete: if false;
+    }
+    
+    // ==================== Analytics Collections ====================
+    match /sessions/{sessionId} {
+      // Anyone can create sessions (for analytics tracking)
+      allow create: if true;
+      
+      // Only admins can read sessions
+      allow read: if isAdmin() && isValidEmail();
+      
+      // Sessions can update themselves
+      allow update: if resource.data.sessionId == request.resource.data.sessionId;
+      
+      // No delete
+      allow delete: if false;
+    }
+    
+    match /productViews/{viewId} {
+      // Anyone can create product views (for analytics tracking)
+      allow create: if true;
+      
+      // Only admins can read
+      allow read: if isAdmin() && isValidEmail();
+      
+      // No update or delete
+      allow update, delete: if false;
+    }
+    
+    match /trafficSources/{sourceId} {
+      // Anyone can create (for analytics)
+      allow create: if true;
+      
+      // Only admins can read
+      allow read: if isAdmin() && isValidEmail();
+      
+      // No update or delete
+      allow update, delete: if false;
+    }
+    
+    // ==================== Audit Logs ====================
+    match /auditLogs/{logId} {
+      // Anyone can create audit logs (system logging)
+      allow create: if true;
+      
+      // Only admins can read audit logs
+      allow read: if isAdmin() && isValidEmail();
+      
+      // No update or delete - audit logs are immutable
+      allow update, delete: if false;
+    }
+    
+    // ==================== Default Deny ====================
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
