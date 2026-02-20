@@ -258,7 +258,7 @@ export default function Products() {
                   >
                     <div className="h-full bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col group hover:-translate-y-2">
                       {/* Image Container */}
-                      <div className="relative w-full h-40 sm:h-48 lg:h-56 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100">
+                      <div className="relative w-full h-64 sm:h-80 lg:h-96 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100">
                         {/* Wishlist Button - Outside overlay so it stays visible */}
                         {product.id && (
                           <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-40 pointer-events-auto">
