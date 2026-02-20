@@ -106,7 +106,7 @@ const ProductCard = ({
     >
       {/* Image Container */}
       <motion.div
-        className="relative w-full h-64 bg-gray-200 overflow-hidden"
+        className="relative w-full h-80 sm:h-96 bg-gray-200 overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
