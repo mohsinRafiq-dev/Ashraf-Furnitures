@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useReducedMotion } from "../hooks/useReducedMotion";
 
 interface Category {
   id: string;
@@ -290,6 +291,7 @@ const CategoryList = ({
   animationsReady = true,
 }: CategoryListProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion(); // Disable animations on mobile
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
