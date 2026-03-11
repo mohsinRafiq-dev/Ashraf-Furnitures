@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { getCategories } from "../services/firebase/categoryService";
 import { OptimizedImage } from "../components/OptimizedImage";
+import SEO from "../components/SEO";
 import { Loader, Sparkles } from "lucide-react";
 
 export default function Categories() {
@@ -54,6 +55,21 @@ export default function Categories() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* SEO Meta Tags */}
+      <SEO
+        title="Furniture Categories - Browse by Style & Room"
+        description="Explore our furniture categories - Living Room, Bedroom, Dining, Office, Kitchen, and more. Find the perfect furniture organized by room and style for easy shopping."
+        keywords={[
+          'furniture categories',
+          'living room furniture',
+          'bedroom furniture',
+          'dining furniture',
+          'office furniture',
+          'furniture by room',
+          'furniture styles',
+        ]}
+      />
+
       {/* Main Content */}
       <motion.section
         initial={{ opacity: 0 }}

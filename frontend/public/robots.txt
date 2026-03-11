@@ -1,0 +1,31 @@
+# Robots.txt for Ashraf Furnitures
+# https://www.robotstxt.org/robotstxt.html
+
+# Allow all search engines to crawl the site
+User-agent: *
+Allow: /
+
+# Disallow admin and internal pages
+Disallow: /admin/
+Disallow: /login
+Disallow: /debug-auth
+Disallow: /seed-data
+
+# Disallow query parameters that don't change content
+Disallow: /*?*utm_source=
+Disallow: /*?*utm_medium=
+Disallow: /*?*utm_campaign=
+Disallow: /*?*fbclid=
+Disallow: /*?*gclid=
+
+# Allow product and category pages
+Allow: /product/*
+Allow: /products*
+Allow: /categories/*
+Allow: /category/*
+
+# Crawl delay (optional, adjust as needed)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://yourdomain.com/sitemap.xml

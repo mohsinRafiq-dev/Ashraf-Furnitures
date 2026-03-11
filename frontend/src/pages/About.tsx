@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import SEO from "../components/SEO";
+import { StructuredData, generateOrganizationSchema, generateFAQSchema } from "../utils/structuredData";
 import {
   Heart,
   Award,
@@ -124,6 +126,24 @@ const About: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 overflow-x-hidden">
+      {/* SEO Meta Tags */}
+      <SEO
+        title="About Us - Our Story & Mission"
+        description="Learn about Ashraf Furnitures - 42+ years of excellence in premium furniture craftsmanship. Discover our commitment to quality, our values, and why 50,000+ customers trust us for their furniture needs."
+        keywords={[
+          'about ashraf furnitures',
+          'furniture company',
+          'quality craftsmanship',
+          'trusted furniture store',
+          'our story',
+          'company history',
+        ]}
+        type="article"
+      />
+      
+      {/* Structured Data */}
+      <StructuredData data={generateOrganizationSchema()} />
+
       {/* Hero Section */}
       <motion.section
         initial={{ opacity: 0 }}

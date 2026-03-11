@@ -6,6 +6,9 @@ import { trackProductView } from "../services/firebase/analyticsService";
 import { formatPrice } from "../utils/formatPrice";
 import { sendProductInquiry } from "../utils/whatsapp";
 import { WhatsAppIcon } from "../components/WhatsAppIcon";
+import SEO from "../components/SEO";
+import Breadcrumbs from "../components/Breadcrumbs";
+import { StructuredData, generateProductSchema } from "../utils/structuredData";
 import {
   ArrowLeft,
   ShoppingCart,
@@ -138,6 +141,40 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-amber-50/30 to-white overflow-auto">
+      {/* SEO Meta Tags */}
+      {product && (
+        <>
+          <SEO
+            title={product.name}
+            description={product.description}
+            keywords={[product.name, product.category, 'furniture', 'buy online']}
+            image={product.images?.[0]?.url}
+            type="product"
+            price={product.price}
+            currency="PKR"
+            availability={product.stock > 0 ? 'in stock' : 'out of stock'}
+          />
+          
+          {/* Structured Data for Product */}
+          <StructuredData
+            data={generateProductSchema({
+              id: product.id,
+              name: product.name,
+              description: product.description,
+              image: product.images?.[0]?.url || '',
+              price: product.price,
+              currency: 'PKR',
+              availability: product.stock > 0 ? 'InStock' : 'OutOfStock',
+              brand: 'Ashraf Furnitures',
+              category: product.category,
+              rating: product.rating,
+              reviewCount: product.reviews,
+              sku: product.sku,
+            })}
+          />
+        </>
+      )}
+
       {/* Header with Back Button */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
