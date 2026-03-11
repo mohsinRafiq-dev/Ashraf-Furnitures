@@ -9,6 +9,7 @@ import {
   Award,
   Wrench,
 } from "lucide-react";
+import { useReducedMotion } from "../hooks/useReducedMotion";
 
 interface HeroSectionProps {
   animationsReady?: boolean;
@@ -21,6 +22,15 @@ const BACKGROUND_IMAGES = [
   "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&h=600&fit=crop",
   "https://images.unsplash.com/photo-1550355291-bbee04a92027?w=1200&h=600&fit=crop",
 ];
+
+// Static variants for mobile (no animation)
+const staticVariants = {
+  hidden: { opacity: 1, y: 0, scale: 1 },
+  visible: { opacity: 1, y: 0, scale: 1 },
+  enter: { opacity: 1, scale: 1 },
+  center: { opacity: 1, scale: 1 },
+  exit: { opacity: 1, scale: 1 },
+};
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -103,35 +113,30 @@ const badgeVariants = {
 
 const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const shouldReduceMotion = useReducedMotion(); // Disable animations on mobile
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handleMotionPreference = (e: MediaQueryListEvent) =>
-      setPrefersReducedMotion(e.matches);
-
     window.addEventListener("resize", handleResize);
-    mediaQuery.addEventListener("change", handleMotionPreference);
-
     return () => {
       window.removeEventListener("resize", handleResize);
-      mediaQuery.removeEventListener("change", handleMotionPreference);
     };
   }, []);
 
+  // Disable auto-rotation on mobile to save performance
   useEffect(() => {
+    if (shouldReduceMotion) return; // No auto-rotation on mobile
+    
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [shouldReduceMotion]);
 
-  const particleCount = isMobile ? 8 : 15;
+  // Fewer particles on mobile for performance
+  const particleCount = shouldReduceMotion ? 0 : (isMobile ? 8 : 15);
 
   const features = [
     { icon: <Award className="w-5 h-5" />, label: "Handcrafted Quality" },
@@ -141,11 +146,11 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
 
   return (
     <div className="relative w-full h-screen min-h-screen flex items-center justify-center overflow-hidden bg-gray-900">
-      {/* Animated Background Images - Always animate, independent of content */}
+      {/* Animated Background Images - Disabled on mobile for performance */}
       <AnimatePresence mode="wait" key="bg-carousel">
         <motion.div
           key={`bg-${currentImageIndex}`}
-          variants={backgroundVariants}
+          variants={shouldReduceMotion ? staticVariants : backgroundVariants}
           initial="enter"
           animate="center"
           exit="exit"
@@ -163,8 +168,8 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent" />
 
-      {/* Animated Particles/Sparkles - Hidden on Mobile & Respects Motion Preference */}
-      {!prefersReducedMotion &&
+      {/* Animated Particles/Sparkles - Disabled on Mobile for Performance */}
+      {!shouldReduceMotion &&
         !isMobile &&
         [...Array(particleCount)].map((_, i) => (
           <motion.div
@@ -205,14 +210,14 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
 
       {/* Content */}
       <motion.div
-        variants={containerVariants}
+        variants={shouldReduceMotion ? staticVariants : containerVariants}
         initial="hidden"
         animate={animationsReady ? "visible" : "hidden"}
         className="relative z-20 text-center px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto"
       >
         {/* Top Badge */}
         <motion.div
-          variants={itemVariants}
+          variants={shouldReduceMotion ?staticVariants : itemVariants}
           className="inline-block mb-4 sm:mb-6"
         >
           <div className="flex items-center gap-2 px-4 sm:px-5 py-2 bg-amber-500/20 border border-amber-500/50 rounded-full backdrop-blur-sm">

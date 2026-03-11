@@ -19,7 +19,9 @@ import {
 import { getCategories } from "../services/firebase/categoryService";
 import { getProducts } from "../services/firebase/productService";
 import { useSplash } from "../context/SplashContext";
+import { useReducedMotion } from "../hooks/useReducedMotion";
 
+// Animation variants - disabled on mobile for performance
 const sectionHeaderVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: {
@@ -27,6 +29,12 @@ const sectionHeaderVariants = {
     y: 0,
     transition: { duration: 0.8, ease: "easeOut" },
   },
+};
+
+// Static variant for mobile (no animation)
+const staticVariants = {
+  hidden: { opacity: 1, y: 0 },
+  visible: { opacity: 1, y: 0 },
 };
 
 const containerVariants = {
@@ -87,6 +95,7 @@ const testimonials = [
 export default function Home() {
   const navigate = useNavigate();
   const { splashComplete } = useSplash();
+  const shouldReduceMotion = useReducedMotion(); // Detect mobile for performance
   const [categories, setCategories] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -219,9 +228,9 @@ export default function Home() {
 
       {/* Trust Section - Why Choose Us */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+        whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8 }}
         viewport={{ once: true }}
         className="relative py-8 sm:py-12 lg:py-16 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
       >
@@ -229,7 +238,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Handcrafted Quality */}
             <motion.div
-              whileHover={{ y: -5 }}
+              whileHover={shouldReduceMotion ? {} : { y: -5 }}
               className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
             >
               <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
@@ -247,7 +256,7 @@ export default function Home() {
 
             {/* Made-to-Order */}
             <motion.div
-              whileHover={{ y: -5 }}
+              whileHover={shouldReduceMotion ? {} : { y: -5 }}
               className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
             >
               <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
@@ -265,7 +274,7 @@ export default function Home() {
 
             {/* Warranty & Support */}
             <motion.div
-              whileHover={{ y: -5 }}
+              whileHover={shouldReduceMotion ? {} : { y: -5 }}
               className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
             >
               <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
@@ -286,31 +295,38 @@ export default function Home() {
 
       {/* Featured Products Section */}
       <motion.section
-        variants={containerVariants}
+        variants={shouldReduceMotion ? staticVariants : containerVariants}
         initial="hidden"
         animate={splashComplete ? "visible" : "hidden"}
         className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
       >
-        {/* Background Orbs */}
-        <motion.div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/20 rounded-full blur-3xl hidden sm:block"
-          animate={{ y: [0, 50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
+        {/* Background Orbs - Hidden on mobile */}
+        {!shouldReduceMotion && (
+          <motion.div
+            className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/20 rounded-full blur-3xl hidden sm:block"
+            animate={{ y: [0, 50, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          />
+        )}
 
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Header with Premium Badge */}
           <motion.div
-            variants={sectionHeaderVariants}
+            variants={shouldReduceMotion ? staticVariants : sectionHeaderVariants}
             className="mb-8 sm:mb-12 lg:mb-16"
           >
             <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              >
+              {!shouldReduceMotion && (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                >
+                  <Sparkles className="w-4 sm:w-5 h-4 sm:h-5 text-amber-500" />
+                </motion.div>
+              )}
+              {shouldReduceMotion && (
                 <Sparkles className="w-4 sm:w-5 h-4 sm:h-5 text-amber-500" />
-              </motion.div>
+              )}
               <span className="text-xs sm:text-sm font-semibold text-amber-600 uppercase tracking-widest">
                 Curated Selection
               </span>
@@ -326,11 +342,11 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Accent Line */}
+            {/* Accent Line - No animation on mobile */}
             <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              initial={shouldReduceMotion ? { scaleX: 1 } : { scaleX: 0 }}
+              whileInView={shouldReduceMotion ? { scaleX: 1 } : { scaleX: 1 }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 0.2 }}
               className="h-1 w-16 sm:w-20 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full mt-4 sm:mt-6 origin-left"
             />
           </motion.div>
@@ -405,32 +421,39 @@ export default function Home() {
 
       {/* Testimonials Section */}
       <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+        whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1 }}
+        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8 }}
         viewport={{ once: true }}
         className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
       >
-        {/* Background Orbs */}
-        <motion.div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/20 rounded-full blur-3xl hidden sm:block"
-          animate={{ y: [0, 50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
+        {/* Background Orbs - Hidden on mobile */}
+        {!shouldReduceMotion && (
+          <motion.div
+            className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/20 rounded-full blur-3xl hidden sm:block"
+            animate={{ y: [0, 50, 0] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          />
+        )}
 
         <div className="max-w-6xl mx-auto relative z-10">
           {/* Header */}
           <motion.div
-            variants={sectionHeaderVariants}
+            variants={shouldReduceMotion ? staticVariants : sectionHeaderVariants}
             className="text-center mb-12 sm:mb-16 lg:mb-20"
           >
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              >
+              {!shouldReduceMotion && (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                >
+                  <Star className="w-5 sm:w-6 h-5 sm:h-6 text-amber-500" />
+                </motion.div>
+              )}
+              {shouldReduceMotion && (
                 <Star className="w-5 sm:w-6 h-5 sm:h-6 text-amber-500" />
-              </motion.div>
+              )}
               <span className="text-xs sm:text-sm font-semibold text-amber-600 uppercase tracking-widest">
                 Customer Love
               </span>
@@ -450,29 +473,32 @@ export default function Home() {
             {/* Main Testimonial Card */}
             <motion.div
               key={currentTestimonial}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
+              initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              animate={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.5 }}
               className="bg-gradient-to-br from-white to-amber-50/50 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xl border border-amber-200/30 backdrop-blur-sm"
             >
               {/* Star Rating */}
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(testimonials[currentTestimonial].rating)].map(
-                  (_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{
-                        delay: i * 0.1,
-                        type: "spring",
-                        stiffness: 100,
-                      }}
-                    >
-                      <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-                    </motion.div>
-                  )
+                  (_, i) =>
+                    shouldReduceMotion ? (
+                      <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
+                    ) : (
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{
+                          delay: i * 0.1,
+                          type: "spring",
+                          stiffness: 100,
+                        }}
+                      >
+                        <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                      </motion.div>
+                    )
                 )}
               </div>
 
