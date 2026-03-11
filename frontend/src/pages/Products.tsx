@@ -8,9 +8,9 @@ import { OptimizedImage } from "../components/OptimizedImage";
 import { formatPrice } from "../utils/formatPrice";
 import { sendProductInquiry } from "../utils/whatsapp";
 import { WhatsAppIcon } from "../components/WhatsAppIcon";
-import SEO from "../components/SEO";
-import Breadcrumbs from "../components/Breadcrumbs";
-import { StructuredData, generateItemListSchema } from "../utils/structuredData";
+// import SEO from "../components/SEO";
+// import Breadcrumbs from "../components/Breadcrumbs";
+// import { StructuredData, generateItemListSchema } from "../utils/structuredData";
 import {
   Star,
   X,
@@ -79,8 +79,8 @@ export default function Products() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-100/60 via-white to-orange-100/60 overflow-hidden">
-      {/* SEO Meta Tags */}
-      <SEO
+      {/* SEO Meta Tags - Temporarily disabled */}
+      {/* <SEO
         title="All Products - Browse Our Furniture Collection"
         description="Browse our complete collection of premium furniture. Find the perfect pieces for your home or office - sofas, tables, chairs, bedroom sets, and more. Quality craftsmanship at competitive prices."
         keywords={[
@@ -93,7 +93,6 @@ export default function Products() {
         ]}
       />
       
-      {/* Structured Data for Product Listing */}
       {products.length > 0 && (
         <StructuredData
           data={generateItemListSchema(
@@ -114,7 +113,7 @@ export default function Products() {
             'All Furniture Products'
           )}
         />
-      )}
+      )} */}
 
       {/* Main Content */}
       <motion.section

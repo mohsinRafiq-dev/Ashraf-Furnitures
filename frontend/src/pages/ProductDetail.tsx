@@ -6,9 +6,9 @@ import { trackProductView } from "../services/firebase/analyticsService";
 import { formatPrice } from "../utils/formatPrice";
 import { sendProductInquiry } from "../utils/whatsapp";
 import { WhatsAppIcon } from "../components/WhatsAppIcon";
-import SEO from "../components/SEO";
-import Breadcrumbs from "../components/Breadcrumbs";
-import { StructuredData, generateProductSchema } from "../utils/structuredData";
+// import SEO from "../components/SEO";
+// import Breadcrumbs from "../components/Breadcrumbs";
+// import { StructuredData, generateProductSchema } from "../utils/structuredData";
 import {
   ArrowLeft,
   ShoppingCart,
@@ -141,8 +141,8 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-amber-50/30 to-white overflow-auto">
-      {/* SEO Meta Tags */}
-      {product && (
+      {/* SEO Meta Tags - Temporarily disabled */}
+      {/* {product && (
         <>
           <SEO
             title={product.name}
@@ -155,7 +155,6 @@ export default function ProductDetail() {
             availability={product.stock > 0 ? 'in stock' : 'out of stock'}
           />
           
-          {/* Structured Data for Product */}
           <StructuredData
             data={generateProductSchema({
               id: product.id,
@@ -173,7 +172,7 @@ export default function ProductDetail() {
             })}
           />
         </>
-      )}
+      )} */}
 
       {/* Header with Back Button */}
       <motion.div

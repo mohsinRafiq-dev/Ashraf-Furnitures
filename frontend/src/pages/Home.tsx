@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import HeroSection from "../components/HeroSection";
 import CategoryList from "../components/CategoryList";
 import ProductGrid from "../components/ProductGrid";
-import SEO from "../components/SEO";
-import { StructuredData, generateOrganizationSchema, generateWebsiteSchema } from "../utils/structuredData";
+// import SEO from "../components/SEO";
+// import { StructuredData, generateOrganizationSchema, generateWebsiteSchema } from "../utils/structuredData";
 import {
   ArrowRight,
   Sparkles,
@@ -182,23 +182,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 overflow-hidden">
-      {/* SEO Meta Tags */}
-      <SEO
-        title="Premium Furniture Collection"
-        description="Explore our curated furniture selection for quality and style. Transform your space with premium sofas, dining tables, bedroom sets, office furniture, and more from Ashraf Furnitures."
-        keywords={[
-          'premium furniture',
-          'home furniture',
-          'modern furniture',
-          'office furniture',
-          'bedroom furniture',
-          'living room furniture',
-          'dining furniture',
-          'quality craftsmanship',
-        ]}
-        type="website"
-      />
-
       {/* Hero Section */}
       <HeroSection animationsReady={splashComplete} />
 
