@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import HeroSection from "../components/HeroSection";
 import CategoryList from "../components/CategoryList";
@@ -94,6 +94,7 @@ export default function Home() {
   useEffect(() => {
     fetchCategories();
     fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-rotate testimonials
@@ -104,7 +105,7 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setLoadingCategories(true);
     try {
       const response = await getCategories();
@@ -133,9 +134,9 @@ export default function Home() {
     } finally {
       setLoadingCategories(false);
     }
-  };
+  }, []);
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoadingProducts(true);
     try {
       const response = await getProducts({ limit: 8 });
@@ -175,7 +176,7 @@ export default function Home() {
     } finally {
       setLoadingProducts(false);
     }
-  };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 overflow-hidden">

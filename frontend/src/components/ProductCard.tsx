@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "./ui/Button";
 import { useCartStore } from "../store";
 import { WishlistButton } from "./WishlistButton";
+import { OptimizedImage } from "./OptimizedImage";
 import { Eye, ShoppingCart } from "lucide-react";
 import { formatPrice } from "../utils/formatPrice";
 import { sendProductInquiry } from "../utils/whatsapp";
@@ -111,18 +112,12 @@ const ProductCard = ({
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Main Image */}
-        <img
+        <OptimizedImage
           src={image}
           alt={name}
           className={`w-full h-full object-cover transition-transform duration-500 ${
             isHovered ? "scale-110" : "scale-100"
           }`}
-          loading="lazy"
-          decoding="async"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=400&fit=crop";
-          }}
         />
 
         {/* Discount Badge */}
@@ -286,4 +281,5 @@ const ProductCard = ({
   );
 };
 
-export default ProductCard;
+// Memoize to prevent unnecessary re-renders
+export default memo(ProductCard);

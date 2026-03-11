@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, memo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import CartDrawer from "../components/CartDrawer";
@@ -31,27 +31,31 @@ export default function MainLayout({ children }: LayoutProps) {
   const { getTotalItems } = useCartStore();
   const cartItemCount = getTotalItems();
 
+  const handleCartOpen = useCallback(() => setCartDrawerOpen(true), []);
+  const handleCartClose = useCallback(() => setCartDrawerOpen(false), []);
+  const handleMobileMenuToggle = useCallback((open: boolean) => setMobileMenuOpen(open), []);
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
       {/* Header */}
-      <Header
+      <MemoizedHeader
         mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        onCartClick={() => setCartDrawerOpen(true)}
+        setMobileMenuOpen={handleMobileMenuToggle}
+        onCartClick={handleCartOpen}
         cartItems={cartItemCount}
       />
 
       {/* Cart Drawer */}
       <CartDrawer
         isOpen={cartDrawerOpen}
-        onClose={() => setCartDrawerOpen(false)}
+        onClose={handleCartClose}
       />
 
       {/* Main Content */}
       <main className="flex-grow">{children}</main>
 
       {/* Footer */}
-      <Footer />
+      <MemoizedFooter />
     </div>
   );
 }
@@ -368,6 +372,8 @@ function Header({
     </header>
   );
 }
+
+const MemoizedHeader = memo(Header);
 
 function Footer() {
   const currentYear = new Date().getFullYear();
@@ -720,6 +726,8 @@ function Footer() {
   );
 }
 
+const MemoizedFooter = memo(Footer);
+
 function WishlistBadge() {
   const { getWishlistCount } = useWishlistStore();
   const count = getWishlistCount();
@@ -738,3 +746,4 @@ function WishlistBadge() {
     </>
   );
 }
+const MemoizedWishlistBadge = memo(WishlistBadge);

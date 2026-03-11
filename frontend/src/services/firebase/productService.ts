@@ -26,6 +26,7 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import { cache, CacheTTL, generateCacheKey } from '../../utils/cache';
 
 // ==================== Types ====================
 
@@ -134,8 +135,18 @@ const docToProduct = (docSnap: DocumentSnapshot): Product | null => {
 
 /**
  * Get all products with filters, sorting, and pagination
+ * Uses caching to improve performance
  */
 export const getProducts = async (filters: ProductFilters = {}): Promise<ProductsResponse> => {
+  // Generate cache key from filters
+  const cacheKey = generateCacheKey('products', filters);
+  
+  // Try to get from cache first
+  const cachedData = cache.get<ProductsResponse>(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
   const {
     search,
     category,
@@ -231,7 +242,7 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<Product
   const endIndex = startIndex + pageSize;
   const paginatedProducts = products.slice(startIndex, endIndex);
 
-  return {
+  const response = {
     products: paginatedProducts,
     pagination: {
       currentPage: page,
@@ -242,26 +253,65 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<Product
       hasPrevPage: page > 1
     }
   };
+
+  // Cache the response for 5 minutes
+  cache.set(cacheKey, response, CacheTTL.MEDIUM);
+
+  return response;
 };
 
 /**
  * Get a single product by ID
+ * Uses caching to improve performance
  */
 export const getProductById = async (productId: string): Promise<Product | null> => {
+  const cacheKey = `product:${productId}`;
+  
+  // Try cache first
+  const cachedProduct = cache.get<Product | null>(cacheKey);
+  if (cachedProduct !== undefined) {
+    return cachedProduct;
+  }
+
   const productDoc = doc(db, 'products', productId);
   const productSnap = await getDoc(productDoc);
-  return docToProduct(productSnap);
+  const product = docToProduct(productSnap);
+
+  // Cache for 10 minutes
+  cache.set(cacheKey, product, CacheTTL.LONG);
+
+  return product;
 };
 
 /**
  * Get a single product by slug
+ * Uses caching to improve performance
  */
 export const getProductBySlug = async (slug: string): Promise<Product | null> => {
+  const cacheKey = `product:slug:${slug}`;
+  
+  // Try cache first
+  const cachedProduct = cache.get<Product | null>(cacheKey);
+  if (cachedProduct !== undefined) {
+    return cachedProduct;
+  }
+
   const productsRef = collection(db, 'products');
   const q = query(productsRef, where('slug', '==', slug.toLowerCase()), limit(1));
   const querySnapshot = await getDocs(q);
   
-  if (querySnapshot.empty) return null;
+  if (querySnapshot.empty) {
+    cache.set(cacheKey, null, CacheTTL.LONG);
+    return null;
+  }
+
+  const product = docToProduct(querySnapshot.docs[0]);
+
+  // Cache for 10 minutes
+  cache.set(cacheKey, product, CacheTTL.LONG);
+
+  return product;
+};
   return docToProduct(querySnapshot.docs[0]);
 };
 

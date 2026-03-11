@@ -24,6 +24,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { generateSlug } from './productService';
+import { cache, CacheTTL, generateCacheKey } from '../../utils/cache';
 
 // ==================== Types ====================
 
@@ -84,8 +85,18 @@ const docToCategory = (docSnap: DocumentSnapshot): Category | null => {
 
 /**
  * Get all categories with filters and sorting
+ * Uses caching to improve performance
  */
 export const getCategories = async (filters: CategoryFilters = {}): Promise<CategoriesResponse> => {
+  // Generate cache key
+  const cacheKey = generateCacheKey('categories', filters);
+  
+  // Try cache first
+  const cachedData = cache.get<CategoriesResponse>(cacheKey);
+  if (cachedData) {
+    return cachedData;
+  }
+
   const {
     search,
     sort = 'newest',
@@ -142,7 +153,7 @@ export const getCategories = async (filters: CategoryFilters = {}): Promise<Cate
   const endIndex = startIndex + pageSize;
   const paginatedCategories = categories.slice(startIndex, endIndex);
 
-  return {
+  const response = {
     categories: paginatedCategories,
     pagination: {
       currentPage: page,
@@ -153,23 +164,43 @@ export const getCategories = async (filters: CategoryFilters = {}): Promise<Cate
       hasPrevPage: page > 1
     }
   };
+
+  // Cache for 5 minutes
+  cache.set(cacheKey, response, CacheTTL.MEDIUM);
+
+  return response;
 };
 
 /**
  * Get a single category by ID
+ * Uses caching to improve performance
  */
 export const getCategoryById = async (categoryId: string): Promise<Category | null> => {
+  const cacheKey = `category:${categoryId}`;
+  
+  // Try cache first
+  const cachedCategory = cache.get<Category | null>(cacheKey);
+  if (cachedCategory !== undefined) {
+    return cachedCategory;
+  }
+
   const categoryDoc = doc(db, 'categories', categoryId);
   const categorySnap = await getDoc(categoryDoc);
   const category = docToCategory(categorySnap);
   
-  if (!category) return null;
+  if (!category) {
+    cache.set(cacheKey, null, CacheTTL.LONG);
+    return null;
+  }
 
   // Update product count
   const productsRef = collection(db, 'products');
   const productQuery = query(productsRef, where('category', '==', category.name));
   const productSnapshot = await getDocs(productQuery);
   category.productCount = productSnapshot.size;
+
+  // Cache for 10 minutes
+  cache.set(cacheKey, category, CacheTTL.LONG);
 
   return category;
 };
