@@ -312,8 +312,6 @@ export const getProductBySlug = async (slug: string): Promise<Product | null> =>
 
   return product;
 };
-  return docToProduct(querySnapshot.docs[0]);
-};
 
 /**
  * Create a new product

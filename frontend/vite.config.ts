@@ -7,13 +7,6 @@ export default defineConfig({
     react({
       // Enable automatic JSX runtime
       jsxRuntime: 'automatic',
-      // Optimize babel transform
-      babel: {
-        plugins: [
-          // Remove prop-types in production
-          ['babel-plugin-transform-remove-imports', { test: 'prop-types' }],
-        ],
-      },
     }),
   ],
   server: {
