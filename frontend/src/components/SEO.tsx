@@ -7,9 +7,6 @@ interface SEOProps {
   keywords?: string[];
   image?: string;
   type?: 'website' | 'article' | 'product';
-  author?: string;
-  publishedTime?: string;
-  modifiedTime?: string;
   price?: number;
   currency?: string;
   availability?: 'in stock' | 'out of stock';
@@ -18,8 +15,8 @@ interface SEOProps {
 }
 
 /**
- * SEO Component - Dynamic meta tags for better SEO
- * Handles: Meta tags, Open Graph, Twitter Cards, Canonical URLs
+ * SEO Component - Optimized for performance and search engines
+ * Handles: Title, Meta descriptions, Open Graph, Twitter Cards, Product markup
  */
 export default function SEO({
   title,
@@ -27,9 +24,6 @@ export default function SEO({
   keywords = [],
   image,
   type = 'website',
-  author = 'Ashraf Furnitures',
-  publishedTime,
-  modifiedTime,
   price,
   currency = 'PKR',
   availability,
@@ -38,130 +32,90 @@ export default function SEO({
 }: SEOProps) {
   const location = useLocation();
   
-  // Default values
+  // Site defaults (optimized for SEO)
   const siteTitle = 'Ashraf Furnitures - Premium Furniture Collection';
   const defaultDescription = 'Explore our curated furniture selection for quality and style. Transform your space with premium furniture from Ashraf Furnitures - sofas, dining tables, bedroom sets, and more.';
-  const defaultKeywords = [
-    'furniture',
-    'home furniture',
-    'office furniture',
-    'premium furniture',
-    'sofas',
-    'dining tables',
-    'bedroom furniture',
-    'living room furniture',
-    'quality furniture',
-    'modern furniture',
-    'ashraf furnitures',
-  ];
-  const siteUrl = window.location.origin;
-  const currentUrl = `${siteUrl}${location.pathname}`;
-  const defaultImage = `${siteUrl}/Mini.png`;
-
-  // Combine values
+  const defaultKeywords = ['furniture', 'home furniture', 'office furniture', 'premium furniture', 'ashraf furnitures'];
+  
+  // Build final values
   const finalTitle = title ? `${title} | Ashraf Furnitures` : siteTitle;
   const finalDescription = description || defaultDescription;
-  const finalKeywords = [...new Set([...keywords, ...defaultKeywords])]; // Remove duplicates
-  const finalImage = image || defaultImage;
+  const finalKeywords = [...new Set([...keywords, ...defaultKeywords])];
+  const siteUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const currentUrl = `${siteUrl}${location.pathname}`;
+  const finalImage = image || `${siteUrl}/Mini.png`;
   const finalCanonical = canonical || currentUrl;
 
   useEffect(() => {
-    // Update document title
-    document.title = finalTitle;
+    // Safely update document title
+    if (typeof document !== 'undefined') {
+      document.title = finalTitle;
+    }
 
-    // Helper function to set meta tag
-    const setMeta = (name: string, content: string, property?: boolean) => {
-      const attr = property ? 'property' : 'name';
-      let element = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement;
+    // Helper to update or create meta tags
+    const updateMetaTag = (selector: string, content: string, isProperty = false) => {
+      if (typeof document === 'undefined') return;
+      
+      const attribute = isProperty ? 'property' : 'name';
+      let element = document.querySelector(`meta[${attribute}="${selector}"]`) as HTMLMetaElement;
       
       if (!element) {
         element = document.createElement('meta');
-        element.setAttribute(attr, name);
+        element.setAttribute(attribute, selector);
         document.head.appendChild(element);
       }
       
       element.setAttribute('content', content);
     };
 
-    // Basic Meta Tags
-    setMeta('description', finalDescription);
-    setMeta('keywords', finalKeywords.join(', '));
-    setMeta('author', author);
-    
-    if (noindex) {
-      setMeta('robots', 'noindex, nofollow');
-    } else {
-      setMeta('robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
-    }
+    // Update canonical link
+    const updateCanonical = (href: string) => {
+      if (typeof document === 'undefined') return;
+      
+      let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+      
+      if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', 'canonical');
+        document.head.appendChild(link);
+      }
+      
+      link.setAttribute('href', href);
+    };
 
-    // Open Graph Meta Tags (for Facebook, LinkedIn, etc.)
-    setMeta('og:title', finalTitle, true);
-    setMeta('og:description', finalDescription, true);
-    setMeta('og:image', finalImage, true);
-    setMeta('og:url', currentUrl, true);
-    setMeta('og:type', type, true);
-    setMeta('og:site_name', 'Ashraf Furnitures', true);
-    setMeta('og:locale', 'en_US', true);
+    // Basic SEO Meta Tags
+    updateMetaTag('description', finalDescription);
+    updateMetaTag('keywords', finalKeywords.join(', '));
+    updateMetaTag('robots', noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large');
 
-    // Product-specific Open Graph tags
+    // Open Graph Tags (Facebook, LinkedIn)
+    updateMetaTag('og:title', finalTitle, true);
+    updateMetaTag('og:description', finalDescription, true);
+    updateMetaTag('og:image', finalImage, true);
+    updateMetaTag('og:url', currentUrl, true);
+    updateMetaTag('og:type', type, true);
+    updateMetaTag('og:site_name', 'Ashraf Furnitures', true);
+
+    // Twitter Card Tags
+    updateMetaTag('twitter:card', 'summary_large_image');
+    updateMetaTag('twitter:title', finalTitle);
+    updateMetaTag('twitter:description', finalDescription);
+    updateMetaTag('twitter:image', finalImage);
+
+    // Product-specific tags
     if (type === 'product' && price !== undefined) {
-      setMeta('product:price:amount', price.toString(), true);
-      setMeta('product:price:currency', currency, true);
+      updateMetaTag('product:price:amount', price.toString(), true);
+      updateMetaTag('product:price:currency', currency, true);
       if (availability) {
-        setMeta('product:availability', availability, true);
+        updateMetaTag('product:availability', availability, true);
       }
     }
 
-    // Twitter Card Meta Tags
-    setMeta('twitter:card', 'summary_large_image');
-    setMeta('twitter:title', finalTitle);
-    setMeta('twitter:description', finalDescription);
-    setMeta('twitter:image', finalImage);
-    setMeta('twitter:site', '@ashraffarnitures');
-    setMeta('twitter:creator', '@ashraffarnitures');
+    // Canonical URL  
+    updateCanonical(finalCanonical);
 
-    // Article-specific tags
-    if (type === 'article') {
-      if (publishedTime) {
-        setMeta('article:published_time', publishedTime, true);
-      }
-      if (modifiedTime) {
-        setMeta('article:modified_time', modifiedTime, true);
-      }
-      setMeta('article:author', author, true);
-    }
+  }, [finalTitle, finalDescription, finalKeywords, finalImage, currentUrl, finalCanonical, type, price, currency, availability, noindex]);
 
-    // Canonical URL
-    let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-    if (!canonicalLink) {
-      canonicalLink = document.createElement('link');
-      canonicalLink.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonicalLink);
-    }
-    canonicalLink.setAttribute('href', finalCanonical);
-
-    // Mobile app meta tags
-    setMeta('mobile-web-app-capable', 'yes');
-    setMeta('apple-mobile-web-app-capable', 'yes');
-    setMeta('apple-mobile-web-app-status-bar-style', 'default');
-    setMeta('apple-mobile-web-app-title', 'Ashraf Furnitures');
-
-  }, [
-    finalTitle,
-    finalDescription,
-    finalKeywords,
-    finalImage,
-    currentUrl,
-    finalCanonical,
-    type,
-    author,
-    publishedTime,
-    modifiedTime,
-    price,
-    currency,
-    availability,
-    noindex,
-  ]);
-
-  return null; // This component doesn't render anything
+  // This component doesn't render anything visible
+  return null;
 }

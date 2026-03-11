@@ -1,6 +1,8 @@
+import { useEffect } from 'react';
+
 /**
- * Structured Data (JSON-LD) for SEO
- * Generates schema.org markup for better search engine understanding
+ * Structured Data (Schema.org JSON-LD) for SEO
+ * Optimized for search engine rich snippets
  */
 
 interface Product {
@@ -21,6 +23,53 @@ interface Product {
 interface BreadcrumbItem {
   name: string;
   url: string;
+}
+
+/**
+ * StructuredData Component - Injects JSON-LD into document head
+ * Safe rendering that doesn't break React
+ */
+interface StructuredDataProps {
+  data: object | object[];
+}
+
+export function StructuredData({ data }: StructuredDataProps) {
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const schemas = Array.isArray(data) ? data : [data];
+    const scriptIds: string[] = [];
+
+    schemas.forEach((schema, index) => {
+      const scriptId = `structured-data-${index}-${Date.now()}`;
+      scriptIds.push(scriptId);
+
+      // Remove existing script if it exists
+      const existingScript = document.getElementById(scriptId);
+      if (existingScript) {
+        existingScript.remove();
+      }
+
+      // Create new script element
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.type = 'application/ld+json';
+      script.text = JSON.stringify(schema);
+      document.head.appendChild(script);
+    });
+
+    // Cleanup function
+    return () => {
+      scriptIds.forEach(id => {
+        const script = document.getElementById(id);
+        if (script) {
+          script.remove();
+        }
+      });
+    };
+  }, [data]);
+
+  return null;
 }
 
 /**
@@ -194,28 +243,3 @@ export const generateFAQSchema = (faqs: Array<{ question: string; answer: string
     })),
   };
 };
-
-/**
- * Component to inject JSON-LD structured data into page
- */
-interface StructuredDataProps {
-  data: object | object[];
-}
-
-export function StructuredData({ data }: StructuredDataProps) {
-  const schemas = Array.isArray(data) ? data : [data];
-  
-  return (
-    <>
-      {schemas.map((schema, index) => (
-        <script
-          key={index}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(schema),
-          }}
-        />
-      ))}
-    </>
-  );
-}
