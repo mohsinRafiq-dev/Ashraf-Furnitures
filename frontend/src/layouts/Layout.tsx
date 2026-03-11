@@ -134,10 +134,9 @@ function Header({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="relative p-2.5 text-gray-700 group transition-all duration-200"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-100/30 to-orange-100/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+              >                <div className="absolute inset-0 bg-gradient-to-r from-amber-100/30 to-orange-100/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 <Heart className="w-6 h-6 text-amber-600 group-hover:text-red-500 transition-colors relative z-10" />
-                <WishlistBadge />
+                <MemoizedWishlistBadge />
               </motion.button>
             </Link>
 
@@ -256,7 +255,7 @@ function Header({
               className="relative p-2 text-gray-700 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 group"
             >
               <Heart className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              <WishlistBadge />
+              <MemoizedWishlistBadge />
             </Link>
 
             {/* Mobile Menu Button */}
