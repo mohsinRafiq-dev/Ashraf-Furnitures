@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 
 interface SplashContextType {
   showSplash: boolean;
@@ -8,13 +8,21 @@ interface SplashContextType {
 
 const SplashContext = createContext<SplashContextType | undefined>(undefined);
 
+const SPLASH_SHOWN_KEY = 'splash_shown';
+
 export function SplashProvider({ children }: { children: React.ReactNode }) {
-  const [showSplash, setShowSplash] = useState(true);
+  // Check if splash was already shown in this session
+  const [showSplash, setShowSplash] = useState(() => {
+    const wasShown = sessionStorage.getItem(SPLASH_SHOWN_KEY);
+    return wasShown !== 'true';
+  });
   const [splashComplete, setSplashComplete] = useState(false);
 
   const completeSplash = useCallback(() => {
     setShowSplash(false);
     setSplashComplete(true);
+    // Mark splash as shown in this session
+    sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
   }, []);
 
   return (

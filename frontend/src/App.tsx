@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import MainLayout from "./layouts/Layout";
-import LoadingSpinner from "./components/LoadingSpinner";
+import PageLoader from "./components/PageLoader";
 import ScrollToTop from "./components/ScrollToTop";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SplashScreen from "./components/SplashScreen";
@@ -55,21 +55,23 @@ function AppContent() {
       {showSplash && <SplashScreen onComplete={completeSplash} />}
       <Router>
         <ScrollToTop />
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            {/* Admin Routes - No MainLayout, Protected */}
-            <Route 
-              path="/admin/dashboard" 
-              element={
-                <ProtectedRoute requiresAdmin>
+        <Routes>
+          {/* Admin Routes - No MainLayout, Protected */}
+          <Route 
+            path="/admin/dashboard" 
+            element={
+              <ProtectedRoute requiresAdmin>
+                <Suspense fallback={<PageLoader />}>
                   <AdminDashboard />
-                </ProtectedRoute>
-              } 
-            />
-            
-            {/* Public Routes - With MainLayout */}
-            <Route path="/*" element={
-              <MainLayout>
+                </Suspense>
+              </ProtectedRoute>
+            } 
+          />
+          
+          {/* Public Routes - With MainLayout */}
+          <Route path="/*" element={
+            <MainLayout>
+              <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/about" element={<About />} />
@@ -90,10 +92,10 @@ function AppContent() {
                   <Route path="/debug-auth" element={<DebugAuth />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </MainLayout>
-            } />
-          </Routes>
-        </Suspense>
+              </Suspense>
+            </MainLayout>
+          } />
+        </Routes>
       </Router>
       <ToastContainer />
     </>
