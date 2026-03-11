@@ -453,18 +453,18 @@ const HeroSection = ({ animationsReady = true }: HeroSectionProps) => {
 
       {/* Enhanced Scroll Indicator - Respects Motion Preference */}
       <motion.div
-        animate={prefersReducedMotion ? {} : { y: [0, 12, 0] }}
+        animate={shouldReduceMotion ? {} : { y: [0, 12, 0] }}
         transition={
-          prefersReducedMotion
+          shouldReduceMotion
             ? {}
             : { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
         }
         className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:flex z-10"
       >
         <motion.div
-          animate={prefersReducedMotion ? {} : { opacity: [0.5, 1, 0.5] }}
+          animate={shouldReduceMotion ? {} : { opacity: [0.5, 1, 0.5] }}
           transition={
-            prefersReducedMotion ? {} : { duration: 2, repeat: Infinity }
+            shouldReduceMotion ? {} : { duration: 2, repeat: Infinity }
           }
           className="flex flex-col items-center gap-1"
         >

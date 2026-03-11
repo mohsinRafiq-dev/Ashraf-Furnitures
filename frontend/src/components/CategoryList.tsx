@@ -291,7 +291,7 @@ const CategoryList = ({
   animationsReady = true,
 }: CategoryListProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const shouldReduceMotion = useReducedMotion(); // Disable animations on mobile
+  // const shouldReduceMotion = useReducedMotion(); // TODO: Apply to animations
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 

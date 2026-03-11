@@ -7,7 +7,6 @@ import { formatPrice } from "../utils/formatPrice";
 import { sendProductInquiry } from "../utils/whatsapp";
 import { WhatsAppIcon } from "../components/WhatsAppIcon";
 import SEO from "../components/SEO";
-import Breadcrumbs from "../components/Breadcrumbs";
 import { StructuredData, generateProductSchema } from "../utils/structuredData";
 import {
   ArrowLeft,
