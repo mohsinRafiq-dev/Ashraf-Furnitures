@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { getCategories } from "../services/firebase/categoryService";
@@ -8,9 +8,16 @@ import { Loader, Sparkles } from "lucide-react";
 
 export default function Categories() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<any[]>([]);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
+  const [displayedCategories, setDisplayedCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const loaderRef = useRef<HTMLDivElement>(null);
+  
+  const INITIAL_LOAD = 6; // Load first 6 categories immediately
+  const LOAD_MORE = 6; // Load 6 more on scroll
 
   useEffect(() => {
     fetchCategories();
@@ -20,15 +27,54 @@ export default function Categories() {
     try {
       setLoading(true);
       const response = await getCategories();
-      // Use productCount from database (set when products are created/updated)
-      setCategories(response.categories || []);
+      const cats = response.categories || [];
+      setAllCategories(cats);
+      // Show first batch immediately
+      setDisplayedCategories(cats.slice(0, INITIAL_LOAD));
+      setCurrentIndex(INITIAL_LOAD);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      setCategories([]);
+      setAllCategories([]);
+      setDisplayedCategories([]);
     } finally {
       setLoading(false);
     }
   };
+
+  const loadMoreCategories = useCallback(() => {
+    if (loadingMore || currentIndex >= allCategories.length) return;
+    
+    setLoadingMore(true);
+    // Simulate slight delay for smooth UX
+    setTimeout(() => {
+      const nextBatch = allCategories.slice(currentIndex, currentIndex + LOAD_MORE);
+      setDisplayedCategories(prev => [...prev, ...nextBatch]);
+      setCurrentIndex(prev => prev + LOAD_MORE);
+      setLoadingMore(false);
+    }, 300);
+  }, [currentIndex, allCategories, loadingMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore && currentIndex < allCategories.length) {
+          loadMoreCategories();
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => {
+      if (loaderRef.current) {
+        observer.unobserve(loaderRef.current);
+      }
+    };
+  }, [loadMoreCategories, loadingMore, currentIndex, allCategories.length]);
 
   // const containerVariants = {
   //   hidden: { opacity: 0 },
@@ -255,37 +301,41 @@ export default function Categories() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-20"
+              className="flex flex-col items-center justify-center py-12"
             >
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
               >
-                <Loader className="w-12 h-12 text-amber-600" />
+                <Loader className="w-10 h-10 text-amber-600" />
               </motion.div>
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="text-gray-600 mt-4 text-lg"
+                className="text-gray-600 mt-3 text-base"
               >
-                Loading our amazing categories...
+                Loading categories...
               </motion.p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 px-3 sm:px-6 lg:px-8 w-full">
-              {categories.length > 0 ? (
-                categories.map((category) => (
-                  <motion.div
-                    key={category._id || category.name}
-                    variants={itemVariants}
-                    className="group h-full"
-                    onMouseEnter={() =>
-                      setHoveredId(category._id || category.name)
-                    }
-                    onMouseLeave={() => setHoveredId(null)}
-                    onClick={() => navigate(`/categories/${category.slug}`)}
-                  >
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 px-3 sm:px-6 lg:px-8 w-full">
+                {displayedCategories.length > 0 ? (
+                  displayedCategories.map((category, index) => (
+                    <motion.div
+                      key={category._id || category.name}
+                      variants={itemVariants}
+                      initial="hidden"
+                      animate="visible"
+                      transition={{ delay: index * 0.05 }}
+                      className="group h-full"
+                      onMouseEnter={() =>
+                        setHoveredId(category._id || category.name)
+                      }
+                      onMouseLeave={() => setHoveredId(null)}
+                      onClick={() => navigate(`/categories/${category.slug}`)}
+                    >
                     <motion.div
                       whileHover={{ y: -12, scale: 1.02 }}
                       transition={{
@@ -480,13 +530,35 @@ export default function Categories() {
                   </div>
                 </motion.div>
               )}
-            </div>
+              </div>
+              
+              {/* Infinite Scroll Loader */}
+              {currentIndex < allCategories.length && (
+                <div ref={loaderRef} className="flex justify-center py-8">
+                  {loadingMore && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center gap-2 text-amber-600"
+                    >
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      >
+                        <Loader className="w-6 h-6" />
+                      </motion.div>
+                      <span className="text-sm font-medium">Loading more...</span>
+                    </motion.div>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </div>
       </motion.section>
 
       {/* CTA Section */}
-      {categories.length > 0 && (
+      {allCategories.length > 0 && (
         <motion.section
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
