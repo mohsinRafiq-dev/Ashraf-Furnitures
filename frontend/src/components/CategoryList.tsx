@@ -57,7 +57,7 @@ const DEFAULT_CATEGORIES: Category[] = [
     id: "6",
     name: "TV Units",
     icon: "📺",
-    thumbnail: "https://images.unsplash.com/photo-1598300188775-3914c67cfb82?w=800&h=600&fit=crop&q=80",
+    thumbnail: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?w=800&h=600&fit=crop&q=80",
     slug: "tv-units",
   },
   {
@@ -113,14 +113,14 @@ const DEFAULT_CATEGORIES: Category[] = [
     id: "14",
     name: "Bar Stools",
     icon: "🍷",
-    thumbnail: "https://images.unsplash.com/photo-1572635148113-b43c0f6d5ff0?w=800&h=600&fit=crop&q=80",
+    thumbnail: "https://images.unsplash.com/photo-1550581190-9c1c48d21d6c?w=800&h=600&fit=crop&q=80",
     slug: "bar-stools",
   },
   {
     id: "15",
     name: "Kids Furniture",
     icon: "🧸",
-    thumbnail: "https://images.unsplash.com/photo-1616628188540-14bbe1c27bc8?w=800&h=600&fit=crop&q=80",
+    thumbnail: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=800&h=600&fit=crop&q=80",
     slug: "kids-furniture",
   },
   {
@@ -141,7 +141,7 @@ const DEFAULT_CATEGORIES: Category[] = [
     id: "18",
     name: "Shoe Racks",
     icon: "👟",
-    thumbnail: "https://images.unsplash.com/photo-1584996221744-7e830b96f507?w=800&h=600&fit=crop&q=80",
+    thumbnail: "https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=800&h=600&fit=crop&q=80",
     slug: "shoe-racks",
   },
   {
@@ -157,11 +157,6 @@ const DEFAULT_CATEGORIES: Category[] = [
     icon: "🛋️",
     thumbnail: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop&q=80",
     slug: "ottoman-poufs",
-  },
-];
-    thumbnail:
-      "https://images.unsplash.com/photo-1565636192335-14c08cf17855?w=400&h=300&fit=crop",
-    slug: "lighting",
   },
 ];
 

@@ -48,7 +48,7 @@ const categories = [
     slug: "tv-units",
     description: "Modern TV stands and entertainment centers",
     color: "from-cyan-500 to-blue-600",
-    image: "https://images.unsplash.com/photo-1598300188775-3914c67cfb82?w=1200&h=800&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?w=1200&h=800&fit=crop&q=80",
     productCount: 0
   },
   {
@@ -112,7 +112,7 @@ const categories = [
     slug: "bar-stools",
     description: "Modern bar stools and counter height seating",
     color: "from-violet-500 to-purple-600",
-    image: "https://images.unsplash.com/photo-1572635148113-b43c0f6d5ff0?w=1200&h=800&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1550581190-9c1c48d21d6c?w=1200&h=800&fit=crop&q=80",
     productCount: 0
   },
   {
@@ -120,7 +120,7 @@ const categories = [
     slug: "kids-furniture",
     description: "Fun and safe furniture for children's rooms",
     color: "from-pink-500 to-rose-600",
-    image: "https://images.unsplash.com/photo-1616628188540-14bbe1c27bc8?w=1200&h=800&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=1200&h=800&fit=crop&q=80",
     productCount: 0
   },
   {
@@ -144,7 +144,7 @@ const categories = [
     slug: "shoe-racks",
     description: "Organized storage solutions for footwear",
     color: "from-amber-600 to-yellow-600",
-    image: "https://images.unsplash.com/photo-1584996221744-7e830b96f507?w=1200&h=800&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=1200&h=800&fit=crop&q=80",
     productCount: 0
   },
   {
