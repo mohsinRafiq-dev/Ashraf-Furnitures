@@ -16,7 +16,11 @@ export function SplashProvider({ children }: { children: React.ReactNode }) {
     const wasShown = sessionStorage.getItem(SPLASH_SHOWN_KEY);
     return wasShown !== 'true';
   });
-  const [splashComplete, setSplashComplete] = useState(false);
+  // If splash was already shown, mark it as complete immediately
+  const [splashComplete, setSplashComplete] = useState(() => {
+    const wasShown = sessionStorage.getItem(SPLASH_SHOWN_KEY);
+    return wasShown === 'true';
+  });
 
   const completeSplash = useCallback(() => {
     setShowSplash(false);
