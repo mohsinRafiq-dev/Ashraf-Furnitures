@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { OptimizedImage } from "./OptimizedImage";
 // import { useReducedMotion } from "../hooks/useReducedMotion"; // TODO: Apply to animations
 
 interface Category {
@@ -173,22 +174,20 @@ const containerVariants = {
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, x: 100, scale: 0.95 },
+  hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
-    x: 0,
-    scale: 1,
+    y: 0,
     transition: {
-      duration: 0.6,
+      duration: 0.4,
       ease: "easeOut",
     },
   },
   scroll: {
     opacity: 1,
-    x: 0,
-    scale: 1,
+    y: 0,
     transition: {
-      duration: 0.5,
+      duration: 0.3,
       ease: "easeOut",
     },
   },
@@ -222,10 +221,10 @@ const CategoryCard = ({ category, index = 0 }: CategoryCardProps) => {
         variants={itemVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: false, margin: "-50px" }}
+        viewport={{ once: true, margin: "0px" }}
         transition={{
-          duration: 0.6,
-          delay: index * 0.08,
+          duration: 0.4,
+          delay: index * 0.05,
           ease: "easeOut",
         }}
         whileHover={{ y: -16, scale: 1.08 }}
@@ -238,13 +237,17 @@ const CategoryCard = ({ category, index = 0 }: CategoryCardProps) => {
           {/* Background Gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-amber-100/20 to-orange-100/20" />
 
-          <motion.img
-            src={category.thumbnail}
-            alt={category.name}
-            className="w-full h-full object-cover"
+          <motion.div
+            className="w-full h-full"
             animate={{ scale: isHovered ? 1.2 : 1 }}
             transition={{ duration: 0.5 }}
-          />
+          >
+            <OptimizedImage
+              src={category.thumbnail}
+              alt={category.name}
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
 
           {/* Animated Overlay on Hover */}
           <AnimatePresence>
