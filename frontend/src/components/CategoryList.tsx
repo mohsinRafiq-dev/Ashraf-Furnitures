@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useReducedMotion } from "../hooks/useReducedMotion";
+// import { useReducedMotion } from "../hooks/useReducedMotion"; // TODO: Apply to animations
 
 interface Category {
   id: string;
