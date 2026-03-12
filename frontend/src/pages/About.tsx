@@ -20,6 +20,57 @@ import {
 } from "lucide-react";
 
 const About: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Business hours configuration
+  const businessHours = {
+    monday: { open: "08:00", close: "21:00" },
+    tuesday: { open: "08:00", close: "21:00" },
+    wednesday: { open: "08:00", close: "21:00" },
+    thursday: { open: "08:00", close: "21:00" },
+    friday: { open: "00:00", close: "00:00" }, // Closed on Friday
+    saturday: { open: "08:00", close: "21:00" },
+    sunday: { open: "08:00", close: "21:00" },
+  };
+
+  // Check if business is open
+  const checkIfOpen = () => {
+    const now = new Date();
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const currentDay = days[now.getDay()];
+    
+    // Friday is closed
+    if (currentDay === 'friday') {
+      return false;
+    }
+    
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+    const todayHours = businessHours[currentDay as keyof typeof businessHours];
+    const [openHour, openMinute] = todayHours.open.split(':').map(Number);
+    const [closeHour, closeMinute] = todayHours.close.split(':').map(Number);
+    const openTimeInMinutes = openHour * 60 + openMinute;
+    const closeTimeInMinutes = closeHour * 60 + closeMinute;
+
+    return currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes;
+  };
+
+  // Update time and open status every minute
+  useEffect(() => {
+    setIsOpen(checkIfOpen());
+    setCurrentTime(new Date());
+
+    const interval = setInterval(() => {
+      setIsOpen(checkIfOpen());
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
+
   const stats = [
     { label: "Years of Excellence", value: "42+", icon: Calendar },
     { label: "Happy Customers", value: "50,000+", icon: Heart },
@@ -738,22 +789,46 @@ const About: React.FC = () => {
                   className="border-0 brightness-95 group-hover:brightness-100 transition-all duration-500"
                 />
                 
-                {/* Floating Location Badge */}
+                {/* Floating Location Badge - Dynamic Open/Closed Status */}
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   whileInView={{ scale: 1, rotate: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.4, type: "spring", stiffness: 150 }}
-                  className="absolute top-6 left-6 bg-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-sm"
+                  className="absolute top-6 right-6 bg-white px-5 py-3 rounded-2xl shadow-2xl backdrop-blur-sm"
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse" />
-                      <div className="absolute inset-0 w-4 h-4 bg-green-400 rounded-full animate-ping" />
+                      {isOpen ? (
+                        <>
+                          <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse" />
+                          <div className="absolute inset-0 w-4 h-4 bg-green-400 rounded-full animate-ping" />
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse" />
+                          <div className="absolute inset-0 w-4 h-4 bg-red-400 rounded-full animate-ping" />
+                        </>
+                      )}
                     </div>
                     <div>
-                      <p className="text-xs text-gray-600 font-medium">We're Open</p>
+                      <p className={`text-xs font-medium ${isOpen ? 'text-green-600' : 'text-red-600'}`}>
+                        {isOpen ? "We're Open" : "We're Closed"}
+                      </p>
                       <p className="text-sm font-bold text-gray-900">Haji Ashraf's Furniture Mart</p>
+                      {/* Show special message for Friday */}
+                      {currentTime.getDay() === 5 && (
+                        <p className="text-[10px] text-red-600 font-medium mt-0.5">
+                          Closed on Fridays
+                        </p>
+                      )}
+                      {/* Show opening time when closed */}
+                      {!isOpen && currentTime.getDay() !== 5 && (
+                        <p className="text-[10px] text-gray-500 font-medium mt-0.5">
+                          {currentTime.getHours() >= 21 ? `Opens ${currentTime.getDay() === 6 ? 'Sunday' : currentTime.getDay() === 4 ? 'Saturday' : 'tomorrow'} at 8:00 AM` :
+                           currentTime.getHours() < 8 ? "Opens at 8:00 AM" : "Opens tomorrow at 8:00 AM"}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </motion.div>
@@ -855,17 +930,26 @@ const About: React.FC = () => {
                   <div className="flex-1">
                     <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Opening Hours</h3>
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-700 font-medium">Mon - Thu</span>
-                        <span className="text-gray-900 font-bold">8:00 AM - 9:00 PM</span>
+                      <div className={`flex justify-between items-center ${[1,2,3,4].includes(currentTime.getDay()) ? 'py-2 px-3 bg-amber-50 rounded-lg border border-amber-200' : ''}`}>
+                        <span className={`font-medium ${[1,2,3,4].includes(currentTime.getDay()) ? 'text-amber-700' : 'text-gray-700'}`}>Mon - Thu</span>
+                        <span className={`font-bold ${[1,2,3,4].includes(currentTime.getDay()) ? 'text-amber-600' : 'text-gray-900'}`}>8:00 AM - 9:00 PM</span>
                       </div>
-                      <div className="flex justify-between items-center py-2 px-3 bg-red-50 rounded-lg border border-red-200">
-                        <span className="text-red-700 font-medium">Friday</span>
-                        <span className="text-red-600 font-bold">Closed</span>
+                      <div className={`flex justify-between items-center py-2 px-3 rounded-lg border ${currentTime.getDay() === 5 ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-200'}`}>
+                        <span className={`font-medium ${currentTime.getDay() === 5 ? 'text-red-700' : 'text-gray-700'}`}>Friday</span>
+                        <span className={`font-bold ${currentTime.getDay() === 5 ? 'text-red-600' : 'text-gray-600'}`}>Closed</span>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-700 font-medium">Sat - Sun</span>
-                        <span className="text-gray-900 font-bold">8:00 AM - 9:00 PM</span>
+                      <div className={`flex justify-between items-center ${[0,6].includes(currentTime.getDay()) ? 'py-2 px-3 bg-amber-50 rounded-lg border border-amber-200' : ''}`}>
+                        <span className={`font-medium ${[0,6].includes(currentTime.getDay()) ? 'text-amber-700' : 'text-gray-700'}`}>Sat - Sun</span>
+                        <span className={`font-bold ${[0,6].includes(currentTime.getDay()) ? 'text-amber-600' : 'text-gray-900'}`}>8:00 AM - 9:00 PM</span>
+                      </div>
+                      {/* Current Status */}
+                      <div className="pt-2 mt-2 border-t border-gray-200">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${isOpen ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
+                          <span className={`text-sm font-semibold ${isOpen ? 'text-green-600' : 'text-red-600'}`}>
+                            {isOpen ? 'Currently Open' : 'Currently Closed'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
