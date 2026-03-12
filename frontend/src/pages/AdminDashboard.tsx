@@ -49,6 +49,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  refreshCategoryProductCounts,
   Category
 } from '../services/firebase/categoryService';
 import { getProductAnalytics } from '../services/firebase/analyticsService';
@@ -1530,15 +1531,37 @@ const AdminDashboard: React.FC = () => {
               <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-900">All Categories</h2>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={openAddCategoryModal}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Add Category
-                  </motion.button>
+                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={async () => {
+                        try {
+                          toast.loading('Refreshing product counts...');
+                          await refreshCategoryProductCounts();
+                          await loadData();
+                          toast.dismiss();
+                          toast.success('Product counts refreshed!');
+                        } catch (error) {
+                          toast.dismiss();
+                          toast.error('Failed to refresh counts');
+                        }
+                      }}
+                      className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Refresh Counts
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={openAddCategoryModal}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Add Category
+                    </motion.button>
+                  </div>
                 </div>
               </div>
 

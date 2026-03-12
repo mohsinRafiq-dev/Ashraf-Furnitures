@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { getCategories } from "../services/firebase/categoryService";
-import { getProducts } from "../services/firebase/productService";
 import { OptimizedImage } from "../components/OptimizedImage";
 import SEO from "../components/SEO";
 import { Loader, Sparkles } from "lucide-react";
@@ -14,31 +13,15 @@ export default function Categories() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchCategoriesWithProductCount();
+    fetchCategories();
   }, []);
 
-  const fetchCategoriesWithProductCount = async () => {
+  const fetchCategories = async () => {
     try {
       setLoading(true);
-      
-      // Fetch categories and products in parallel
-      const [categoriesResponse, productsResponse] = await Promise.all([
-        getCategories(),
-        getProducts({ limit: 1000 }) // Fetch all products to count
-      ]);
-      
-      const categoriesData = categoriesResponse.categories || [];
-      const productsData = productsResponse.products || [];
-      
-      // Calculate product count for each category
-      const categoriesWithCount = categoriesData.map((category: any) => ({
-        ...category,
-        productCount: productsData.filter(
-          (product: any) => product.category === category.name
-        ).length
-      }));
-      
-      setCategories(categoriesWithCount);
+      const response = await getCategories();
+      // Use productCount from database (set when products are created/updated)
+      setCategories(response.categories || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
       setCategories([]);

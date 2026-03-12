@@ -408,3 +408,47 @@ export const subscribeToCategories = (
     onError
   );
 };
+
+/**
+ * Refresh product counts for all categories
+ * This is a utility function for admin use to sync category counts with actual products
+ */
+export const refreshCategoryProductCounts = async (): Promise<void> => {
+  try {
+    // Get all categories
+    const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+    const categories = categoriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+
+    // Get all products
+    const productsSnapshot = await getDocs(collection(db, 'products'));
+    const products = productsSnapshot.docs.map(doc => doc.data());
+
+    // Count products per category
+    const categoryProductCounts: Record<string, number> = {};
+    products.forEach((product: any) => {
+      const categoryName = product.category;
+      if (categoryName) {
+        categoryProductCounts[categoryName] = (categoryProductCounts[categoryName] || 0) + 1;
+      }
+    });
+
+    // Update each category with correct count
+    const updatePromises = categories.map(category => {
+      const count = categoryProductCounts[category.name] || 0;
+      return updateDoc(doc(db, 'categories', category.id!), {
+        productCount: count,
+        updatedAt: serverTimestamp()
+      });
+    });
+
+    await Promise.all(updatePromises);
+    
+    // Clear category cache to force refresh
+    cache.clear();
+    
+    console.log('✅ Category product counts refreshed successfully');
+  } catch (error) {
+    console.error('Error refreshing category product counts:', error);
+    throw error;
+  }
+};
