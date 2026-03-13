@@ -1,19 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { getCategories } from "../services/firebase/categoryService";
+import { getCategoriesChunk } from "../services/firebase/categoryService";
 import { OptimizedImage } from "../components/OptimizedImage";
 import SEO from "../components/SEO";
 import { Loader, Sparkles } from "lucide-react";
 
 export default function Categories() {
   const navigate = useNavigate();
-  const [allCategories, setAllCategories] = useState<any[]>([]);
   const [displayedCategories, setDisplayedCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [lastDoc, setLastDoc] = useState<any>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const loaderRef = useRef<HTMLDivElement>(null);
   
   const INITIAL_LOAD = 6; // Load first 6 categories immediately
@@ -26,39 +26,42 @@ export default function Categories() {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await getCategories();
-      const cats = response.categories || [];
-      setAllCategories(cats);
-      // Show first batch immediately
-      setDisplayedCategories(cats.slice(0, INITIAL_LOAD));
-      setCurrentIndex(INITIAL_LOAD);
+      const response = await getCategoriesChunk(INITIAL_LOAD, null);
+      setDisplayedCategories(response.categories || []);
+      setLastDoc(response.lastDoc);
+      setHasMore(response.hasMore);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      setAllCategories([]);
       setDisplayedCategories([]);
+      setLastDoc(null);
+      setHasMore(false);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadMoreCategories = useCallback(() => {
-    if (loadingMore || currentIndex >= allCategories.length) return;
-    
-    setLoadingMore(true);
-    // Simulate slight delay for smooth UX
-    setTimeout(() => {
-      const nextBatch = allCategories.slice(currentIndex, currentIndex + LOAD_MORE);
-      setDisplayedCategories(prev => [...prev, ...nextBatch]);
-      setCurrentIndex(prev => prev + LOAD_MORE);
+  const loadMoreCategories = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+      const response = await getCategoriesChunk(LOAD_MORE, lastDoc);
+      setDisplayedCategories(prev => [...prev, ...(response.categories || [])]);
+      setLastDoc(response.lastDoc);
+      setHasMore(response.hasMore);
+    } catch (error) {
+      console.error("Error loading more categories:", error);
+      setHasMore(false);
+    } finally {
       setLoadingMore(false);
-    }, 300);
-  }, [currentIndex, allCategories, loadingMore]);
+    }
+  }, [loadingMore, hasMore, lastDoc]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && !loadingMore && currentIndex < allCategories.length) {
+        if (entries[0].isIntersecting && !loadingMore && hasMore) {
           loadMoreCategories();
         }
       },
@@ -74,7 +77,7 @@ export default function Categories() {
         observer.unobserve(loaderRef.current);
       }
     };
-  }, [loadMoreCategories, loadingMore, currentIndex, allCategories.length]);
+  }, [loadMoreCategories, loadingMore, hasMore]);
 
   // const containerVariants = {
   //   hidden: { opacity: 0 },
@@ -533,7 +536,7 @@ export default function Categories() {
               </div>
               
               {/* Infinite Scroll Loader */}
-              {currentIndex < allCategories.length && (
+              {hasMore && (
                 <div ref={loaderRef} className="flex justify-center py-8">
                   {loadingMore && (
                     <motion.div
@@ -558,7 +561,7 @@ export default function Categories() {
       </motion.section>
 
       {/* CTA Section */}
-      {allCategories.length > 0 && (
+      {displayedCategories.length > 0 && (
         <motion.section
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}

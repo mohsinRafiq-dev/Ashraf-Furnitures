@@ -16,8 +16,11 @@ import {
   where,
   orderBy,
   limit,
+  startAfter,
   Timestamp,
   DocumentSnapshot,
+  QueryDocumentSnapshot,
+  DocumentData,
   onSnapshot,
   Unsubscribe,
   serverTimestamp
@@ -57,6 +60,12 @@ export interface CategoriesResponse {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   };
+}
+
+export interface CategoriesChunkResponse {
+  categories: Category[];
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+  hasMore: boolean;
 }
 
 // ==================== Helper Functions ====================
@@ -138,15 +147,6 @@ export const getCategories = async (filters: CategoryFilters = {}): Promise<Cate
     );
   }
 
-  // Update product counts for each category
-  // This is done by counting products with matching category name
-  const productsRef = collection(db, 'products');
-  for (const category of categories) {
-    const productQuery = query(productsRef, where('category', '==', category.name));
-    const productSnapshot = await getDocs(productQuery);
-    category.productCount = productSnapshot.size;
-  }
-
   // Client-side pagination
   const totalCount = categories.length;
   const startIndex = (page - 1) * pageSize;
@@ -169,6 +169,39 @@ export const getCategories = async (filters: CategoryFilters = {}): Promise<Cate
   cache.set(cacheKey, response, CacheTTL.MEDIUM);
 
   return response;
+};
+
+/**
+ * Fetch categories in chunks for fast progressive loading on the Categories page.
+ * Uses Firestore cursor pagination to avoid loading the full collection at once.
+ */
+export const getCategoriesChunk = async (
+  pageSize = 6,
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null = null
+): Promise<CategoriesChunkResponse> => {
+  const categoriesRef = collection(db, 'categories');
+
+  const baseConstraints = [orderBy('createdAt', 'desc')];
+  const q = lastDoc
+    ? query(categoriesRef, ...baseConstraints, startAfter(lastDoc), limit(pageSize + 1))
+    : query(categoriesRef, ...baseConstraints, limit(pageSize + 1));
+
+  const querySnapshot = await getDocs(q);
+  const docs = querySnapshot.docs;
+  const hasMore = docs.length > pageSize;
+  const pageDocs = hasMore ? docs.slice(0, pageSize) : docs;
+
+  const categories = pageDocs
+    .map(docToCategory)
+    .filter((c): c is Category => c !== null);
+
+  const newLastDoc = pageDocs.length > 0 ? pageDocs[pageDocs.length - 1] : lastDoc;
+
+  return {
+    categories,
+    lastDoc: newLastDoc,
+    hasMore,
+  };
 };
 
 /**
