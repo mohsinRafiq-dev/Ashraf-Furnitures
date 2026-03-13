@@ -1,7 +1,12 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { subscribeToProducts, Product as FirebaseProduct } from "../services/firebase/productService";
+import {
+  getProductsChunk,
+  Product as FirebaseProduct,
+  ProductFilters,
+} from "../services/firebase/productService";
+import { getCategories, Category } from "../services/firebase/categoryService";
 import { SkeletonGrid } from "../components/ProductSkeleton";
 import { WishlistButton } from "../components/WishlistButton";
 import { OptimizedImage } from "../components/OptimizedImage";
@@ -18,12 +23,51 @@ import {
   Eye,
   ShoppingCart,
   Sparkles,
+  Loader,
+  SlidersHorizontal,
+  RotateCcw,
+  ChevronDown,
 } from "lucide-react";
+
+type ProductSort = NonNullable<ProductFilters["sort"]>;
+
+const PRODUCT_SORT_OPTIONS: ProductSort[] = [
+  "newest",
+  "oldest",
+  "price-asc",
+  "price-desc",
+  "rating",
+  "popular",
+  "featured",
+];
+
+const getCategoryFilterFromSearch = (searchParams: URLSearchParams) => {
+  const category = searchParams.get("category")?.trim();
+  return category ? category : "all";
+};
+
+const getSortFilterFromSearch = (
+  searchParams: URLSearchParams
+): ProductSort => {
+  const sort = searchParams.get("sort");
+  return PRODUCT_SORT_OPTIONS.includes(sort as ProductSort)
+    ? (sort as ProductSort)
+    : "newest";
+};
 
 export default function Products() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<FirebaseProduct[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [prefetching, setPrefetching] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [prefetchedProducts, setPrefetchedProducts] = useState<FirebaseProduct[]>([]);
+  const [prefetchedLastDoc, setPrefetchedLastDoc] = useState<any>(null);
+  const [prefetchedHasMore, setPrefetchedHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<FirebaseProduct | null>(
@@ -33,6 +77,37 @@ export default function Products() {
   const [quickViewImageIndex, setQuickViewImageIndex] = useState(0);
   const [quickViewZoom, setQuickViewZoom] = useState(1);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const loaderRef = useRef<HTMLDivElement>(null);
+  const [selectedCategory, setSelectedCategory] = useState(() =>
+    getCategoryFilterFromSearch(searchParams)
+  );
+  const [selectedSort, setSelectedSort] = useState<ProductSort>(() =>
+    getSortFilterFromSearch(searchParams)
+  );
+  const [featuredOnly, setFeaturedOnly] = useState(
+    () => searchParams.get("featured") === "true"
+  );
+
+  const { INITIAL_LOAD, LOAD_MORE } = useMemo(() => {
+    const nav = navigator as Navigator & {
+      connection?: { effectiveType?: string };
+      deviceMemory?: number;
+    };
+
+    const connectionType = nav.connection?.effectiveType || "4g";
+    const deviceMemory = nav.deviceMemory || 4;
+    const isSmallScreen = window.innerWidth < 768;
+
+    if (connectionType === "2g" || connectionType === "slow-2g" || deviceMemory <= 2) {
+      return { INITIAL_LOAD: 6, LOAD_MORE: 6 };
+    }
+
+    if (connectionType === "3g" || isSmallScreen) {
+      return { INITIAL_LOAD: 9, LOAD_MORE: 9 };
+    }
+
+    return { INITIAL_LOAD: 12, LOAD_MORE: 12 };
+  }, []);
 
   // Detect mobile on mount and resize
   useEffect(() => {
@@ -40,6 +115,40 @@ export default function Products() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    const nextCategory = getCategoryFilterFromSearch(searchParams);
+    const nextSort = getSortFilterFromSearch(searchParams);
+    const nextFeaturedOnly = searchParams.get("featured") === "true";
+
+    setSelectedCategory((current) =>
+      current === nextCategory ? current : nextCategory
+    );
+    setSelectedSort((current) => (current === nextSort ? current : nextSort));
+    setFeaturedOnly((current) =>
+      current === nextFeaturedOnly ? current : nextFeaturedOnly
+    );
+  }, [searchParams]);
+
+  useEffect(() => {
+    const nextSearchParams = new URLSearchParams();
+
+    if (selectedCategory !== "all") {
+      nextSearchParams.set("category", selectedCategory);
+    }
+
+    if (selectedSort !== "newest") {
+      nextSearchParams.set("sort", selectedSort);
+    }
+
+    if (featuredOnly) {
+      nextSearchParams.set("featured", "true");
+    }
+
+    if (searchParams.toString() !== nextSearchParams.toString()) {
+      setSearchParams(nextSearchParams, { replace: true });
+    }
+  }, [featuredOnly, searchParams, selectedCategory, selectedSort, setSearchParams]);
 
   // Animation variants for product cards - optimized for performance
   const itemVariants = {
@@ -54,26 +163,149 @@ export default function Products() {
     },
   };
 
-  // Fetch all products with real-time updates
+  const activeFilters = useMemo<Pick<ProductFilters, "category" | "featured" | "sort">>(
+    () => ({
+      category: selectedCategory === "all" ? undefined : selectedCategory,
+      featured: featuredOnly ? true : undefined,
+      sort: selectedSort,
+    }),
+    [selectedCategory, featuredOnly, selectedSort]
+  );
+
+  const resetFilters = () => {
+    setSelectedCategory("all");
+    setSelectedSort("newest");
+    setFeaturedOnly(false);
+  };
+
+  const prefetchNextProducts = useCallback(async (cursor: any, hasMoreFlag: boolean) => {
+    if (!cursor || !hasMoreFlag || prefetching) return;
+
+    try {
+      setPrefetching(true);
+      const response = await getProductsChunk(LOAD_MORE, cursor, activeFilters);
+      setPrefetchedProducts(response.products || []);
+      setPrefetchedLastDoc(response.lastDoc);
+      setPrefetchedHasMore(response.hasMore);
+    } catch (error) {
+      console.error("Failed to prefetch products:", error);
+      setPrefetchedProducts([]);
+      setPrefetchedLastDoc(null);
+      setPrefetchedHasMore(false);
+    } finally {
+      setPrefetching(false);
+    }
+  }, [prefetching, LOAD_MORE, activeFilters]);
+
   useEffect(() => {
-    setLoading(true);
-    
-    const unsubscribe = subscribeToProducts(
-      { limit: 100 }, // Load all products for now
-      (response) => {
-        setProducts(response.products);
-        setError(null);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Failed to fetch products:", error);
-        setError("Failed to load products. Please try again.");
-        setLoading(false);
+    const loadCategories = async () => {
+      try {
+        const response = await getCategories({ sort: "name-asc", limit: 50 });
+        setCategories(response.categories || []);
+      } catch (error) {
+        console.error("Failed to load filter categories:", error);
       }
+    };
+
+    loadCategories();
+  }, []);
+
+  const fetchInitialProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setPrefetchedProducts([]);
+      setPrefetchedLastDoc(null);
+      setPrefetchedHasMore(false);
+      const response = await getProductsChunk(INITIAL_LOAD, null, activeFilters);
+      setProducts(response.products || []);
+      setLastDoc(response.lastDoc);
+      setHasMore(response.hasMore);
+      setError(null);
+
+      if (response.lastDoc && response.hasMore) {
+        prefetchNextProducts(response.lastDoc, response.hasMore);
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+      setError("Failed to load products. Please try again.");
+      setProducts([]);
+      setLastDoc(null);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [prefetchNextProducts, INITIAL_LOAD, activeFilters]);
+
+  const loadMoreProducts = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+
+      if (prefetchedProducts.length > 0) {
+        setProducts((prev) => [...prev, ...prefetchedProducts]);
+        setLastDoc(prefetchedLastDoc);
+        setHasMore(prefetchedHasMore);
+
+        setPrefetchedProducts([]);
+        setPrefetchedLastDoc(null);
+        setPrefetchedHasMore(false);
+
+        if (prefetchedLastDoc && prefetchedHasMore) {
+          prefetchNextProducts(prefetchedLastDoc, prefetchedHasMore);
+        }
+      } else {
+        const response = await getProductsChunk(LOAD_MORE, lastDoc, activeFilters);
+        setProducts((prev) => [...prev, ...(response.products || [])]);
+        setLastDoc(response.lastDoc);
+        setHasMore(response.hasMore);
+
+        if (response.lastDoc && response.hasMore) {
+          prefetchNextProducts(response.lastDoc, response.hasMore);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load more products:", error);
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [
+    loadingMore,
+    hasMore,
+    lastDoc,
+    prefetchedProducts,
+    prefetchedLastDoc,
+    prefetchedHasMore,
+    prefetchNextProducts,
+    activeFilters,
+    LOAD_MORE,
+  ]);
+
+  useEffect(() => {
+    fetchInitialProducts();
+  }, [fetchInitialProducts]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore && hasMore && !loading) {
+          loadMoreProducts();
+        }
+      },
+      { threshold: 0, rootMargin: "900px 0px" }
     );
 
-    return () => unsubscribe();
-  }, []);
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => {
+      if (loaderRef.current) {
+        observer.unobserve(loaderRef.current);
+      }
+    };
+  }, [loadMoreProducts, loadingMore, hasMore, loading]);
 
 
   return (
@@ -251,6 +483,105 @@ export default function Products() {
               viewport={{ once: true }}
               className="h-1 w-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full origin-left mx-auto mt-4"
             />
+
+            {!loading && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 sm:mt-8 relative overflow-hidden rounded-3xl border border-amber-200/60 bg-gradient-to-br from-white via-amber-50/80 to-orange-50/70 shadow-xl p-4 sm:p-6"
+              >
+                <div className="absolute inset-0 pointer-events-none opacity-60">
+                  <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-gradient-to-br from-amber-300/30 to-orange-300/10 blur-2xl" />
+                  <div className="absolute -bottom-10 -left-10 w-28 h-28 rounded-full bg-gradient-to-tr from-orange-300/20 to-amber-200/10 blur-2xl" />
+                </div>
+
+                <div className="relative flex items-center justify-between gap-3 mb-5 flex-col sm:flex-row">
+                  <div className="flex items-center gap-3 text-gray-900 justify-center sm:justify-start">
+                    <div className="p-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 shadow-lg">
+                      <SlidersHorizontal className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h2 className="text-lg sm:text-xl font-bold text-gray-900">Filter Products</h2>
+                      <p className="text-xs sm:text-sm text-gray-600">Refine the collection by category and sort order</p>
+                    </div>
+                  </div>
+
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-amber-200/70 text-xs sm:text-sm font-semibold text-amber-700 shadow-sm">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {products.length} visible
+                  </div>
+                </div>
+
+                <div className="relative grid grid-cols-1 md:grid-cols-4 gap-3 sm:gap-4">
+                  <label className="flex flex-col gap-2 text-sm font-semibold text-gray-700 text-left">
+                    <span className="uppercase tracking-wide text-[11px] text-amber-700">Category</span>
+                    <div className="relative group">
+                      <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className="w-full appearance-none px-4 pr-12 py-3.5 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-white to-amber-50/70 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-400 transition-all group-hover:border-amber-300"
+                      >
+                        <option value="all">All categories</option>
+                        {categories.map((category) => (
+                          <option key={category.id || category.name} value={category.name}>
+                            {category.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 shadow-sm">
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex flex-col gap-2 text-sm font-semibold text-gray-700 text-left">
+                    <span className="uppercase tracking-wide text-[11px] text-amber-700">Sort by</span>
+                    <div className="relative group">
+                      <select
+                        value={selectedSort}
+                        onChange={(e) => setSelectedSort(e.target.value as ProductSort)}
+                        className="w-full appearance-none px-4 pr-12 py-3.5 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-white to-amber-50/70 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-400 transition-all group-hover:border-amber-300"
+                      >
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="price-asc">Price: Low to high</option>
+                        <option value="price-desc">Price: High to low</option>
+                        <option value="featured">Featured first</option>
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-amber-700 shadow-sm">
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-amber-200/80 bg-white/90 text-sm font-semibold text-gray-700 shadow-sm md:mt-[1.65rem] cursor-pointer hover:border-amber-300 transition-colors">
+                    <span className={`relative flex h-6 w-11 items-center rounded-full transition-colors ${featuredOnly ? "bg-gradient-to-r from-amber-500 to-orange-600" : "bg-gray-300"}`}>
+                      <span className={`absolute h-5 w-5 rounded-full bg-white shadow-md transition-transform ${featuredOnly ? "translate-x-5" : "translate-x-0.5"}`} />
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={featuredOnly}
+                      onChange={(e) => setFeaturedOnly(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <span>Featured only</span>
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="flex items-center justify-center gap-2 px-4 py-3.5 rounded-2xl bg-gradient-to-r from-gray-900 to-gray-700 text-white font-semibold shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all md:mt-[1.65rem]"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset Filters
+                  </button>
+                </div>
+              </motion.div>
+            )}
 
             {/* Loading State - Show Skeleton Grid */}
             {loading && <SkeletonGrid count={12} />}
@@ -462,6 +793,19 @@ export default function Products() {
                 ))}
               </div>
 
+              {hasMore && (
+                <div ref={loaderRef} className="flex justify-center py-8 sm:py-10">
+                  {(loadingMore || prefetching) && (
+                    <div className="flex items-center gap-2 text-amber-600">
+                      <Loader className="w-5 h-5 animate-spin" />
+                      <span className="text-sm font-semibold">
+                        {loadingMore ? "Loading more products..." : "Preparing more products..."}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Load More Button - Currently loading all products */}
               {/* 
               {hasMoreProducts && (
@@ -489,8 +833,15 @@ export default function Products() {
           ) : !loading && products.length === 0 ? (
             <div className="text-center py-12 sm:py-16 lg:py-20">
               <p className="text-base sm:text-lg lg:text-2xl text-gray-500 mb-4 px-2 sm:px-0">
-                No products found
+                No products match the selected filters
               </p>
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="px-4 sm:px-6 py-2.5 sm:py-3 bg-orange-600 text-white rounded-lg font-semibold text-sm sm:text-base hover:bg-orange-700 transition-colors"
+              >
+                Clear Filters
+              </button>
             </div>
           ) : null}
         </div>

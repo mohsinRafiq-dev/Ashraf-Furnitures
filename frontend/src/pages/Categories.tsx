@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { getCategoriesChunk } from "../services/firebase/categoryService";
+import { getCategoriesChunk, refreshCategoryProductCounts } from "../services/firebase/categoryService";
 import { OptimizedImage } from "../components/OptimizedImage";
 import SEO from "../components/SEO";
 import { Loader, Sparkles } from "lucide-react";
@@ -11,17 +11,59 @@ export default function Categories() {
   const [displayedCategories, setDisplayedCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [prefetching, setPrefetching] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [lastDoc, setLastDoc] = useState<any>(null);
+  const [prefetchedCategories, setPrefetchedCategories] = useState<any[]>([]);
+  const [prefetchedLastDoc, setPrefetchedLastDoc] = useState<any>(null);
+  const [prefetchedHasMore, setPrefetchedHasMore] = useState(false);
+  const [countsRepairAttempted, setCountsRepairAttempted] = useState(false);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
-  
-  const INITIAL_LOAD = 6; // Load first 6 categories immediately
-  const LOAD_MORE = 6; // Load 6 more on scroll
+
+  const { INITIAL_LOAD, LOAD_MORE } = useMemo(() => {
+    const nav = navigator as Navigator & {
+      connection?: { effectiveType?: string };
+      deviceMemory?: number;
+    };
+
+    const connectionType = nav.connection?.effectiveType || "4g";
+    const deviceMemory = nav.deviceMemory || 4;
+    const isMobile = window.innerWidth < 768;
+
+    if (connectionType === "2g" || connectionType === "slow-2g" || deviceMemory <= 2) {
+      return { INITIAL_LOAD: 4, LOAD_MORE: 4 };
+    }
+
+    if (connectionType === "3g" || isMobile) {
+      return { INITIAL_LOAD: 6, LOAD_MORE: 6 };
+    }
+
+    return { INITIAL_LOAD: 8, LOAD_MORE: 8 };
+  }, []);
 
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  const prefetchNextCategories = useCallback(async (cursor: any, hasMoreFlag: boolean) => {
+    if (!cursor || !hasMoreFlag || prefetching) return;
+
+    try {
+      setPrefetching(true);
+      const response = await getCategoriesChunk(LOAD_MORE, cursor);
+      setPrefetchedCategories(response.categories || []);
+      setPrefetchedLastDoc(response.lastDoc);
+      setPrefetchedHasMore(response.hasMore);
+    } catch (error) {
+      console.error("Error prefetching categories:", error);
+      setPrefetchedCategories([]);
+      setPrefetchedLastDoc(null);
+      setPrefetchedHasMore(false);
+    } finally {
+      setPrefetching(false);
+    }
+  }, [prefetching, LOAD_MORE]);
 
   const fetchCategories = async () => {
     try {
@@ -30,6 +72,23 @@ export default function Categories() {
       setDisplayedCategories(response.categories || []);
       setLastDoc(response.lastDoc);
       setHasMore(response.hasMore);
+
+      // One-time self-heal for old/stale category counts.
+      const allZero = (response.categories || []).length > 0 &&
+        (response.categories || []).every((c: any) => (c.productCount || 0) === 0);
+
+      if (allZero && !countsRepairAttempted) {
+        setCountsRepairAttempted(true);
+        await refreshCategoryProductCounts();
+        const repaired = await getCategoriesChunk(INITIAL_LOAD, null);
+        setDisplayedCategories(repaired.categories || []);
+        setLastDoc(repaired.lastDoc);
+        setHasMore(repaired.hasMore);
+      }
+
+      if (response.lastDoc && response.hasMore) {
+        prefetchNextCategories(response.lastDoc, response.hasMore);
+      }
     } catch (error) {
       console.error("Error fetching categories:", error);
       setDisplayedCategories([]);
@@ -45,17 +104,44 @@ export default function Categories() {
 
     try {
       setLoadingMore(true);
-      const response = await getCategoriesChunk(LOAD_MORE, lastDoc);
-      setDisplayedCategories(prev => [...prev, ...(response.categories || [])]);
-      setLastDoc(response.lastDoc);
-      setHasMore(response.hasMore);
+
+      if (prefetchedCategories.length > 0) {
+        setDisplayedCategories(prev => [...prev, ...prefetchedCategories]);
+        setLastDoc(prefetchedLastDoc);
+        setHasMore(prefetchedHasMore);
+
+        setPrefetchedCategories([]);
+        setPrefetchedLastDoc(null);
+        setPrefetchedHasMore(false);
+
+        if (prefetchedLastDoc && prefetchedHasMore) {
+          prefetchNextCategories(prefetchedLastDoc, prefetchedHasMore);
+        }
+      } else {
+        const response = await getCategoriesChunk(LOAD_MORE, lastDoc);
+        setDisplayedCategories(prev => [...prev, ...(response.categories || [])]);
+        setLastDoc(response.lastDoc);
+        setHasMore(response.hasMore);
+
+        if (response.lastDoc && response.hasMore) {
+          prefetchNextCategories(response.lastDoc, response.hasMore);
+        }
+      }
     } catch (error) {
       console.error("Error loading more categories:", error);
       setHasMore(false);
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, lastDoc]);
+  }, [
+    loadingMore,
+    hasMore,
+    lastDoc,
+    prefetchedCategories,
+    prefetchedLastDoc,
+    prefetchedHasMore,
+    prefetchNextCategories,
+  ]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -65,7 +151,7 @@ export default function Categories() {
           loadMoreCategories();
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0, rootMargin: "700px 0px" }
     );
 
     if (loaderRef.current) {
@@ -337,7 +423,11 @@ export default function Categories() {
                         setHoveredId(category._id || category.name)
                       }
                       onMouseLeave={() => setHoveredId(null)}
-                      onClick={() => navigate(`/categories/${category.slug}`)}
+                      onClick={() =>
+                        navigate(
+                          `/products?category=${encodeURIComponent(category.name)}`
+                        )
+                      }
                     >
                     <motion.div
                       whileHover={{ y: -12, scale: 1.02 }}
@@ -538,7 +628,7 @@ export default function Categories() {
               {/* Infinite Scroll Loader */}
               {hasMore && (
                 <div ref={loaderRef} className="flex justify-center py-8">
-                  {loadingMore && (
+                  {(loadingMore || prefetching) && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -550,7 +640,9 @@ export default function Categories() {
                       >
                         <Loader className="w-6 h-6" />
                       </motion.div>
-                      <span className="text-sm font-medium">Loading more...</span>
+                      <span className="text-sm font-medium">
+                        {loadingMore ? "Loading more..." : "Preparing more..."}
+                      </span>
                     </motion.div>
                   )}
                 </div>

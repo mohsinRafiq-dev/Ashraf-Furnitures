@@ -17,13 +17,17 @@ import {
   where,
   orderBy,
   limit,
+  startAfter,
   Timestamp,
   DocumentSnapshot,
+  QueryDocumentSnapshot,
+  DocumentData,
   QueryConstraint,
   onSnapshot,
   Unsubscribe,
   serverTimestamp,
-  writeBatch
+  writeBatch,
+  increment
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { cache, CacheTTL, generateCacheKey } from '../../utils/cache';
@@ -90,6 +94,146 @@ export interface ProductsResponse {
   };
 }
 
+export interface ProductsChunkResponse {
+  products: Product[];
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+  hasMore: boolean;
+}
+
+type ProductChunkFilters = Pick<ProductFilters, 'category' | 'featured' | 'sort'>;
+
+const buildProductQueryConstraints = (
+  filters: ProductChunkFilters,
+  pageSize: number,
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null = null
+): QueryConstraint[] => {
+  const { category, featured, sort = 'newest' } = filters;
+  const queryConstraints: QueryConstraint[] = [];
+
+  if (category) {
+    queryConstraints.push(where('category', '==', category));
+  }
+
+  if (featured !== undefined) {
+    queryConstraints.push(where('featured', '==', featured));
+  }
+
+  switch (sort) {
+    case 'price-asc':
+      queryConstraints.push(orderBy('price', 'asc'));
+      queryConstraints.push(orderBy('createdAt', 'desc'));
+      break;
+    case 'price-desc':
+      queryConstraints.push(orderBy('price', 'desc'));
+      queryConstraints.push(orderBy('createdAt', 'desc'));
+      break;
+    case 'oldest':
+      queryConstraints.push(orderBy('createdAt', 'asc'));
+      break;
+    case 'featured':
+      queryConstraints.push(orderBy('featured', 'desc'));
+      queryConstraints.push(orderBy('createdAt', 'desc'));
+      break;
+    case 'newest':
+    default:
+      queryConstraints.push(orderBy('createdAt', 'desc'));
+      break;
+  }
+
+  if (lastDoc) {
+    queryConstraints.push(startAfter(lastDoc));
+  }
+
+  queryConstraints.push(limit(pageSize + 1));
+
+  return queryConstraints;
+};
+
+const buildFallbackProductQueryConstraints = (
+  filters: ProductChunkFilters
+): QueryConstraint[] => {
+  const { category, featured } = filters;
+  const queryConstraints: QueryConstraint[] = [];
+
+  if (category) {
+    queryConstraints.push(where('category', '==', category));
+  }
+
+  if (featured !== undefined) {
+    queryConstraints.push(where('featured', '==', featured));
+  }
+
+  return queryConstraints;
+};
+
+const getTimestampValue = (value: Timestamp | Date | undefined): number => {
+  if (!value) return 0;
+  if (value instanceof Date) return value.getTime();
+  if (typeof (value as Timestamp).toMillis === 'function') {
+    return (value as Timestamp).toMillis();
+  }
+
+  return 0;
+};
+
+const compareProducts = (left: Product, right: Product, sort: ProductFilters['sort'] = 'newest') => {
+  switch (sort) {
+    case 'price-asc':
+      return left.price - right.price || getTimestampValue(right.createdAt) - getTimestampValue(left.createdAt);
+    case 'price-desc':
+      return right.price - left.price || getTimestampValue(right.createdAt) - getTimestampValue(left.createdAt);
+    case 'rating':
+      return right.rating - left.rating || right.reviews - left.reviews || getTimestampValue(right.createdAt) - getTimestampValue(left.createdAt);
+    case 'popular':
+      return right.reviews - left.reviews || right.rating - left.rating || getTimestampValue(right.createdAt) - getTimestampValue(left.createdAt);
+    case 'featured':
+      return Number(right.featured) - Number(left.featured) || getTimestampValue(right.createdAt) - getTimestampValue(left.createdAt);
+    case 'oldest':
+      return getTimestampValue(left.createdAt) - getTimestampValue(right.createdAt);
+    case 'newest':
+    default:
+      return getTimestampValue(right.createdAt) - getTimestampValue(left.createdAt);
+  }
+};
+
+const isMissingIndexError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  return 'code' in error && (error as { code?: string }).code === 'failed-precondition';
+};
+
+const getProductsChunkWithFallback = async (
+  productsRef: ReturnType<typeof collection>,
+  pageSize: number,
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null,
+  filters: ProductChunkFilters
+): Promise<ProductsChunkResponse> => {
+  const fallbackQuery = query(productsRef, ...buildFallbackProductQueryConstraints(filters));
+  const fallbackSnapshot = await getDocs(fallbackQuery);
+  const sortedProducts = fallbackSnapshot.docs
+    .map((doc) => ({ snapshot: doc, product: docToProduct(doc) }))
+    .filter(
+      (entry): entry is { snapshot: QueryDocumentSnapshot<DocumentData>; product: Product } =>
+        entry.product !== null
+    )
+    .sort((left, right) => compareProducts(left.product, right.product, filters.sort));
+
+  const startIndex = lastDoc
+    ? sortedProducts.findIndex(({ snapshot }) => snapshot.id === lastDoc.id) + 1
+    : 0;
+  const safeStartIndex = startIndex > 0 ? startIndex : 0;
+  const pageEntries = sortedProducts.slice(safeStartIndex, safeStartIndex + pageSize);
+  const newLastDoc = pageEntries.length > 0 ? pageEntries[pageEntries.length - 1].snapshot : lastDoc;
+
+  return {
+    products: pageEntries.map(({ product }) => product),
+    lastDoc: newLastDoc,
+    hasMore: safeStartIndex + pageSize < sortedProducts.length,
+  };
+};
+
 // ==================== Helper Functions ====================
 
 /**
@@ -129,6 +273,26 @@ const docToProduct = (docSnap: DocumentSnapshot): Product | null => {
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   };
+};
+
+/**
+ * Adjust category product counter by category name.
+ */
+const adjustCategoryProductCount = async (categoryName: string | undefined, delta: number): Promise<void> => {
+  if (!categoryName || !delta) return;
+
+  const categoryQuery = query(
+    collection(db, 'categories'),
+    where('name', '==', categoryName),
+    limit(1)
+  );
+  const categorySnapshot = await getDocs(categoryQuery);
+  if (categorySnapshot.empty) return;
+
+  await updateDoc(categorySnapshot.docs[0].ref, {
+    productCount: increment(delta),
+    updatedAt: serverTimestamp(),
+  });
 };
 
 // ==================== CRUD Operations ====================
@@ -261,6 +425,45 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<Product
 };
 
 /**
+ * Fetch products in chunks for fast progressive loading.
+ * Uses Firestore cursor pagination to avoid loading too many products at once.
+ */
+export const getProductsChunk = async (
+  pageSize = 12,
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null = null,
+  filters: ProductChunkFilters = {}
+): Promise<ProductsChunkResponse> => {
+  const productsRef = collection(db, 'products');
+  const q = query(productsRef, ...buildProductQueryConstraints(filters, pageSize, lastDoc));
+
+  try {
+    const querySnapshot = await getDocs(q);
+    const docs = querySnapshot.docs;
+    const hasMore = docs.length > pageSize;
+    const pageDocs = hasMore ? docs.slice(0, pageSize) : docs;
+
+    const products = pageDocs
+      .map(docToProduct)
+      .filter((p): p is Product => p !== null);
+
+    const newLastDoc = pageDocs.length > 0 ? pageDocs[pageDocs.length - 1] : lastDoc;
+
+    return {
+      products,
+      lastDoc: newLastDoc,
+      hasMore,
+    };
+  } catch (error) {
+    if (!isMissingIndexError(error)) {
+      throw error;
+    }
+
+    console.warn('Falling back to client-side product sorting for filtered chunk query.', error);
+    return getProductsChunkWithFallback(productsRef, pageSize, lastDoc, filters);
+  }
+};
+
+/**
  * Get a single product by ID
  * Uses caching to improve performance
  */
@@ -346,6 +549,11 @@ export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt
   
   const product = docToProduct(productSnap);
   if (!product) throw new Error('Failed to create product');
+
+  // Keep category counters in sync for listing pages.
+  await adjustCategoryProductCount(product.category, 1);
+  cache.invalidatePattern('products');
+  cache.invalidatePattern('categories');
   
   return product;
 };
@@ -360,6 +568,9 @@ export const updateProduct = async (productId: string, updates: Partial<Product>
   if (!productSnap.exists()) {
     throw new Error('Product not found');
   }
+
+  const currentData = productSnap.data();
+  const previousCategory = currentData.category as string | undefined;
 
   // If name is being updated, regenerate slug
   let updatedData = { ...updates };
@@ -398,6 +609,18 @@ export const updateProduct = async (productId: string, updates: Partial<Product>
   const updatedSnap = await getDoc(productRef);
   const product = docToProduct(updatedSnap);
   if (!product) throw new Error('Failed to update product');
+
+  // If category changed, move one count from old to new category.
+  const nextCategory = product.category;
+  if (previousCategory && nextCategory && previousCategory !== nextCategory) {
+    await Promise.all([
+      adjustCategoryProductCount(previousCategory, -1),
+      adjustCategoryProductCount(nextCategory, 1),
+    ]);
+  }
+
+  cache.invalidatePattern('products');
+  cache.invalidatePattern('categories');
   
   return product;
 };
@@ -407,13 +630,26 @@ export const updateProduct = async (productId: string, updates: Partial<Product>
  */
 export const deleteProduct = async (productId: string): Promise<void> => {
   const productRef = doc(db, 'products', productId);
+  const productSnap = await getDoc(productRef);
+  const productData = productSnap.exists() ? productSnap.data() : null;
   await deleteDoc(productRef);
+
+  if (productData?.category) {
+    await adjustCategoryProductCount(productData.category as string, -1);
+  }
+
+  cache.invalidatePattern('products');
+  cache.invalidatePattern('categories');
 };
 
 /**
  * Bulk delete products
  */
 export const bulkDeleteProducts = async (productIds: string[]): Promise<void> => {
+  const productSnapshots = await Promise.all(
+    productIds.map((id) => getDoc(doc(db, 'products', id)))
+  );
+
   const batch = writeBatch(db);
   
   productIds.forEach(id => {
@@ -422,6 +658,24 @@ export const bulkDeleteProducts = async (productIds: string[]): Promise<void> =>
   });
   
   await batch.commit();
+
+  // Aggregate category decrements to minimize writes.
+  const categoryAdjustments: Record<string, number> = {};
+  productSnapshots.forEach((snap) => {
+    if (!snap.exists()) return;
+    const categoryName = snap.data().category as string | undefined;
+    if (!categoryName) return;
+    categoryAdjustments[categoryName] = (categoryAdjustments[categoryName] || 0) - 1;
+  });
+
+  await Promise.all(
+    Object.entries(categoryAdjustments).map(([name, delta]) =>
+      adjustCategoryProductCount(name, delta)
+    )
+  );
+
+  cache.invalidatePattern('products');
+  cache.invalidatePattern('categories');
 };
 
 /**

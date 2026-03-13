@@ -20,3 +20,22 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </React.StrictMode>
 );
+
+// Collect web vitals after initial render without blocking interactivity.
+const win = window as Window & {
+  requestIdleCallback?: (callback: () => void, opts?: { timeout: number }) => number;
+};
+
+const startVitals = () => {
+  import("./utils/webVitals")
+    .then((m) => m.initWebVitals())
+    .catch(() => {
+      // Ignore vitals bootstrap issues
+    });
+};
+
+if (typeof win.requestIdleCallback === "function") {
+  win.requestIdleCallback(startVitals, { timeout: 3000 });
+} else {
+  window.setTimeout(startVitals, 1500);
+}

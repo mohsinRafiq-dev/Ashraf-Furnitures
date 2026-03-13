@@ -210,12 +210,11 @@ interface CategoryCardProps {
 
 const CategoryCard = ({ category, index = 0 }: CategoryCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const productCategoryHref = `/products?category=${encodeURIComponent(category.name)}`;
 
   return (
     <Link
-      to={`/categories/${
-        category.slug || category.name.toLowerCase().replace(/\s+/g, "-")
-      }`}
+      to={productCategoryHref}
     >
       <motion.div
         variants={itemVariants}

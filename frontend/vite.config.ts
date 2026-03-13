@@ -33,13 +33,31 @@ export default defineConfig({
     // Code splitting for better caching and faster loads
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Separate vendor chunks for better caching
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'animation': ['framer-motion'],
-          'icons': ['lucide-react'],
-          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
-          'utils': ['axios', 'zustand'],
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+
+          // Core framework
+          if (
+            id.includes('react') ||
+            id.includes('react-dom') ||
+            id.includes('react-router-dom')
+          ) {
+            return 'react-vendor';
+          }
+
+          // Animation/UI libs
+          if (id.includes('framer-motion')) return 'animation';
+          if (id.includes('lucide-react')) return 'icons';
+
+          // Split Firebase by feature so users only download what they use
+          if (id.includes('firebase/firestore')) return 'firebase-firestore';
+          if (id.includes('firebase/auth')) return 'firebase-auth';
+          if (id.includes('firebase/storage')) return 'firebase-storage';
+          if (id.includes('firebase/app')) return 'firebase-core';
+          if (id.includes('firebase/analytics')) return 'firebase-analytics';
+          if (id.includes('firebase/')) return 'firebase-misc';
+
+          if (id.includes('axios') || id.includes('zustand')) return 'utils';
         },
         // Optimize chunk file naming
         chunkFileNames: 'assets/js/[name]-[hash].js',

@@ -44,10 +44,36 @@ function AppContent() {
 
   // Track visitor session on app load
   useEffect(() => {
-    initializeAnalytics().catch((err: Error) => {
-      // Silently fail - analytics is optional
-      console.debug('Analytics not available:', err.message);
-    });
+    let cancelled = false;
+    let timeoutId: number | null = null;
+    const win = window as Window & {
+      requestIdleCallback?: (callback: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    const run = () => {
+      if (cancelled) return;
+      initializeAnalytics().catch((err: Error) => {
+        // Silently fail - analytics is optional
+        console.debug('Analytics not available:', err.message);
+      });
+    };
+
+    if (typeof win.requestIdleCallback === 'function') {
+      const idleId = win.requestIdleCallback(run, { timeout: 2000 });
+      return () => {
+        cancelled = true;
+        if (typeof win.cancelIdleCallback === 'function') {
+          win.cancelIdleCallback(idleId);
+        }
+      };
+    }
+
+    timeoutId = window.setTimeout(run, 1200);
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
   }, []);
 
   return (

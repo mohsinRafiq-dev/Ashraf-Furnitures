@@ -34,7 +34,8 @@ import {
   XCircle,
   ZoomOut,
   ZoomIn,
-  Home
+  Home,
+  Gauge
 } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import { 
@@ -53,10 +54,21 @@ import {
   Category
 } from '../services/firebase/categoryService';
 import { getProductAnalytics } from '../services/firebase/analyticsService';
+import { cache } from '../utils/cache';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 
 type TabType = 'dashboard' | 'products' | 'categories' | 'analytics';
+
+type WebVitalName = 'LCP' | 'CLS' | 'INP' | 'FCP' | 'TTFB';
+type WebVitalRating = 'good' | 'needs-improvement' | 'poor';
+
+interface SessionWebVital {
+  name: WebVitalName;
+  value: number;
+  rating: WebVitalRating;
+  ts: number;
+}
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -131,10 +143,47 @@ const AdminDashboard: React.FC = () => {
     wishlist: number;
     totalActions: number;
   }>>([]);
+  const [webVitals, setWebVitals] = useState<SessionWebVital[]>([]);
+
+  const loadWebVitals = () => {
+    try {
+      const raw = sessionStorage.getItem('ashraf_web_vitals');
+      const parsed = raw ? JSON.parse(raw) : [];
+      const safe = Array.isArray(parsed) ? parsed : [];
+      const ordered = safe.sort((a: SessionWebVital, b: SessionWebVital) => a.name.localeCompare(b.name));
+      setWebVitals(ordered);
+    } catch {
+      setWebVitals([]);
+    }
+  };
+
+  const handleRefreshVitals = async () => {
+    try {
+      toast.loading('Refreshing vitals...');
+      const mod = await import('../utils/webVitals');
+      mod.initWebVitals();
+
+      // Give observers a brief moment to flush buffered values.
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      loadWebVitals();
+      toast.dismiss();
+      toast.success('Vitals refreshed');
+    } catch {
+      toast.dismiss();
+      toast.error('Failed to refresh vitals');
+    }
+  };
 
   useEffect(() => {
     loadData();
+    loadWebVitals();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      loadWebVitals();
+    }
+  }, [activeTab]);
 
   // Handle window resize to ensure proper sidebar behavior
   useEffect(() => {
@@ -152,7 +201,7 @@ const AdminDashboard: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (showErrorToast = true): Promise<boolean> => {
     try {
       setLoading(true);
       const [productsRes, categoriesRes, analyticsData] = await Promise.all([
@@ -163,11 +212,32 @@ const AdminDashboard: React.FC = () => {
       setProducts(productsRes.products);
       setCategories(categoriesRes.categories);
       setProductAnalytics(analyticsData);
+      return true;
     } catch (error) {
       console.error('Error loading data:', error);
-      toast.error('Failed to load data');
+      if (showErrorToast) {
+        toast.error('Failed to load data');
+      }
+      return false;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshData = async () => {
+    try {
+      toast.loading('Refreshing dashboard data...');
+      cache.clear();
+      const success = await loadData(false);
+      toast.dismiss();
+      if (success) {
+        toast.success('Dashboard data refreshed');
+      } else {
+        toast.error('Failed to refresh dashboard data');
+      }
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Failed to refresh dashboard data');
     }
   };
 
@@ -918,7 +988,7 @@ const AdminDashboard: React.FC = () => {
                     <motion.button
                       whileHover={{ scale: 1.02, x: 5 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={loadData}
+                      onClick={handleRefreshData}
                       className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl hover:shadow-lg transition-all"
                     >
                       <RefreshCw className="w-5 h-5" />
@@ -1668,16 +1738,80 @@ const AdminDashboard: React.FC = () => {
               {/* Analytics Header */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Analytics & Insights</h2>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={loadData}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Refresh Data
-                </motion.button>
+                <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleRefreshVitals}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
+                  >
+                    <Gauge className="w-4 h-4" />
+                    Refresh Vitals
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleRefreshData}
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Refresh Data
+                  </motion.button>
+                </div>
               </div>
+
+              {/* Core Web Vitals (Session) */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
+              >
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="p-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg">
+                    <Gauge className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Core Web Vitals (Current Session)</h3>
+                    <p className="text-sm text-gray-500">Measured in your browser after page load</p>
+                  </div>
+                </div>
+
+                {webVitals.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    {webVitals.map((v) => (
+                      <div
+                        key={v.name}
+                        className="rounded-xl border p-4 bg-gray-50/80"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-bold text-gray-800">{v.name}</p>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-semibold ${
+                              v.rating === 'good'
+                                ? 'bg-green-100 text-green-700'
+                                : v.rating === 'needs-improvement'
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {v.rating}
+                          </span>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">
+                          {v.name === 'CLS' ? v.value.toFixed(3) : Math.round(v.value)}
+                          <span className="text-sm text-gray-500 ml-1">{v.name === 'CLS' ? '' : 'ms'}</span>
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">
+                    No session vitals yet. Visit Home, Categories, or Products and refresh this tab.
+                  </p>
+                )}
+              </motion.div>
 
               {/* Key Metrics Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -2185,6 +2319,7 @@ const AdminDashboard: React.FC = () => {
                     Cancel
                   </button>
                   <motion.button
+                    type="button"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleSaveCategory}
