@@ -212,55 +212,13 @@ export default function Categories() {
         transition={{ duration: 0.6 }}
         className="relative w-full py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/60"
       >
-        {/* Premium Animated Background Decorations */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Top Right Large Gradient Orb */}
-          <motion.div
-            className="absolute -top-56 -right-56 w-96 h-96 bg-gradient-to-b from-amber-300/40 via-amber-200/30 to-transparent rounded-full opacity-50 blur-3xl"
-            animate={{
-              x: [0, 30, 0],
-              y: [0, 20, 0],
-            }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-
-          {/* Bottom Left Large Gradient Orb */}
-          <motion.div
-            className="absolute -bottom-48 -left-48 w-96 h-96 bg-gradient-to-tr from-orange-200/40 via-amber-100/30 to-transparent rounded-full opacity-45 blur-3xl"
-            animate={{
-              x: [0, -30, 0],
-              y: [0, -20, 0],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1,
-            }}
-          />
-
-          {/* Center Glow Effect */}
-          <motion.div
-            className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-amber-200/30 via-orange-100/20 to-transparent rounded-full opacity-40 blur-3xl"
-            animate={{
-              scale: [1, 1.1, 1],
-            }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          />
-
-          {/* Dynamic Animated Grid Pattern */}
-          <motion.div
-            className="absolute inset-0 opacity-20"
-            animate={{ backgroundPosition: ["0% 0%", "100% 100%"] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            style={{
-              backgroundImage:
-                "linear-gradient(45deg, rgba(217,119,6,0.3) 1px, transparent 1px), linear-gradient(-45deg, rgba(217,119,6,0.3) 1px, transparent 1px)",
-              backgroundSize: "60px 60px",
-            }}
-          />
-
-          {/* Radial Gradient Overlay */}
+        {/* Static decorative backdrop — same look, no per-frame animation cost. */}
+        <div
+          className="absolute inset-0 overflow-hidden pointer-events-none"
+          aria-hidden
+        >
+          <div className="absolute -top-56 -right-56 w-96 h-96 bg-gradient-to-b from-amber-300/40 via-amber-200/30 to-transparent rounded-full opacity-50 blur-3xl" />
+          <div className="absolute -bottom-48 -left-48 w-96 h-96 bg-gradient-to-tr from-orange-200/40 via-amber-100/30 to-transparent rounded-full opacity-45 blur-3xl" />
           <div
             className="absolute inset-0 opacity-25"
             style={{
@@ -268,52 +226,8 @@ export default function Categories() {
                 "radial-gradient(circle at 20% 50%, rgba(217,119,6,0.2) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(217,119,6,0.2) 0%, transparent 50%), radial-gradient(circle at 40% 20%, rgba(217,119,6,0.15) 0%, transparent 50%)",
             }}
           />
-
-          {/* Subtle Mesh Gradient */}
-          <div
-            className="absolute inset-0 bg-gradient-mesh opacity-30"
-            style={{
-              backgroundImage: `
-                linear-gradient(135deg, transparent 0%, rgba(217,119,6,0.05) 25%, transparent 50%),
-                linear-gradient(225deg, transparent 0%, rgba(217,119,6,0.05) 25%, transparent 50%)
-              `,
-            }}
-          />
-
-          {/* Floating Accent Dots */}
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-amber-300 rounded-full opacity-40"
-              style={{
-                left: `${20 + i * 10}%`,
-                top: `${30 + (i % 3) * 20}%`,
-              }}
-              animate={{
-                y: [0, -30, 0],
-                opacity: [0.2, 0.6, 0.2],
-              }}
-              transition={{
-                duration: 4 + i * 0.5,
-                repeat: Infinity,
-                delay: i * 0.3,
-              }}
-            />
-          ))}
-
-          {/* Top Border Accent Line */}
-          <motion.div
-            className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-40"
-            animate={{ opacity: [0.2, 0.6, 0.2] }}
-            transition={{ duration: 3, repeat: Infinity }}
-          />
-
-          {/* Bottom Border Accent Line */}
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-orange-400 to-transparent opacity-40"
-            animate={{ opacity: [0.2, 0.6, 0.2] }}
-            transition={{ duration: 3, repeat: Infinity, delay: 1 }}
-          />
+          <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-40" />
+          <div className="absolute bottom-0 inset-x-0 h-0.5 bg-gradient-to-r from-transparent via-orange-400 to-transparent opacity-40" />
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
@@ -333,12 +247,7 @@ export default function Categories() {
               viewport={{ once: true }}
               className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/50 rounded-full backdrop-blur-sm text-xs sm:text-sm"
             >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              >
-                <Sparkles className="w-3 sm:w-4 h-3 sm:h-4 text-amber-600" />
-              </motion.div>
+              <Sparkles className="w-3 sm:w-4 h-3 sm:h-4 text-amber-600" />
               <span className="text-amber-600 font-semibold text-sm uppercase tracking-widest">
                 Explore
               </span>
@@ -353,16 +262,9 @@ export default function Categories() {
               className="text-2xl sm:text-3xl lg:text-5xl xl:text-6xl font-bold text-gray-900 leading-tight"
             >
               All{" "}
-              <motion.span
-                className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600"
-                animate={{
-                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                }}
-                transition={{ duration: 4, repeat: Infinity }}
-                style={{ backgroundSize: "200% 200%" }}
-              >
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">
                 Categories
-              </motion.span>
+              </span>
             </motion.h2>
 
             {/* Description */}

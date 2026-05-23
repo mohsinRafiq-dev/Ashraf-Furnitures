@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import HeroSection from "../components/HeroSection";
 import CategoryList from "../components/CategoryList";
@@ -16,12 +16,10 @@ import {
   Wrench,
   ShieldCheck,
 } from "lucide-react";
-import { getCategories } from "../services/firebase/categoryService";
-import { getProducts } from "../services/firebase/productService";
+import { useCategoriesQuery, useFeaturedProductsQuery } from "../services/firebase/queries";
 import { useSplash } from "../context/SplashContext";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
-// Animation variants - disabled on mobile for performance
 const sectionHeaderVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: {
@@ -31,7 +29,6 @@ const sectionHeaderVariants = {
   },
 };
 
-// Static variant for mobile (no animation)
 const staticVariants = {
   hidden: { opacity: 1, y: 0 },
   visible: { opacity: 1, y: 0 },
@@ -41,24 +38,25 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2,
-    },
+    transition: { staggerChildren: 0.1, delayChildren: 0.2 },
   },
 };
 
-// Mock testimonials data
+// Inline SVG avatars — no external image fetches, no CLS, no Unsplash cost.
+const avatar = (initials: string, bg: string) =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='32' fill='${bg}'/><text x='50%' y='54%' font-family='system-ui,sans-serif' font-size='24' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'>${initials}</text></svg>`
+  )}`;
+
 const testimonials = [
   {
     id: 1,
     name: "Sarah Johnson",
     role: "Interior Designer",
     content:
-      "The quality of furniture from Furniture Mart is exceptional. Every piece I've purchased has been delivered on time and in perfect condition. Highly recommend!",
+      "The quality of furniture from Ashraf Furnitures is exceptional. Every piece I've purchased has been delivered on time and in perfect condition. Highly recommend!",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop",
+    image: avatar("SJ", "%23d97706"),
   },
   {
     id: 2,
@@ -67,8 +65,7 @@ const testimonials = [
     content:
       "Amazing selection and great prices. The customer service team helped me find the perfect sofa for my living room. Will definitely shop here again!",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop",
+    image: avatar("MC", "%23ea580c"),
   },
   {
     id: 3,
@@ -77,8 +74,7 @@ const testimonials = [
     content:
       "Best furniture store I've worked with. Their product range is diverse and the quality is consistently high. My clients love their purchases!",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop",
+    image: avatar("ED", "%23b45309"),
   },
   {
     id: 4,
@@ -87,26 +83,49 @@ const testimonials = [
     content:
       "Furnishing our office was seamless. Fast delivery, excellent build quality, and their team was very professional. Great investment!",
     rating: 5,
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop",
+    image: avatar("JW", "%23c2410c"),
   },
 ];
 
 export default function Home() {
   const navigate = useNavigate();
   const { splashComplete } = useSplash();
-  const shouldReduceMotion = useReducedMotion(); // Detect mobile for performance
-  const [categories, setCategories] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [loadingCategories, setLoadingCategories] = useState(false);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
 
-  useEffect(() => {
-    fetchCategories();
-    fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { data: categoriesResponse, isLoading: loadingCategories } =
+    useCategoriesQuery({ sort: "name-asc", limit: 50 });
+  const { data: productsResponse, isLoading: loadingProducts } =
+    useFeaturedProductsQuery(8);
+
+  const categories = useMemo(() => {
+    const list = categoriesResponse?.categories ?? [];
+    return list.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      icon: "🛋️",
+      thumbnail: cat.image,
+      slug: cat.slug,
+    }));
+  }, [categoriesResponse]);
+
+  const products = useMemo(() => {
+    const list = productsResponse?.products ?? [];
+    return list.map((product) => {
+      const primaryImage =
+        product.images?.find((img) => img.isPrimary) || product.images?.[0];
+      return {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: primaryImage?.url || "",
+        rating: product.rating || 4.5,
+        reviewCount: product.reviews || 0,
+        inStock: product.stock > 0,
+        images: primaryImage ? [primaryImage] : [],
+      };
+    });
+  }, [productsResponse]);
 
   // Auto-rotate testimonials
   useEffect(() => {
@@ -116,217 +135,73 @@ export default function Home() {
     return () => clearInterval(timer);
   }, []);
 
-  const fetchCategories = useCallback(async () => {
-    setLoadingCategories(true);
-    try {
-      const response = await getCategories();
-      const apiCategories = response.categories || [];
-
-      // Handle empty or invalid response
-      if (!apiCategories || apiCategories.length === 0) {
-        console.warn('No categories returned from Firestore');
-        setCategories([]);
-        return;
-      }
-
-      // Transform API categories to match CategoryList component format
-      const transformedCategories = apiCategories.map((cat: any) => ({
-        id: cat.id,
-        name: cat.name,
-        icon: "🛋️", // You can add icon mapping if needed
-        thumbnail: cat.image,
-        slug: cat.slug,
-      }));
-
-      setCategories(transformedCategories);
-    } catch (err) {
-      console.error("Error fetching categories:", err);
-      setCategories([]);
-    } finally {
-      setLoadingCategories(false);
-    }
-  }, []);
-
-  const fetchProducts = useCallback(async () => {
-    setLoadingProducts(true);
-    try {
-      const response = await getProducts({ limit: 8 });
-      const apiProducts = response.products || [];
-
-      // Handle empty or invalid response
-      if (!apiProducts || apiProducts.length === 0) {
-        console.warn('No products returned from Firestore');
-        setProducts([]);
-        return;
-      }
-
-      // Transform products to match ProductGrid component format
-      const transformedProducts = apiProducts.map((product: any) => {
-        // Get primary image or first image - optimized
-        const primaryImage =
-          product.images?.find((img: any) => img.isPrimary) ||
-          product.images?.[0];
-
-        return {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image:
-            primaryImage?.url ||
-            "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&h=400&fit=crop",
-          rating: product.rating || 4.5,
-          reviewCount: product.reviews || 0,
-          inStock: product.stock > 0,
-          images: [primaryImage].filter(Boolean), // Only primary image for quick view
-        };
-      });
-
-      setProducts(transformedProducts);
-    } catch (err) {
-      console.error("Error fetching products:", err);
-    } finally {
-      setLoadingProducts(false);
-    }
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 overflow-hidden">
-      {/* SEO Optimization */}
       <SEO
         title="Premium Furniture Collection"
         description="Explore our curated furniture selection for quality and style. Transform your space with premium sofas, dining tables, bedroom sets, office furniture, and more from Ashraf Furnitures."
         keywords={[
-          'premium furniture',
-          'home furniture',
-          'modern furniture',
-          'office furniture',
-          'bedroom furniture',
-          'living room furniture',
-          'dining furniture',
-          'quality craftsmanship',
+          "premium furniture",
+          "home furniture",
+          "modern furniture",
+          "office furniture",
+          "bedroom furniture",
+          "living room furniture",
+          "dining furniture",
+          "quality craftsmanship",
         ]}
         type="website"
       />
-      
-      {/* Structured Data for Rich Snippets */}
-      <StructuredData 
-        data={[
-          generateOrganizationSchema(),
-          generateWebsiteSchema(),
-        ]} 
-      />
+      <StructuredData data={[generateOrganizationSchema(), generateWebsiteSchema()]} />
 
-      {/* Hero Section */}
       <HeroSection animationsReady={splashComplete} />
 
-      {/* Category List Section */}
       <CategoryList
         categories={categories}
         isLoading={loadingCategories}
         animationsReady={splashComplete}
       />
 
-      {/* Trust Section - Why Choose Us */}
-      <motion.section
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-        whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1 }}
-        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8 }}
-        viewport={{ once: true }}
-        className="relative py-8 sm:py-12 lg:py-16 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
-      >
+      {/* Trust Section */}
+      <section className="relative py-8 sm:py-12 lg:py-16 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {/* Handcrafted Quality */}
-            <motion.div
-              whileHover={shouldReduceMotion ? {} : { y: -5 }}
-              className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
-            >
-              <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
-                <Award className="w-6 h-6 text-amber-600" />
+            {[
+              { Icon: Award, title: "Handcrafted Quality", desc: "Built to last — premium craftsmanship" },
+              { Icon: Wrench, title: "Made-to-Order", desc: "Custom sizes & finishes available" },
+              { Icon: ShieldCheck, title: "Warranty & Support", desc: "Limited warranty & aftercare" },
+            ].map(({ Icon, title, desc }) => (
+              <div
+                key={title}
+                className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 hover:-translate-y-1 transition-all"
+              >
+                <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
+                  <Icon className="w-6 h-6 text-amber-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{title}</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">{desc}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                  Handcrafted Quality
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600">
-                  Built to last — premium craftsmanship
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Made-to-Order */}
-            <motion.div
-              whileHover={shouldReduceMotion ? {} : { y: -5 }}
-              className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
-            >
-              <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
-                <Wrench className="w-6 h-6 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                  Made-to-Order
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600">
-                  Custom sizes & finishes available
-                </p>
-              </div>
-            </motion.div>
-
-            {/* Warranty & Support */}
-            <motion.div
-              whileHover={shouldReduceMotion ? {} : { y: -5 }}
-              className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 transition-all"
-            >
-              <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
-                <ShieldCheck className="w-6 h-6 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                  Warranty & Support
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600">
-                  Limited warranty & aftercare
-                </p>
-              </div>
-            </motion.div>
+            ))}
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Featured Products Section */}
+      {/* Featured Products */}
       <motion.section
         variants={shouldReduceMotion ? staticVariants : containerVariants}
         initial="hidden"
         animate={splashComplete ? "visible" : "hidden"}
         className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
       >
-        {/* Background Orbs - Hidden on mobile */}
-        {!shouldReduceMotion && (
-          <motion.div
-            className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/20 rounded-full blur-3xl hidden sm:block"
-            animate={{ y: [0, 50, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-        )}
-
         <div className="max-w-7xl mx-auto relative z-10">
-          {/* Header with Premium Badge */}
           <motion.div
             variants={shouldReduceMotion ? staticVariants : sectionHeaderVariants}
             className="mb-8 sm:mb-12 lg:mb-16"
           >
             <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-              {!shouldReduceMotion && (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                >
-                  <Sparkles className="w-4 sm:w-5 h-4 sm:h-5 text-amber-500" />
-                </motion.div>
-              )}
-              {shouldReduceMotion && (
-                <Sparkles className="w-4 sm:w-5 h-4 sm:h-5 text-amber-500" />
-              )}
+              <Sparkles className="w-4 sm:w-5 h-4 sm:h-5 text-amber-500" />
               <span className="text-xs sm:text-sm font-semibold text-amber-600 uppercase tracking-widest">
                 Curated Selection
               </span>
@@ -342,22 +217,13 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Accent Line - No animation on mobile */}
-            <motion.div
-              initial={shouldReduceMotion ? { scaleX: 1 } : { scaleX: 0 }}
-              whileInView={shouldReduceMotion ? { scaleX: 1 } : { scaleX: 1 }}
-              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8, delay: 0.2 }}
-              className="h-1 w-16 sm:w-20 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full mt-4 sm:mt-6 origin-left"
-            />
+            <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-amber-500 to-amber-600 rounded-full mt-4 sm:mt-6" />
           </motion.div>
 
-          {/* Product Grid */}
-          <motion.div variants={containerVariants}>
+          <div>
             {loadingProducts ? (
               <div className="flex justify-center items-center py-12">
-                <div className="text-gray-500 text-sm sm:text-base">
-                  Loading products...
-                </div>
+                <div className="text-gray-500 text-sm sm:text-base">Loading products...</div>
               </div>
             ) : products.length > 0 ? (
               <ProductGrid products={products} columns={4} gap="lg" />
@@ -366,94 +232,36 @@ export default function Home() {
                 No products available
               </div>
             )}
-          </motion.div>
+          </div>
 
-          {/* CTA Section */}
-          <motion.div
-            variants={sectionHeaderVariants}
-            className="mt-8 sm:mt-12 lg:mt-16 flex items-center justify-center"
-          >
+          <div className="mt-8 sm:mt-12 lg:mt-16 flex items-center justify-center">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={shouldReduceMotion ? {} : { scale: 1.05 }}
+              whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
               onClick={() => navigate("/products")}
-              className="group relative px-6 sm:px-8 lg:px-10 py-3 sm:py-4 text-sm sm:text-base lg:text-lg font-bold text-white overflow-hidden rounded-lg sm:rounded-xl transition-all"
+              className="group relative px-6 sm:px-8 lg:px-10 py-3 sm:py-4 text-sm sm:text-base lg:text-lg font-bold text-white rounded-lg sm:rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:shadow-2xl transition-all"
             >
-              {/* Animated Background */}
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700"
-                animate={{
-                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-                style={{ backgroundSize: "200% 200%" }}
-              />
-
-              {/* Glow Effect */}
-              <motion.div
-                className="absolute -inset-0.5 bg-gradient-to-r from-amber-400 to-amber-600 rounded-lg sm:rounded-xl opacity-0 group-hover:opacity-75 blur transition-all -z-10"
-                initial={{ opacity: 0 }}
-                whileHover={{ opacity: 0.75 }}
-              />
-
-              {/* Content */}
-              <motion.div
-                className="relative flex items-center gap-2"
-                variants={{
-                  hover: { transition: { staggerChildren: 0.05 } },
-                }}
-                whileHover="hover"
-              >
+              <span className="relative flex items-center gap-2">
                 <span>View All Products</span>
-                <motion.div
-                  variants={{
-                    hover: { x: 5 },
-                  }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5" />
-                </motion.div>
-              </motion.div>
+                <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
             </motion.button>
-          </motion.div>
+          </div>
         </div>
       </motion.section>
 
-      {/* Testimonials Section */}
-      <motion.section
-        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
-        whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1 }}
-        transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.8 }}
-        viewport={{ once: true }}
-        className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
-      >
-        {/* Background Orbs - Hidden on mobile */}
-        {!shouldReduceMotion && (
-          <motion.div
-            className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/20 rounded-full blur-3xl hidden sm:block"
-            animate={{ y: [0, 50, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-        )}
-
+      {/* Testimonials */}
+      <section className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
         <div className="max-w-6xl mx-auto relative z-10">
-          {/* Header */}
           <motion.div
             variants={shouldReduceMotion ? staticVariants : sectionHeaderVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
             className="text-center mb-12 sm:mb-16 lg:mb-20"
           >
             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
-              {!shouldReduceMotion && (
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                >
-                  <Star className="w-5 sm:w-6 h-5 sm:h-6 text-amber-500" />
-                </motion.div>
-              )}
-              {shouldReduceMotion && (
-                <Star className="w-5 sm:w-6 h-5 sm:h-6 text-amber-500" />
-              )}
+              <Star className="w-5 sm:w-6 h-5 sm:h-6 text-amber-500" />
               <span className="text-xs sm:text-sm font-semibold text-amber-600 uppercase tracking-widest">
                 Customer Love
               </span>
@@ -468,54 +276,33 @@ export default function Home() {
             </p>
           </motion.div>
 
-          {/* Testimonials Carousel */}
           <div className="relative">
-            {/* Main Testimonial Card */}
             <motion.div
               key={currentTestimonial}
-              initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              animate={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 1, y: 0 }}
-              exit={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.5 }}
               className="bg-gradient-to-br from-white to-amber-50/50 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-xl border border-amber-200/30 backdrop-blur-sm"
             >
-              {/* Star Rating */}
               <div className="flex items-center gap-1 mb-4">
-                {[...Array(testimonials[currentTestimonial].rating)].map(
-                  (_, i) =>
-                    shouldReduceMotion ? (
-                      <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                    ) : (
-                      <motion.div
-                        key={i}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{
-                          delay: i * 0.1,
-                          type: "spring",
-                          stiffness: 100,
-                        }}
-                      >
-                        <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-                      </motion.div>
-                    )
-                )}
+                {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
+                ))}
               </div>
 
-              {/* Testimonial Content */}
               <p className="text-base sm:text-lg lg:text-xl text-gray-800 font-medium mb-6 sm:mb-8 leading-relaxed">
                 "{testimonials[currentTestimonial].content}"
               </p>
 
-              {/* Customer Info */}
               <div className="flex items-center gap-4">
-                <motion.img
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 100 }}
+                <img
                   src={testimonials[currentTestimonial].image}
                   alt={testimonials[currentTestimonial].name}
+                  width={64}
+                  height={64}
                   className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-amber-300"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div>
                   <p className="font-semibold text-gray-900 text-sm sm:text-base">
@@ -528,11 +315,9 @@ export default function Home() {
               </div>
             </motion.div>
 
-            {/* Navigation Buttons */}
             <div className="flex items-center justify-between mt-6 sm:mt-8">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
+              <button
+                type="button"
                 onClick={() =>
                   setCurrentTestimonial(
                     currentTestimonial === 0
@@ -540,32 +325,30 @@ export default function Home() {
                       : currentTestimonial - 1
                   )
                 }
-                className="p-2 sm:p-3 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 text-amber-600 hover:shadow-lg transition-all"
+                aria-label="Previous testimonial"
+                className="p-2 sm:p-3 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 text-amber-600 hover:shadow-lg hover:scale-110 transition-all"
               >
                 <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-              </motion.button>
+              </button>
 
-              {/* Dots */}
               <div className="flex gap-2">
                 {testimonials.map((_, index) => (
-                  <motion.button
+                  <button
                     key={index}
+                    type="button"
                     onClick={() => setCurrentTestimonial(index)}
-                    animate={{
-                      scale: currentTestimonial === index ? 1.2 : 1,
-                      backgroundColor:
-                        currentTestimonial === index
-                          ? "rgb(217, 119, 6)"
-                          : "rgb(253, 224, 71)",
-                    }}
-                    className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-amber-300 transition-all"
+                    aria-label={`Go to testimonial ${index + 1}`}
+                    className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all ${
+                      currentTestimonial === index
+                        ? "bg-amber-600 scale-125"
+                        : "bg-amber-300 hover:bg-amber-400"
+                    }`}
                   />
                 ))}
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
+              <button
+                type="button"
                 onClick={() =>
                   setCurrentTestimonial(
                     currentTestimonial === testimonials.length - 1
@@ -573,90 +356,47 @@ export default function Home() {
                       : currentTestimonial + 1
                   )
                 }
-                className="p-2 sm:p-3 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 text-amber-600 hover:shadow-lg transition-all"
+                aria-label="Next testimonial"
+                className="p-2 sm:p-3 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 text-amber-600 hover:shadow-lg hover:scale-110 transition-all"
               >
                 <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-              </motion.button>
+              </button>
             </div>
           </div>
         </div>
-      </motion.section>
+      </section>
 
-      {/* Newsletter Section - Premium Gradient */}
-      <motion.section
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-        viewport={{ once: true }}
-        className="relative py-12 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
-      >
-        {/* Background Orbs */}
-        <motion.div
-          className="absolute -top-40 -right-40 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/20 rounded-full blur-3xl hidden sm:block"
-          animate={{ y: [0, 50, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-
+      {/* Newsletter */}
+      <section className="relative py-12 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
         <div className="max-w-4xl mx-auto relative z-10 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="space-y-4 sm:space-y-6"
-          >
-            <motion.h3
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-amber-700 via-orange-600 to-amber-700 bg-clip-text text-transparent"
-            >
+          <div className="space-y-4 sm:space-y-6">
+            <h3 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-amber-700 via-orange-600 to-amber-700 bg-clip-text text-transparent">
               Stay Updated with New Arrivals
-            </motion.h3>
+            </h3>
             <p className="text-sm sm:text-base lg:text-lg text-gray-700 font-medium">
               Subscribe to our newsletter and get exclusive offers, design tips,
               and early access to new collections.
             </p>
 
-            <motion.form
+            <form
               onSubmit={(e) => e.preventDefault()}
               className="flex flex-col sm:flex-row gap-3 sm:gap-3 max-w-2xl mx-auto mt-8 sm:mt-10"
             >
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-lg text-sm sm:text-base text-gray-900 font-medium placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-amber-50 transition-all shadow-lg"
+                className="flex-1 px-4 sm:px-6 py-3 sm:py-4 rounded-lg text-sm sm:text-base text-gray-900 font-medium placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-lg"
               />
-              <motion.button
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 20px 40px rgba(217,119,6,0.3)",
-                }}
-                whileTap={{ scale: 0.95 }}
-                className="group relative px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-white overflow-hidden rounded-lg whitespace-nowrap shadow-xl hover:shadow-2xl transition-all"
+              <button
+                type="submit"
+                className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-bold text-white rounded-lg whitespace-nowrap shadow-xl bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 hover:shadow-2xl hover:scale-105 active:scale-95 transition-all"
               >
-                {/* Gradient Background */}
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 rounded-lg" />
-
-                {/* Hover Glow Effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 opacity-0 group-hover:opacity-100 blur-lg -z-10 rounded-lg"
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                />
-
-                {/* Shine Effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-lg"
-                  animate={{ x: ["-100%", "100%"] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 0 }}
-                />
-
-                <span className="relative">Subscribe</span>
-              </motion.button>
-            </motion.form>
-          </motion.div>
+                Subscribe
+              </button>
+            </form>
+          </div>
         </div>
-      </motion.section>
+      </section>
     </div>
   );
 }

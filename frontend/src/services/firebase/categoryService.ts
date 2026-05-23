@@ -220,19 +220,13 @@ export const getCategoryById = async (categoryId: string): Promise<Category | nu
   const categoryDoc = doc(db, 'categories', categoryId);
   const categorySnap = await getDoc(categoryDoc);
   const category = docToCategory(categorySnap);
-  
+
   if (!category) {
     cache.set(cacheKey, null, CacheTTL.LONG);
     return null;
   }
 
-  // Update product count
-  const productsRef = collection(db, 'products');
-  const productQuery = query(productsRef, where('category', '==', category.name));
-  const productSnapshot = await getDocs(productQuery);
-  category.productCount = productSnapshot.size;
-
-  // Cache for 10 minutes
+  // Cache for 10 minutes — productCount is kept in sync by productService writes
   cache.set(cacheKey, category, CacheTTL.LONG);
 
   return category;
@@ -247,17 +241,10 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | null> 
   const querySnapshot = await getDocs(q);
   
   if (querySnapshot.empty) return null;
-  
-  const category = docToCategory(querySnapshot.docs[0]);
-  if (!category) return null;
 
-  // Update product count
-  const productsRef = collection(db, 'products');
-  const productQuery = query(productsRef, where('category', '==', category.name));
-  const productSnapshot = await getDocs(productQuery);
-  category.productCount = productSnapshot.size;
-
-  return category;
+  // productCount is denormalized on the category doc and kept in sync by
+  // create/update/delete in productService.
+  return docToCategory(querySnapshot.docs[0]);
 };
 
 /**
@@ -413,18 +400,10 @@ export const subscribeToCategories = (
 
   return onSnapshot(
     q,
-    async (snapshot) => {
+    (snapshot) => {
       const categories = snapshot.docs
         .map(docToCategory)
         .filter((c): c is Category => c !== null);
-
-      // Update product counts (this is async but we'll do it in background)
-      const productsRef = collection(db, 'products');
-      for (const category of categories) {
-        const productQuery = query(productsRef, where('category', '==', category.name));
-        const productSnapshot = await getDocs(productQuery);
-        category.productCount = productSnapshot.size;
-      }
 
       onUpdate({
         categories,
