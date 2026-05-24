@@ -48,6 +48,7 @@ const fetchSearchResults = async (
       name: product.name,
       price: product.price,
       originalPrice: product.originalPrice,
+      hidePrice: product.hidePrice,
       image:
         product.images?.[0]?.url ||
         "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500&h=400&fit=crop",

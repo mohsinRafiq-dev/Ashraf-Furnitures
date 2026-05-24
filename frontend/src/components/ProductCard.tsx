@@ -9,12 +9,15 @@ import { Eye, ShoppingCart } from "lucide-react";
 import { formatPrice } from "../utils/formatPrice";
 import { sendProductInquiry } from "../utils/whatsapp";
 import { WhatsAppIcon } from "./WhatsAppIcon";
+import { PriceOrInquiry } from "./PriceOrInquiry";
 
 interface ProductCardProps {
   id: string;
   name: string;
   price: number;
   originalPrice?: number;
+  /** When true, render "Ask Price" WhatsApp CTA instead of an amount. */
+  hidePrice?: boolean;
   image: string;
   rating: number;
   reviewCount: number;
@@ -30,6 +33,7 @@ const ProductCard = ({
   name,
   price,
   originalPrice,
+  hidePrice,
   image,
   rating,
   reviewCount,
@@ -207,64 +211,66 @@ const ProductCard = ({
         {/* Price and Add to Cart - Modern Layout */}
         <div className="mt-4 space-y-3">
           {/* Price Section */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-baseline gap-2"
-          >
-            <span className="text-2xl font-bold text-amber-600">
-              {formatPrice(price)}
-            </span>
-            {originalPrice && originalPrice > price && (
+          <div className="flex items-baseline gap-2">
+            <PriceOrInquiry
+              productName={name}
+              price={price}
+              hidePrice={hidePrice}
+              variant="card"
+            />
+            {!hidePrice && originalPrice && originalPrice > price && (
               <span className="text-sm text-gray-500 line-through">
                 {formatPrice(originalPrice)}
               </span>
             )}
-          </motion.div>
+          </div>
 
-          {/* Action Buttons - Add to Cart & WhatsApp */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.25 }}
-            className="flex gap-2"
-          >
+          {/* Action Buttons */}
+          {hidePrice ? (
             <Button
-              onClick={handleAddToCart}
-              disabled={!inStock || isAdding}
-              variant={inStock ? "primary" : "secondary"}
-              className="flex-1 py-2.5 rounded-xl font-semibold transition-all duration-200"
+              onClick={(e) => {
+                e.stopPropagation();
+                sendProductInquiry(name, price, { showPrice: false });
+              }}
+              className="w-full py-2.5 rounded-xl font-semibold bg-green-500 hover:bg-green-600 text-white border-none transition-all duration-200 flex items-center justify-center gap-2"
               size="sm"
-            >
-              {isAdding ? (
-                <motion.span
-                  animate={{ opacity: [0.5, 1] }}
-                  transition={{ duration: 0.5, repeat: Infinity }}
-                >
-                  Adding...
-                </motion.span>
-              ) : inStock ? (
-                <span className="flex items-center justify-center gap-2">
-                  <ShoppingCart className="w-4 h-4" />
-                  Add to Cart
-                </span>
-              ) : (
-                "Out of Stock"
-              )}
-            </Button>
-            
-            {/* WhatsApp Order Button */}
-            <Button
-              onClick={() => sendProductInquiry(name, price)}
-              variant="secondary"
-              className="py-2.5 px-4 rounded-xl font-semibold bg-green-500 hover:bg-green-600 text-white border-none transition-all duration-200"
-              size="sm"
-              title="Order via WhatsApp"
+              title="Ask price on WhatsApp"
             >
               <WhatsAppIcon className="w-5 h-5" />
+              Contact for Price
             </Button>
-          </motion.div>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                onClick={handleAddToCart}
+                disabled={!inStock || isAdding}
+                variant={inStock ? "primary" : "secondary"}
+                className="flex-1 py-2.5 rounded-xl font-semibold transition-all duration-200"
+                size="sm"
+              >
+                {isAdding ? (
+                  <span>Adding...</span>
+                ) : inStock ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <ShoppingCart className="w-4 h-4" />
+                    Add to Cart
+                  </span>
+                ) : (
+                  "Out of Stock"
+                )}
+              </Button>
+
+              <Button
+                onClick={() => sendProductInquiry(name, price)}
+                variant="secondary"
+                className="py-2.5 px-4 rounded-xl font-semibold bg-green-500 hover:bg-green-600 text-white border-none transition-all duration-200"
+                size="sm"
+                title="Order via WhatsApp"
+              >
+                <WhatsAppIcon className="w-5 h-5" />
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 

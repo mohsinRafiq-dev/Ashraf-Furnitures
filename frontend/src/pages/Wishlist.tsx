@@ -167,7 +167,11 @@ export default function Wishlist() {
 
                   <div className="flex items-center justify-between mt-auto mb-4">
                     <div className="text-2xl font-bold text-amber-600">
-                      ${item.price.toFixed(2)}
+                      {item.price > 0 ? `$${item.price.toFixed(2)}` : (
+                        <span className="text-sm font-semibold text-green-600">
+                          Contact for Price
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-gray-500">
                       Added{" "}

@@ -16,10 +16,23 @@ interface OrderItem {
 }
 
 /**
- * Send product inquiry via WhatsApp
+ * Send product inquiry via WhatsApp.
+ *
+ * When the product's price is hidden (or omitted), we ask the seller for a
+ * quote instead of echoing the amount back.
  */
-export const sendProductInquiry = (productName: string, price: number) => {
-  const message = `Hi, I'm interested in:\n\n📦 *${productName}*\n💰 Price: ${formatPrice(price)}\n\nCan you please provide more details?`;
+export const sendProductInquiry = (
+  productName: string,
+  price?: number | null,
+  options: { showPrice?: boolean } = {}
+) => {
+  const showPrice =
+    options.showPrice ?? (typeof price === 'number' && price > 0);
+
+  const message = showPrice && typeof price === 'number'
+    ? `Hi, I'm interested in:\n\n📦 *${productName}*\n💰 Price: ${formatPrice(price)}\n\nCan you please provide more details?`
+    : `Hi, I'm interested in:\n\n📦 *${productName}*\n\nCan you please share the price and availability?`;
+
   openWhatsApp(message);
 };
 

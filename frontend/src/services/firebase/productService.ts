@@ -55,6 +55,12 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  /**
+   * When true, the storefront shows "Contact for Price" + a WhatsApp CTA
+   * instead of the numeric price. Defaults to true for newly-created
+   * products (admin opts in to display).
+   */
+  hidePrice?: boolean;
   category: string;
   images: ProductImage[];
   stock: number;
@@ -260,6 +266,9 @@ const docToProduct = (docSnap: DocumentSnapshot): Product | null => {
     name: data.name,
     description: data.description || '',
     price: data.price,
+    // Legacy products without the field default to "price hidden" so the
+    // storefront stays consistent with the new admin default.
+    hidePrice: data.hidePrice ?? true,
     category: data.category,
     images: data.images || [],
     stock: data.stock || 0,

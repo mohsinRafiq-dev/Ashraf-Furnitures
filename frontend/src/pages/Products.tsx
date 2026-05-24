@@ -10,9 +10,9 @@ import { getCategories, Category } from "../services/firebase/categoryService";
 import { SkeletonGrid } from "../components/ProductSkeleton";
 import { WishlistButton } from "../components/WishlistButton";
 import { OptimizedImage } from "../components/OptimizedImage";
-import { formatPrice } from "../utils/formatPrice";
 import { sendProductInquiry } from "../utils/whatsapp";
 import { WhatsAppIcon } from "../components/WhatsAppIcon";
+import { PriceOrInquiry } from "../components/PriceOrInquiry";
 import SEO from "../components/SEO";
 import { StructuredData, generateItemListSchema } from "../utils/structuredData";
 import {
@@ -697,11 +697,14 @@ export default function Products() {
 
                         {/* Price and Add to Cart - Modern Layout */}
                         <div className="mt-4 space-y-3">
-                          {/* Price Section */}
+                          {/* Price or "Ask Price" CTA */}
                           <div className="flex items-baseline gap-2">
-                            <span className="text-xl sm:text-2xl font-bold text-amber-600">
-                              {formatPrice(product.price)}
-                            </span>
+                            <PriceOrInquiry
+                              productName={product.name}
+                              price={product.price}
+                              hidePrice={product.hidePrice}
+                              variant="card"
+                            />
                           </div>
 
                           {/* Stock Status */}
@@ -719,23 +722,41 @@ export default function Products() {
                             </span>
                           </div>
 
-                          {/* Add to Cart Button */}
-                          <div className="flex gap-2">
+                          {/* Action Button(s) */}
+                          {product.hidePrice ? (
                             <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                sendProductInquiry(product.name, product.price, { showPrice: false });
+                              }}
                               disabled={product.stock === 0}
-                              className="flex-1 p-2 sm:p-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
-                            >
-                              <ShoppingCart className="w-4 sm:w-5 h-4 sm:h-5 inline mr-2" />
-                              Add to Cart
-                            </button>
-                            <button
-                              onClick={() => sendProductInquiry(product.name, product.price)}
-                              className="p-2 sm:p-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
-                              title="Order via WhatsApp"
+                              className="w-full p-2 sm:p-3 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm sm:text-base transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                              title="Ask price on WhatsApp"
                             >
                               <WhatsAppIcon className="w-5 sm:w-6 h-5 sm:h-6" />
+                              Contact for Price
                             </button>
-                          </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                disabled={product.stock === 0}
+                                className="flex-1 p-2 sm:p-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
+                              >
+                                <ShoppingCart className="w-4 sm:w-5 h-4 sm:h-5 inline mr-2" />
+                                Add to Cart
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => sendProductInquiry(product.name, product.price)}
+                                className="p-2 sm:p-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
+                                title="Order via WhatsApp"
+                              >
+                                <WhatsAppIcon className="w-5 sm:w-6 h-5 sm:h-6" />
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
 

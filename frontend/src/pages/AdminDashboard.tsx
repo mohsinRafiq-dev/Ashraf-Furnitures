@@ -259,6 +259,12 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
+    // Close the modal first; refresh from Firestore in the background.
+    setShowCategoryModal(false);
+    const toastId = toast.loading(
+      editingCategory?.id ? 'Updating category...' : 'Creating category...'
+    );
+
     try {
       const categoryData: Partial<Category> = {
         name: categoryName,
@@ -269,17 +275,15 @@ const AdminDashboard: React.FC = () => {
 
       if (editingCategory?.id) {
         await updateCategory(editingCategory.id, categoryData);
-        toast.success('Category updated!');
+        toast.success('Category updated!', { id: toastId });
       } else {
         await createCategory(categoryData as Omit<Category, 'id' | 'createdAt' | 'updatedAt'>);
-        toast.success('Category created!');
+        toast.success('Category created!', { id: toastId });
       }
-
-      setShowCategoryModal(false);
-      await loadData();
+      await loadData(false);
     } catch (error) {
       console.error('Error saving category:', error);
-      toast.error('Failed to save category');
+      toast.error('Failed to save category', { id: toastId });
     }
   };
 
@@ -1162,7 +1166,9 @@ const AdminDashboard: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setProductHidePrice((v) => !v)}
-                    aria-pressed={productHidePrice}
+                    aria-pressed={productHidePrice ? 'true' : 'false'}
+                    aria-label="Toggle hide price"
+                    title={productHidePrice ? 'Price is hidden — click to show' : 'Price is shown — click to hide'}
                     className={`relative h-7 w-12 rounded-full transition-colors flex-shrink-0 ${
                       productHidePrice ? 'bg-amber-500' : 'bg-gray-300'
                     }`}

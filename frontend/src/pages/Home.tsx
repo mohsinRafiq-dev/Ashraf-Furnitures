@@ -118,6 +118,7 @@ export default function Home() {
         id: product.id ?? product.slug,
         name: product.name,
         price: product.price,
+        hidePrice: product.hidePrice,
         image: primaryImage?.url || "",
         rating: product.rating || 4.5,
         reviewCount: product.reviews || 0,

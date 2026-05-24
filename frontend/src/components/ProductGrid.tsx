@@ -8,6 +8,8 @@ export interface Product {
   name: string;
   price: number;
   originalPrice?: number;
+  /** When true, customers see "Ask Price" WhatsApp CTA instead of an amount. */
+  hidePrice?: boolean;
   image: string;
   rating: number;
   reviewCount: number;
@@ -117,6 +119,7 @@ const ProductGrid = ({
                   name={product.name}
                   price={product.price}
                   originalPrice={product.originalPrice}
+                  hidePrice={product.hidePrice}
                   image={product.image}
                   rating={product.rating}
                   reviewCount={product.reviewCount}

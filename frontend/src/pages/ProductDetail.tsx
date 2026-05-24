@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getProductById } from "../services/firebase/productService";
 import { trackProductView } from "../services/firebase/analyticsService";
-import { formatPrice } from "../utils/formatPrice";
 import { sendProductInquiry } from "../utils/whatsapp";
+import { PriceOrInquiry } from "../components/PriceOrInquiry";
 import { WhatsAppIcon } from "../components/WhatsAppIcon";
 import SEO from "../components/SEO";
 import { StructuredData, generateProductSchema } from "../utils/structuredData";
@@ -387,14 +387,17 @@ export default function ProductDetail() {
               </div>
             </motion.div>
 
-            {/* Price */}
+            {/* Price or Contact for Price CTA */}
             <motion.div
               variants={itemVariants}
               className="flex items-baseline gap-2 sm:gap-4 py-3 sm:py-4 border-y border-gray-200"
             >
-              <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-amber-600">
-                {formatPrice(product.price)}
-              </p>
+              <PriceOrInquiry
+                productName={product.name}
+                price={product.price}
+                hidePrice={product.hidePrice}
+                variant="detail"
+              />
             </motion.div>
 
             {/* Stock Status */}
@@ -512,34 +515,48 @@ export default function ProductDetail() {
                   <Share2 className="w-5 sm:w-6 h-5 sm:h-6" />
                 </motion.button>
               </div>
-              <motion.button
-                onClick={() => {
-                  // Track add to cart
-                  trackProductView(
-                    productId || "",
-                    product.name,
-                    "add_to_cart"
-                  );
-                }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={product.stock === 0}
-                className="flex-1 px-4 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl text-xs sm:text-base"
-              >
-                <ShoppingCart className="w-4 sm:w-6 h-4 sm:h-6" />
-                <span className="hidden sm:inline">Add to Cart</span>
-                <span className="sm:hidden">Add</span>({quantity})
-              </motion.button>
-              <motion.button
-                onClick={() => sendProductInquiry(product.name, product.price)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="px-3 sm:px-6 py-2.5 sm:py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-2 shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl text-xs sm:text-base"
-                title="Order via WhatsApp"
-              >
-                <WhatsAppIcon className="w-5 sm:w-7 h-5 sm:h-7" />
-                <span className="hidden sm:inline">WhatsApp</span>
-              </motion.button>
+              {product.hidePrice ? (
+                <motion.button
+                  onClick={() => {
+                    trackProductView(productId || "", product.name, "add_to_cart");
+                    sendProductInquiry(product.name, product.price, { showPrice: false });
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={product.stock === 0}
+                  className="flex-1 px-4 sm:px-8 py-2.5 sm:py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl text-xs sm:text-base"
+                  title="Ask price on WhatsApp"
+                >
+                  <WhatsAppIcon className="w-5 sm:w-7 h-5 sm:h-7" />
+                  <span>Contact for Price</span>
+                </motion.button>
+              ) : (
+                <>
+                  <motion.button
+                    onClick={() => {
+                      trackProductView(productId || "", product.name, "add_to_cart");
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={product.stock === 0}
+                    className="flex-1 px-4 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 sm:gap-2 shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl text-xs sm:text-base"
+                  >
+                    <ShoppingCart className="w-4 sm:w-6 h-4 sm:h-6" />
+                    <span className="hidden sm:inline">Add to Cart</span>
+                    <span className="sm:hidden">Add</span>({quantity})
+                  </motion.button>
+                  <motion.button
+                    onClick={() => sendProductInquiry(product.name, product.price)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="px-3 sm:px-6 py-2.5 sm:py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-2 shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl text-xs sm:text-base"
+                    title="Order via WhatsApp"
+                  >
+                    <WhatsAppIcon className="w-5 sm:w-7 h-5 sm:h-7" />
+                    <span className="hidden sm:inline">WhatsApp</span>
+                  </motion.button>
+                </>
+              )}
             </motion.div>
 
             {/* Trust Badges */}
