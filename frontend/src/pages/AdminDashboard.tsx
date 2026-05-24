@@ -87,16 +87,20 @@ const AdminDashboard: React.FC = () => {
   const [categoryImage, setCategoryImage] = useState('');
 
   // Product Modal
+  // Numeric inputs are held as STRINGS so the user can fully clear them
+  // (typing "12", backspace, backspace ⇒ "" instead of being stuck at "0").
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productName, setProductName] = useState('');
   const [productDescription, setProductDescription] = useState('');
-  const [productPrice, setProductPrice] = useState(0);
+  const [productPrice, setProductPrice] = useState<string>('');
   const [productCategory, setProductCategory] = useState('');
-  const [productStock, setProductStock] = useState(0);
+  const [productStock, setProductStock] = useState<string>('');
   const [productSku, setProductSku] = useState('');
   const [productImage, setProductImage] = useState('');
   const [productFeatured, setProductFeatured] = useState(false);
+  // When true, the storefront shows "Contact for Price" instead of an amount.
+  const [productHidePrice, setProductHidePrice] = useState(true);
 
   // Cropper state
   const [showCropModal, setShowCropModal] = useState(false);
@@ -310,12 +314,13 @@ const AdminDashboard: React.FC = () => {
     setEditingProduct(null);
     setProductName('');
     setProductDescription('');
-    setProductPrice(0);
+    setProductPrice('');
     setProductCategory('');
-    setProductStock(0);
+    setProductStock('');
     setProductSku('');
     setProductImage('');
     setProductFeatured(false);
+    setProductHidePrice(true); // Default: price hidden until admin opts in
     setShowProductModal(true);
   };
 
@@ -323,9 +328,9 @@ const AdminDashboard: React.FC = () => {
     setEditingProduct(product);
     setProductName(product.name);
     setProductDescription(product.description);
-    setProductPrice(product.price);
+    setProductPrice(product.price ? String(product.price) : '');
     setProductCategory(product.category);
-    setProductStock(product.stock || 0);
+    setProductStock(product.stock ? String(product.stock) : '');
     setProductSku(product.sku || '');
     setProductImage(
       product.images && product.images[0]
@@ -335,6 +340,10 @@ const AdminDashboard: React.FC = () => {
         : ''
     );
     setProductFeatured(product.featured || false);
+    // Existing products without the flag default to "hidden" (the new default).
+    setProductHidePrice(
+      (product as Product & { hidePrice?: boolean }).hidePrice ?? true
+    );
     setShowProductModal(true);
   };
 
@@ -344,33 +353,41 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
+    // Close modal immediately and roll the network call into the background
+    // so saving feels instant. We refresh from Firestore after the write
+    // resolves (the service also invalidates its own cache).
+    setShowProductModal(false);
+    const toastId = toast.loading(editingProduct?.id ? 'Updating product...' : 'Creating product...');
+
     try {
-      const productData: Partial<Product> = {
+      const parsedPrice = productPrice.trim() === '' ? 0 : Number(productPrice);
+      const parsedStock = productStock.trim() === '' ? 0 : Number(productStock);
+
+      const productData: Partial<Product> & { hidePrice?: boolean } = {
         name: productName,
         description: productDescription,
-        price: productPrice,
+        price: Number.isFinite(parsedPrice) ? parsedPrice : 0,
         category: productCategory,
-        stock: productStock,
+        stock: Number.isFinite(parsedStock) ? parsedStock : 0,
         sku: productSku,
         images: productImage ? [{ url: productImage, alt: productName, isPrimary: true }] : [],
         featured: productFeatured,
+        hidePrice: productHidePrice,
         rating: editingProduct?.rating || 0,
-        reviews: editingProduct?.reviews || 0
+        reviews: editingProduct?.reviews || 0,
       };
 
       if (editingProduct?.id) {
         await updateProduct(editingProduct.id, productData);
-        toast.success('Product updated!');
+        toast.success('Product updated!', { id: toastId });
       } else {
         await createProduct(productData as Omit<Product, 'id' | 'createdAt' | 'updatedAt'>);
-        toast.success('Product created!');
+        toast.success('Product created!', { id: toastId });
       }
-
-      setShowProductModal(false);
-      await loadData();
+      await loadData(false);
     } catch (error) {
       console.error('Error saving product:', error);
-      toast.error('Failed to save product');
+      toast.error('Failed to save product', { id: toastId });
     }
   };
 
@@ -1134,16 +1151,45 @@ const AdminDashboard: React.FC = () => {
                   />
                 </div>
 
+                {/* Hide Price Toggle */}
+                <div className="flex items-center justify-between gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Hide price on website</p>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      Customers will see "Contact for Price" and a WhatsApp button instead of the amount.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setProductHidePrice((v) => !v)}
+                    aria-pressed={productHidePrice}
+                    className={`relative h-7 w-12 rounded-full transition-colors flex-shrink-0 ${
+                      productHidePrice ? 'bg-amber-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 h-5 w-5 bg-white rounded-full shadow transition-transform ${
+                        productHidePrice ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Price *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Price {productHidePrice ? '(optional — hidden)' : '*'}
+                    </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">$</span>
                       <input
                         type="number"
+                        inputMode="decimal"
                         value={productPrice}
-                        onChange={(e) => setProductPrice(Number(e.target.value))}
-                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
+                        onChange={(e) => setProductPrice(e.target.value)}
+                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base disabled:bg-gray-100 disabled:text-gray-400"
+                        disabled={productHidePrice}
+                        placeholder={productHidePrice ? 'Not shown to customers' : '0.00'}
                         min="0"
                         step="0.01"
                       />
@@ -1154,9 +1200,11 @@ const AdminDashboard: React.FC = () => {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Stock</label>
                     <input
                       type="number"
+                      inputMode="numeric"
                       value={productStock}
-                      onChange={(e) => setProductStock(Number(e.target.value))}
+                      onChange={(e) => setProductStock(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base"
+                      placeholder="0"
                       min="0"
                     />
                   </div>
