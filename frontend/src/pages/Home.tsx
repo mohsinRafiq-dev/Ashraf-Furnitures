@@ -101,7 +101,7 @@ export default function Home() {
   const categories = useMemo(() => {
     const list = categoriesResponse?.categories ?? [];
     return list.map((cat) => ({
-      id: cat.id,
+      id: cat.id ?? cat.slug,
       name: cat.name,
       icon: "🛋️",
       thumbnail: cat.image,
@@ -115,7 +115,7 @@ export default function Home() {
       const primaryImage =
         product.images?.find((img) => img.isPrimary) || product.images?.[0];
       return {
-        id: product.id,
+        id: product.id ?? product.slug,
         name: product.name,
         price: product.price,
         image: primaryImage?.url || "",

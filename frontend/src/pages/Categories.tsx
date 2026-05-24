@@ -445,47 +445,18 @@ export default function Categories() {
                         )}
 
                         {/* Product Count Badge */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.2, duration: 0.5 }}
-                          whileHover={{
-                            scale: 1.05,
-                            boxShadow: "0 8px 16px rgba(217, 119, 6, 0.2)",
-                          }}
-                          viewport={{ once: true }}
-                          className="inline-flex items-center gap-2 mt-auto w-full px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-amber-100/80 to-orange-100/80 rounded-lg border border-amber-200/50 cursor-pointer transition-all flex-wrap"
-                        >
-                          {/* Animated Count Number */}
-                          <motion.span
-                            className="text-amber-600 font-bold text-sm sm:text-base tabular-nums"
-                            animate={{
-                              scale: [1, 1.15, 1],
-                              color: [
-                                "rgb(217, 119, 6)",
-                                "rgb(234, 88, 12)",
-                                "rgb(217, 119, 6)",
-                              ],
-                            }}
-                            transition={{
-                              duration: 2,
-                              repeat: Infinity,
-                              delay: 0.5,
-                            }}
-                          >
+                        <div className="inline-flex items-center gap-2 mt-auto w-full px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-amber-100/80 to-orange-100/80 rounded-lg border border-amber-200/50 cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] flex-wrap">
+                          <span className="text-amber-600 font-bold text-sm sm:text-base tabular-nums">
                             {category.productCount || 0}
-                          </motion.span>
+                          </span>
                           <span className="text-gray-700 text-xs sm:text-sm font-medium">
                             Products
                           </span>
-                          {/* Animated Arrow */}
-                          <motion.svg
+                          <svg
                             className="w-3 sm:w-4 h-3 sm:h-4 text-amber-600 ml-auto flex-shrink-0"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
-                            animate={{ x: [0, 3, 0] }}
-                            transition={{ duration: 1.5, repeat: Infinity }}
                           >
                             <path
                               strokeLinecap="round"
@@ -493,8 +464,8 @@ export default function Categories() {
                               strokeWidth={2}
                               d="M9 5l7 7-7 7"
                             />
-                          </motion.svg>
-                        </motion.div>
+                          </svg>
+                        </div>
                       </div>
 
                       {/* Bottom Gradient Accent */}
@@ -563,22 +534,9 @@ export default function Categories() {
           transition={{ duration: 0.6 }}
           className="relative bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 overflow-hidden"
         >
-          {/* Animated Background Orbs */}
-          <motion.div
-            className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-amber-200/40 to-orange-200/30 rounded-full blur-3xl"
-            animate={{ y: [0, 30, 0], x: [0, 20, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute bottom-0 left-0 w-72 h-72 bg-gradient-to-tr from-orange-200/30 to-amber-200/30 rounded-full blur-3xl"
-            animate={{ y: [0, -30, 0], x: [0, -20, 0] }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 1,
-            }}
-          />
+          {/* Static decorative orbs */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-amber-200/40 to-orange-200/30 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 bg-gradient-to-tr from-orange-200/30 to-amber-200/30 rounded-full blur-3xl pointer-events-none" />
 
           <div className="max-w-7xl mx-auto text-center relative z-10">
             <motion.div
@@ -604,15 +562,9 @@ export default function Categories() {
               className="text-2xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight"
             >
               Find Your Perfect
-              <motion.span
-                className="block bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 bg-clip-text text-transparent"
-                animate={{
-                  backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                }}
-                transition={{ duration: 4, repeat: Infinity }}
-              >
+              <span className="block bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 bg-clip-text text-transparent">
                 Furniture
-              </motion.span>
+              </span>
             </motion.h2>
 
             <motion.p
@@ -633,32 +585,24 @@ export default function Categories() {
               transition={{ delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center"
             >
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="group relative px-6 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 text-white font-bold text-sm sm:text-base rounded-lg sm:rounded-xl overflow-hidden transition-all shadow-lg hover:shadow-2xl"
+              <button
+                type="button"
+                onClick={() => navigate("/products")}
+                className="group relative px-6 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-600 text-white font-bold text-sm sm:text-base rounded-lg sm:rounded-xl overflow-hidden transition-all shadow-lg hover:shadow-2xl hover:scale-105 active:scale-95"
               >
-                {/* Shine Effect */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                  animate={{ x: ["-100%", "100%"] }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-                />
                 <span className="relative flex items-center gap-2 justify-center">
                   <span>Start Shopping</span>
-                  <motion.div className="group-hover:translate-x-1 transition-transform">
-                    →
-                  </motion.div>
+                  <span className="inline-block group-hover:translate-x-1 transition-transform">→</span>
                 </span>
-              </motion.button>
+              </button>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-6 sm:px-10 py-3 sm:py-4 border-2 border-amber-600 text-amber-600 font-bold text-sm sm:text-base rounded-lg sm:rounded-xl hover:bg-amber-600/10 transition-all"
+              <button
+                type="button"
+                onClick={() => navigate("/products")}
+                className="px-6 sm:px-10 py-3 sm:py-4 border-2 border-amber-600 text-amber-600 font-bold text-sm sm:text-base rounded-lg sm:rounded-xl hover:bg-amber-600/10 hover:scale-105 active:scale-95 transition-all"
               >
                 Browse Products
-              </motion.button>
+              </button>
             </motion.div>
           </div>
         </motion.section>

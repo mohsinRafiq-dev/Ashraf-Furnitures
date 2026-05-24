@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -37,7 +37,9 @@ import {
   Home,
   Gauge
 } from 'lucide-react';
-import Cropper from 'react-easy-crop';
+// react-easy-crop is only needed inside the image crop modal. Lazy-loading
+// keeps it out of the initial admin bundle (~50 KB gz).
+const Cropper = lazy(() => import('react-easy-crop'));
 import { 
   getProducts, 
   createProduct, 
@@ -2526,17 +2528,25 @@ const AdminDashboard: React.FC = () => {
 
               <div ref={cropContainerRef} className="relative w-full bg-gray-800 rounded-lg overflow-hidden mb-4" style={{ height: '400px' }}>
                 {cropImage && (
-                  <Cropper
-                    image={cropImage}
-                    crop={crop}
-                    zoom={zoom}
-                    aspect={4 / 3}
-                    onCropChange={setCrop}
-                    onCropComplete={onCropComplete}
-                    onZoomChange={setZoom}
-                    restrictPosition={false}
-                    onMediaLoaded={onMediaLoaded}
-                  />
+                  <Suspense
+                    fallback={
+                      <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">
+                        Loading editor…
+                      </div>
+                    }
+                  >
+                    <Cropper
+                      image={cropImage}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={4 / 3}
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                      restrictPosition={false}
+                      onMediaLoaded={onMediaLoaded}
+                    />
+                  </Suspense>
                 )}
               </div>
 
