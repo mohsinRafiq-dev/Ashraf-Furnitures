@@ -1,51 +1,38 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
+import {
+  LayoutDashboard,
+  Package,
   FolderOpen,
   BarChart3,
-  Plus,
-  Edit2,
-  Trash2,
   X,
   Save,
   LogOut,
   User,
-  Search,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
   Menu,
   Image as ImageIcon,
-  ArrowUpDown,
-  Filter,
-  Download,
-  Grid,
-  List,
-  AlertTriangle,
-  Star,
-  ShoppingBag,
-  Eye,
-  RefreshCw,
-  Clock,
-  CheckCircle,
-  XCircle,
   ZoomOut,
   ZoomIn,
   Home,
-  Gauge
 } from 'lucide-react';
 // react-easy-crop is only needed inside the image crop modal. Lazy-loading
 // keeps it out of the initial admin bundle (~50 KB gz).
 const Cropper = lazy(() => import('react-easy-crop'));
-import { 
-  getProducts, 
-  createProduct, 
-  updateProduct, 
+
+// Each tab is its own JS chunk — only the tab the admin opens gets downloaded.
+const DashboardTab = lazy(() => import('./admin/DashboardTab'));
+const ProductsTab = lazy(() => import('./admin/ProductsTab'));
+const CategoriesTab = lazy(() => import('./admin/CategoriesTab'));
+const AnalyticsTab = lazy(() => import('./admin/AnalyticsTab'));
+
+import { AdminContext, type AdminContextValue } from './admin/AdminContext';
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
   deleteProduct,
-  Product 
+  Product,
 } from '../services/firebase/productService';
 import {
   getCategories,
@@ -302,6 +289,19 @@ const AdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error deleting category:', error);
       toast.error('Failed to delete category');
+    }
+  };
+
+  const refreshCategoryCounts = async () => {
+    try {
+      toast.loading('Refreshing product counts...');
+      await refreshCategoryProductCounts();
+      await loadData();
+      toast.dismiss();
+      toast.success('Product counts refreshed!');
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Failed to refresh counts');
     }
   };
 
@@ -598,7 +598,68 @@ const AdminDashboard: React.FC = () => {
     { id: 'analytics' as TabType, icon: BarChart3, label: 'Analytics' },
   ];
 
+  // Single source of truth handed to lazy-loaded tabs.
+  const contextValue: AdminContextValue = useMemo(
+    () => ({
+      products,
+      categories,
+      loading,
+      totalProducts,
+      totalCategories,
+      totalRevenue,
+      lowStockProducts,
+      outOfStockProducts,
+      featuredProducts,
+      topProducts,
+      categoryStats,
+      filteredAndSortedProducts,
+      productAnalytics,
+      webVitals,
+      searchQuery,
+      setSearchQuery,
+      sortBy,
+      setSortBy,
+      sortOrder,
+      setSortOrder,
+      filterCategory,
+      setFilterCategory,
+      viewMode,
+      setViewMode,
+      selectedProducts,
+      setActiveTab,
+      openAddProductModal,
+      openEditProductModal,
+      handleDeleteProduct,
+      handleSelectProduct,
+      handleSelectAll,
+      handleBulkDelete,
+      exportToCSV,
+      openAddCategoryModal,
+      openEditCategoryModal,
+      handleDeleteCategory,
+      refreshCategoryCounts,
+      handleRefreshData,
+      handleRefreshVitals,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      products,
+      categories,
+      loading,
+      filteredAndSortedProducts,
+      productAnalytics,
+      webVitals,
+      searchQuery,
+      sortBy,
+      sortOrder,
+      filterCategory,
+      viewMode,
+      selectedProducts,
+    ]
+  );
+
   return (
+    <AdminContext.Provider value={contextValue}>
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50">
       {/* Mobile Overlay */}
       <AnimatePresence>
@@ -882,1337 +943,19 @@ const AdminDashboard: React.FC = () => {
         </motion.div>
 
         <AnimatePresence mode="wait">
-          {/* Dashboard Tab */}
-          {activeTab === 'dashboard' && (
-            <motion.div
-              key="dashboard"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
-            >
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  { 
-                    label: 'Total Products', 
-                    value: totalProducts, 
-                    icon: Package, 
-                    color: 'from-blue-500 to-blue-600',
-                    trend: '+12%'
-                  },
-                  { 
-                    label: 'Categories', 
-                    value: totalCategories, 
-                    icon: FolderOpen, 
-                    color: 'from-purple-500 to-purple-600',
-                    trend: '+5%'
-                  },
-                  { 
-                    label: 'Total Revenue', 
-                    value: `$${totalRevenue.toLocaleString()}`, 
-                    icon: DollarSign, 
-                    color: 'from-green-500 to-green-600',
-                    trend: '+23%'
-                  },
-                  { 
-                    label: 'Low Stock', 
-                    value: lowStockProducts, 
-                    icon: TrendingDown, 
-                    color: 'from-red-500 to-red-600',
-                    trend: '-8%'
-                  },
-                ].map((stat, index) => (
-                  <motion.div
-                    key={stat.label}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -5 }}
-                    className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className={`p-3 bg-gradient-to-r ${stat.color} rounded-xl shadow-lg`}>
-                        <stat.icon className="w-6 h-6 text-white" />
-                      </div>
-                      <span className="text-sm font-semibold text-green-600 flex items-center gap-1">
-                        <TrendingUp className="w-4 h-4" />
-                        {stat.trend}
-                      </span>
-                    </div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-                    <p className="text-gray-500 text-sm">{stat.label}</p>
-                  </motion.div>
-                ))}
+          <Suspense
+            key={activeTab}
+            fallback={
+              <div className="flex items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-amber-600" />
               </div>
-
-              {/* Quick Actions & Stats Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Quick Actions */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-amber-600" />
-                    Quick Actions
-                  </h2>
-                  <div className="space-y-3">
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 5 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={openAddProductModal}
-                      className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:shadow-lg transition-all"
-                    >
-                      <Plus className="w-5 h-5" />
-                      <span className="font-medium">Add New Product</span>
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 5 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={openAddCategoryModal}
-                      className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all"
-                    >
-                      <Plus className="w-5 h-5" />
-                      <span className="font-medium">Add New Category</span>
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 5 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setActiveTab('products')}
-                      className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transition-all"
-                    >
-                      <Eye className="w-5 h-5" />
-                      <span className="font-medium">View All Products</span>
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02, x: 5 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleRefreshData}
-                      className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl hover:shadow-lg transition-all"
-                    >
-                      <RefreshCw className="w-5 h-5" />
-                      <span className="font-medium">Refresh Data</span>
-                    </motion.button>
-                  </div>
-                </motion.div>
-
-                {/* Additional Stats */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-amber-600" />
-                    Inventory Status
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-blue-600" />
-                        <span className="text-sm font-medium text-gray-700">In Stock</span>
-                      </div>
-                      <span className="text-lg font-bold text-blue-600">
-                        {products.filter(p => (p.stock || 0) > 10).length}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                        <span className="text-sm font-medium text-gray-700">Low Stock</span>
-                      </div>
-                      <span className="text-lg font-bold text-yellow-600">{lowStockProducts}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-red-50 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <XCircle className="w-5 h-5 text-red-600" />
-                        <span className="text-sm font-medium text-gray-700">Out of Stock</span>
-                      </div>
-                      <span className="text-lg font-bold text-red-600">{outOfStockProducts}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-amber-50 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <Star className="w-5 h-5 text-amber-600" />
-                        <span className="text-sm font-medium text-gray-700">Featured</span>
-                      </div>
-                      <span className="text-lg font-bold text-amber-600">{featuredProducts}</span>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Category Performance */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <FolderOpen className="w-5 h-5 text-amber-600" />
-                    Top Categories
-                  </h2>
-                  <div className="space-y-3">
-                    {categoryStats.slice(0, 5).map((cat, index) => (
-                      <div key={cat.name} className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-gray-700">{cat.name}</span>
-                            <span className="text-xs text-gray-500">{cat.count} items</span>
-                          </div>
-                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${(cat.value / (categoryStats[0]?.value || 1)) * 100}%` }}
-                              transition={{ delay: 0.7 + index * 0.1, duration: 0.5 }}
-                              className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full"
-                            />
-                          </div>
-                        </div>
-                        <span className="text-sm font-bold text-amber-600">
-                          ${cat.value.toLocaleString()}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Top Products & Recent Activity */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Top Products by Value */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <Star className="w-6 h-6 text-amber-600" />
-                    Top Products by Value
-                  </h2>
-                  <div className="space-y-4">
-                    {topProducts.map((product, index) => (
-                      <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.8 + index * 0.1 }}
-                        className="flex items-center gap-4 p-4 hover:bg-amber-50 rounded-xl transition-colors cursor-pointer"
-                        onClick={() => openEditProductModal(product)}
-                      >
-                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-bold text-sm">
-                          #{index + 1}
-                        </div>
-                        <div className="w-14 h-14 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {product.images && product.images[0] ? (
-                            <img
-                              src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Package className="w-6 h-6 text-amber-600" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
-                          <p className="text-sm text-gray-500">{product.category}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-amber-600">${(product.price * (product.stock || 0)).toLocaleString()}</p>
-                          <p className="text-xs text-gray-500">{product.stock} × ${product.price}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Recent Products */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <Clock className="w-6 h-6 text-amber-600" />
-                    Recent Products
-                  </h2>
-                  <div className="space-y-4">
-                    {products.slice(0, 5).map((product, index) => (
-                      <motion.div
-                        key={product.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.9 + index * 0.1 }}
-                        className="flex items-center gap-4 p-4 hover:bg-amber-50 rounded-xl transition-colors cursor-pointer"
-                        onClick={() => openEditProductModal(product)}
-                      >
-                        <div className="w-14 h-14 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {product.images && product.images[0] ? (
-                            <img
-                              src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Package className="w-6 h-6 text-amber-600" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
-                          <p className="text-sm text-gray-500">{product.category}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-amber-600">${product.price}</p>
-                          <p className="text-sm text-gray-500">Stock: {product.stock || 0}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Products Tab */}
-          {activeTab === 'products' && (
-            <motion.div
-              key="products"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
-            >
-              {/* Toolbar */}
-              <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 space-y-4">
-                {/* Search and Actions Row */}
-                <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                  <div className="relative flex-1 w-full lg:max-w-md">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Search by name, category, or SKU..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
-                    />
-                  </div>
-                  
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {/* View Mode Toggle */}
-                    <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
-                      <button
-                        onClick={() => setViewMode('grid')}
-                        className={`p-2 rounded-lg transition-all ${
-                          viewMode === 'grid'
-                            ? 'bg-white text-amber-600 shadow-sm'
-                            : 'text-gray-600 hover:text-amber-600'
-                        }`}
-                        title="Grid view"
-                      >
-                        <Grid className="w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => setViewMode('list')}
-                        className={`p-2 rounded-lg transition-all ${
-                          viewMode === 'list'
-                            ? 'bg-white text-amber-600 shadow-sm'
-                            : 'text-gray-600 hover:text-amber-600'
-                        }`}
-                        title="List view"
-                      >
-                        <List className="w-5 h-5" />
-                      </button>
-                    </div>
-
-                    {/* Export Button */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={exportToCSV}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all"
-                      title="Export to CSV"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span className="hidden sm:inline">Export</span>
-                    </motion.button>
-
-                    {/* Add Product Button */}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={openAddProductModal}
-                      className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:shadow-lg transition-all whitespace-nowrap"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Add Product
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* Filters and Sort Row */}
-                <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-                  <div className="flex items-center gap-3 w-full sm:w-auto">
-                    {/* Category Filter */}
-                    <div className="flex items-center gap-2 flex-1 sm:flex-initial">
-                      <Filter className="w-4 h-4 text-amber-600" />
-                      <select
-                        value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
-                        className="px-4 py-2.5 bg-white border-2 border-amber-200 rounded-xl hover:border-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-600 transition-all text-sm font-medium text-gray-700 cursor-pointer shadow-sm hover:shadow-md"
-                        aria-label="Filter by category"
-                      >
-                        <option value="all" className="bg-white hover:bg-amber-50 py-2">All Categories</option>
-                        {categories.map((cat) => (
-                          <option key={cat.id} value={cat.name} className="bg-white hover:bg-amber-50 py-2">
-                            {cat.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Sort Options */}
-                    <div className="flex items-center gap-2 flex-1 sm:flex-initial">
-                      <ArrowUpDown className="w-4 h-4 text-amber-600" />
-                      <select
-                        value={`${sortBy}-${sortOrder}`}
-                        onChange={(e) => {
-                          const [field, order] = e.target.value.split('-') as [typeof sortBy, typeof sortOrder];
-                          setSortBy(field);
-                          setSortOrder(order);
-                        }}
-                        className="px-4 py-2.5 bg-white border-2 border-amber-200 rounded-xl hover:border-amber-400 focus:ring-2 focus:ring-amber-500 focus:border-amber-600 transition-all text-sm font-medium text-gray-700 cursor-pointer shadow-sm hover:shadow-md"
-                        aria-label="Sort products"
-                      >
-                        <option value="date-desc" className="bg-white hover:bg-amber-50 py-2">Newest First</option>
-                        <option value="date-asc" className="bg-white hover:bg-amber-50 py-2">Oldest First</option>
-                        <option value="name-asc" className="bg-white hover:bg-amber-50 py-2">Name (A-Z)</option>
-                        <option value="name-desc" className="bg-white hover:bg-amber-50 py-2">Name (Z-A)</option>
-                        <option value="price-asc" className="bg-white hover:bg-amber-50 py-2">Price (Low-High)</option>
-                        <option value="price-desc" className="bg-white hover:bg-amber-50 py-2">Price (High-Low)</option>
-                        <option value="stock-asc" className="bg-white hover:bg-amber-50 py-2">Stock (Low-High)</option>
-                        <option value="stock-desc" className="bg-white hover:bg-amber-50 py-2">Stock (High-Low)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Results Count & Bulk Actions */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-600">
-                      {filteredAndSortedProducts.length} products
-                    </span>
-                    {selectedProducts.length > 0 && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-amber-600">
-                          {selectedProducts.length} selected
-                        </span>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={handleBulkDelete}
-                          className="flex items-center gap-1 px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
-                        </motion.button>
-                        <button
-                          onClick={() => setSelectedProducts([])}
-                          className="text-sm text-gray-500 hover:text-gray-700"
-                        >
-                          Clear
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Bulk Select Checkbox */}
-                {filteredAndSortedProducts.length > 0 && (
-                  <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-                    <input
-                      type="checkbox"
-                      checked={selectedProducts.length === filteredAndSortedProducts.length}
-                      onChange={handleSelectAll}
-                      className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
-                      id="select-all"
-                    />
-                    <label htmlFor="select-all" className="text-sm text-gray-600 cursor-pointer">
-                      Select all products
-                    </label>
-                  </div>
-                )}
-              </div>
-
-              {/* Products Grid/List */}
-              {loading ? (
-                <div className="flex items-center justify-center py-20">
-                  <div className="relative">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-600"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Package className="w-6 h-6 text-amber-600" />
-                    </div>
-                  </div>
-                </div>
-              ) : filteredAndSortedProducts.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 text-center border border-gray-100"
-                >
-                  <Package className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No products found</h3>
-                  <p className="text-sm sm:text-base text-gray-500 mb-6">
-                    {searchQuery || filterCategory !== 'all' 
-                      ? 'Try adjusting your filters or search query' 
-                      : 'Start by creating your first product'}
-                  </p>
-                  {!searchQuery && filterCategory === 'all' && (
-                    <button
-                      onClick={openAddProductModal}
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Add Product
-                    </button>
-                  )}
-                </motion.div>
-              ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredAndSortedProducts.map((product, index) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ y: -8, scale: 1.02 }}
-                      className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl transition-all relative"
-                    >
-                      {/* Selection Checkbox */}
-                      <div className="absolute top-3 left-3 z-10">
-                        <input
-                          type="checkbox"
-                          checked={selectedProducts.includes(product.id || '')}
-                          onChange={() => product.id && handleSelectProduct(product.id)}
-                          className="w-5 h-5 text-amber-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-amber-500 bg-white shadow-md cursor-pointer"
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label={`Select ${product.name}`}
-                        />
-                      </div>
-
-                      <div className="relative h-48 bg-gradient-to-br from-amber-100 to-orange-100 overflow-hidden group">
-                        {product.images && product.images[0] ? (
-                          <img
-                            src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url}
-                            alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full">
-                            <Package className="w-16 h-16 text-amber-300" />
-                          </div>
-                        )}
-                        {product.featured && (
-                          <div className="absolute top-3 right-3 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full shadow-lg flex items-center gap-1">
-                            <Star className="w-3 h-3 fill-current" />
-                            Featured
-                          </div>
-                        )}
-                        {(product.stock || 0) === 0 && (
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                            <span className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg">
-                              Out of Stock
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-5">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-bold text-gray-900 truncate text-lg flex-1">{product.name}</h3>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-1">{product.category}</p>
-                        {product.sku && (
-                          <p className="text-xs text-gray-400 mb-3">SKU: {product.sku}</p>
-                        )}
-                        <div className="flex items-center justify-between mb-4">
-                          <p className="text-2xl font-bold text-amber-600">${product.price}</p>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
-                            (product.stock || 0) === 0 
-                              ? 'bg-red-100 text-red-600'
-                              : (product.stock || 0) < 10 
-                              ? 'bg-yellow-100 text-yellow-700' 
-                              : 'bg-green-100 text-green-600'
-                          }`}>
-                            <ShoppingBag className="w-3 h-3" />
-                            {product.stock || 0}
-                          </span>
-                        </div>
-                        <div className="flex gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => openEditProductModal(product)}
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                            Edit
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => product.id && handleDeleteProduct(product.id)}
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                          </motion.button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                /* List View */
-                <div className="space-y-4">
-                  {filteredAndSortedProducts.map((product, index) => (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-2xl transition-all"
-                    >
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 sm:p-6">
-                        {/* Selection Checkbox */}
-                        <input
-                          type="checkbox"
-                          checked={selectedProducts.includes(product.id || '')}
-                          onChange={() => product.id && handleSelectProduct(product.id)}
-                          className="w-5 h-5 text-amber-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-amber-500 cursor-pointer flex-shrink-0"
-                          aria-label={`Select ${product.name}`}
-                        />
-
-                        {/* Product Image */}
-                        <div className="relative w-full sm:w-24 lg:w-32 h-32 sm:h-24 lg:h-32 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl overflow-hidden flex-shrink-0">
-                          {product.images && product.images[0] ? (
-                            <img
-                              src={typeof product.images[0] === 'string' ? product.images[0] : product.images[0].url}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full">
-                              <Package className="w-12 h-12 text-amber-300" />
-                            </div>
-                          )}
-                          {(product.stock || 0) === 0 && (
-                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                              <AlertTriangle className="w-6 h-6 text-red-500" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Product Details */}
-                        <div className="flex-1 min-w-0 w-full">
-                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-                            <div className="flex-1">
-                              <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <h3 className="font-bold text-gray-900 text-base sm:text-lg">{product.name}</h3>
-                                {product.featured && (
-                                  <span className="px-2 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-semibold rounded-full flex items-center gap-1">
-                                    <Star className="w-3 h-3 fill-current" />
-                                    Featured
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-500">{product.category}</p>
-                              {product.sku && (
-                                <p className="text-xs text-gray-400 mt-1">SKU: {product.sku}</p>
-                              )}
-                            </div>
-                            <p className="text-2xl sm:text-3xl font-bold text-amber-600 flex-shrink-0">${product.price}</p>
-                          </div>
-                          
-                          {product.description && (
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{product.description}</p>
-                          )}
-
-                          <div className="flex flex-wrap items-center gap-3 mb-3 sm:mb-0">
-                            <span className={`px-3 py-1 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1 ${
-                              (product.stock || 0) === 0 
-                                ? 'bg-red-100 text-red-600'
-                                : (product.stock || 0) < 10 
-                                ? 'bg-yellow-100 text-yellow-700' 
-                                : 'bg-green-100 text-green-600'
-                            }`}>
-                              <ShoppingBag className="w-3 h-3 sm:w-4 sm:h-4" />
-                              Stock: {product.stock || 0}
-                            </span>
-                            {product.createdAt && (
-                              <span className="text-xs text-gray-400 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                Added {(product.createdAt instanceof Date ? product.createdAt : product.createdAt.toDate()).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex flex-col gap-2 flex-shrink-0">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => openEditProductModal(product)}
-                            className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all whitespace-nowrap"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                            Edit
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => product.id && handleDeleteProduct(product.id)}
-                            className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all whitespace-nowrap"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                          </motion.button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* Categories Tab */}
-          {activeTab === 'categories' && (
-            <motion.div
-              key="categories"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
-            >
-              {/* Toolbar */}
-              <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 border border-gray-100">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">All Categories</h2>
-                  <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={async () => {
-                        try {
-                          toast.loading('Refreshing product counts...');
-                          await refreshCategoryProductCounts();
-                          await loadData();
-                          toast.dismiss();
-                          toast.success('Product counts refreshed!');
-                        } catch (error) {
-                          toast.dismiss();
-                          toast.error('Failed to refresh counts');
-                        }
-                      }}
-                      className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      Refresh Counts
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={openAddCategoryModal}
-                      className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all"
-                    >
-                      <Plus className="w-5 h-5" />
-                      Add Category
-                    </motion.button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Categories Grid */}
-              {loading ? (
-                <div className="flex items-center justify-center py-20">
-                  <div className="relative">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-600"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <FolderOpen className="w-6 h-6 text-amber-600" />
-                    </div>
-                  </div>
-                </div>
-              ) : categories.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 text-center border border-gray-100"
-                >
-                  <FolderOpen className="w-16 h-16 sm:w-20 sm:h-20 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No categories yet</h3>
-                  <p className="text-sm sm:text-base text-gray-500 mb-6">Create your first category to organize products</p>
-                  <button
-                    onClick={openAddCategoryModal}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:shadow-lg transition-all"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Add Category
-                  </button>
-                </motion.div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {categories.map((category, index) => (
-                    <motion.div
-                      key={category.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ y: -8, scale: 1.02 }}
-                      className="bg-white rounded-2xl shadow-lg overflow-hidden border-l-4 hover:shadow-2xl transition-all"
-                      style={{ borderLeftColor: category.color || '#f59e0b' }}
-                    >
-                      {category.image && (
-                        <div className="h-40 bg-gradient-to-br from-amber-100 to-orange-100 overflow-hidden">
-                          <img 
-                            src={category.image} 
-                            alt={category.name} 
-                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" 
-                          />
-                        </div>
-                      )}
-                      <div className="p-6">
-                        <div className="flex items-start justify-between mb-3">
-                          <h3 className="text-xl font-bold text-gray-900">{category.name}</h3>
-                          <div 
-                            className="w-8 h-8 rounded-full shadow-inner"
-                            style={{ backgroundColor: category.color || '#f59e0b' }}
-                          />
-                        </div>
-                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">{category.description || 'No description'}</p>
-                        <div className="flex items-center gap-2 mb-4">
-                          <Package className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
-                            {products.filter(p => p.category === category.name).length} products
-                          </span>
-                        </div>
-                        <div className="flex gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => openEditCategoryModal(category)}
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                            Edit
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => category.id && handleDeleteCategory(category.id)}
-                            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl transition-all"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Delete
-                          </motion.button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* Analytics Tab */}
-          {activeTab === 'analytics' && (
-            <motion.div
-              key="analytics"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
-            >
-              {/* Analytics Header */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Analytics & Insights</h2>
-                <div className="w-full sm:w-auto flex flex-col sm:flex-row gap-2">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleRefreshVitals}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all"
-                  >
-                    <Gauge className="w-4 h-4" />
-                    Refresh Vitals
-                  </motion.button>
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleRefreshData}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-all"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Refresh Data
-                  </motion.button>
-                </div>
-              </div>
-
-              {/* Core Web Vitals (Session) */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-              >
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg">
-                    <Gauge className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">Core Web Vitals (Current Session)</h3>
-                    <p className="text-sm text-gray-500">Measured in your browser after page load</p>
-                  </div>
-                </div>
-
-                {webVitals.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                    {webVitals.map((v) => (
-                      <div
-                        key={v.name}
-                        className="rounded-xl border p-4 bg-gray-50/80"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-bold text-gray-800">{v.name}</p>
-                          <span
-                            className={`text-xs px-2 py-1 rounded-full font-semibold ${
-                              v.rating === 'good'
-                                ? 'bg-green-100 text-green-700'
-                                : v.rating === 'needs-improvement'
-                                ? 'bg-amber-100 text-amber-700'
-                                : 'bg-red-100 text-red-700'
-                            }`}
-                          >
-                            {v.rating}
-                          </span>
-                        </div>
-                        <p className="text-2xl font-bold text-gray-900">
-                          {v.name === 'CLS' ? v.value.toFixed(3) : Math.round(v.value)}
-                          <span className="text-sm text-gray-500 ml-1">{v.name === 'CLS' ? '' : 'ms'}</span>
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">
-                    No session vitals yet. Visit Home, Categories, or Products and refresh this tab.
-                  </p>
-                )}
-              </motion.div>
-
-              {/* Key Metrics Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Total Products */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg p-6 text-white"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <Package className="w-8 h-8 opacity-80" />
-                    <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Products</span>
-                  </div>
-                  <p className="text-3xl font-bold mb-1">{products.length}</p>
-                  <p className="text-blue-100 text-sm">Total Products</p>
-                </motion.div>
-
-                {/* Total Categories */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg p-6 text-white"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <FolderOpen className="w-8 h-8 opacity-80" />
-                    <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Categories</span>
-                  </div>
-                  <p className="text-3xl font-bold mb-1">{categories.length}</p>
-                  <p className="text-purple-100 text-sm">Active Categories</p>
-                </motion.div>
-
-                {/* Total Inventory Value */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl shadow-lg p-6 text-white"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <DollarSign className="w-8 h-8 opacity-80" />
-                    <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Value</span>
-                  </div>
-                  <p className="text-3xl font-bold mb-1">
-                    ${totalRevenue.toLocaleString()}
-                  </p>
-                  <p className="text-green-100 text-sm">Inventory Value</p>
-                </motion.div>
-
-                {/* Low Stock Alert */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  className="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl shadow-lg p-6 text-white"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <AlertTriangle className="w-8 h-8 opacity-80" />
-                    <span className="text-sm font-medium bg-white/20 px-2 py-1 rounded-full">Alert</span>
-                  </div>
-                  <p className="text-3xl font-bold mb-1">{lowStockProducts}</p>
-                  <p className="text-red-100 text-sm">Low Stock Items</p>
-                </motion.div>
-              </div>
-
-              {/* Performance Metrics Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Top Performing Products */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg">
-                      <TrendingUp className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">Top Performers</h3>
-                      <p className="text-sm text-gray-500">Highest value products</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    {topProducts.slice(0, 5).map((product, index) => (
-                      <div
-                        key={product.id}
-                        className="flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg hover:shadow-md transition-all"
-                      >
-                        <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-bold text-sm">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-900 truncate">{product.name}</p>
-                          <p className="text-xs text-gray-500">{product.category}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-amber-600">${((product.stock || 0) * product.price).toLocaleString()}</p>
-                          <p className="text-xs text-gray-500">{product.stock} units</p>
-                        </div>
-                      </div>
-                    ))}
-                    {topProducts.length === 0 && (
-                      <p className="text-center text-gray-400 py-8">No product data available</p>
-                    )}
-                  </div>
-                </motion.div>
-
-                {/* Category Performance */}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
-                      <BarChart3 className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900">Category Insights</h3>
-                      <p className="text-sm text-gray-500">Performance by category</p>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    {categoryStats.map((cat, index) => {
-                      const percentage = totalRevenue > 0 ? (cat.value / totalRevenue) * 100 : 0;
-                      return (
-                        <div key={index}>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold text-gray-900">{cat.name}</span>
-                            <div className="text-right">
-                              <span className="font-bold text-purple-600">${cat.value.toLocaleString()}</span>
-                              <span className="text-xs text-gray-500 ml-2">({cat.count} items)</span>
-                            </div>
-                          </div>
-                          <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <motion.div
-                              initial={{ width: 0 }}
-                              animate={{ width: `${percentage}%` }}
-                              transition={{ delay: 0.2 + index * 0.1, duration: 0.8 }}
-                              className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
-                            />
-                          </div>
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-xs text-gray-500">{percentage.toFixed(1)}% of total</span>
-                            <span className="text-xs text-gray-500">Avg: ${cat.count > 0 ? (cat.value / cat.count).toFixed(2) : '0.00'}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {categoryStats.length === 0 && (
-                      <p className="text-center text-gray-400 py-8">No category data available</p>
-                    )}
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Product Engagement & Analytics */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-              >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg">
-                    <Eye className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">Product Engagement</h3>
-                    <p className="text-sm text-gray-500">Views, clicks, and customer actions</p>
-                  </div>
-                </div>
-
-                {productAnalytics.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b-2 border-gray-200">
-                          <th className="text-left py-3 px-4 font-semibold text-gray-700">Product</th>
-                          <th className="text-center py-3 px-4 font-semibold text-gray-700">
-                            <div className="flex items-center justify-center gap-1">
-                              <Eye className="w-4 h-4" />
-                              Views
-                            </div>
-                          </th>
-                          <th className="text-center py-3 px-4 font-semibold text-gray-700">
-                            <div className="flex items-center justify-center gap-1">
-                              <ShoppingBag className="w-4 h-4" />
-                              Add to Cart
-                            </div>
-                          </th>
-                          <th className="text-center py-3 px-4 font-semibold text-gray-700">
-                            <div className="flex items-center justify-center gap-1">
-                              <Star className="w-4 h-4" />
-                              Wishlist
-                            </div>
-                          </th>
-                          <th className="text-center py-3 px-4 font-semibold text-gray-700">Total Actions</th>
-                          <th className="text-center py-3 px-4 font-semibold text-gray-700">Engagement</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {productAnalytics.slice(0, 10).map((item, index) => {
-                          const engagementRate = item.views > 0 
-                            ? ((item.addToCart + item.wishlist) / item.views * 100).toFixed(1)
-                            : '0.0';
-                          
-                          return (
-                            <motion.tr
-                              key={item.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 transition-all"
-                            >
-                              <td className="py-3 px-4">
-                                <div className="flex items-center gap-2">
-                                  <span className="flex items-center justify-center w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full font-bold text-xs">
-                                    {index + 1}
-                                  </span>
-                                  <span className="font-medium text-gray-900">{item.name}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full font-semibold text-sm">
-                                  {item.views}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full font-semibold text-sm">
-                                  {item.addToCart}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 rounded-full font-semibold text-sm">
-                                  {item.wishlist}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <span className="font-bold text-gray-900">{item.totalActions}</span>
-                              </td>
-                              <td className="py-3 px-4 text-center">
-                                <div className="flex items-center justify-center gap-2">
-                                  <div className="w-16 bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full"
-                                      style={{ width: `${Math.min(parseFloat(engagementRate), 100)}%` }}
-                                    />
-                                  </div>
-                                  <span className="text-sm font-semibold text-gray-700">{engagementRate}%</span>
-                                </div>
-                              </td>
-                            </motion.tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Eye className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-2">No engagement data yet</p>
-                    <p className="text-sm text-gray-400">Product views and actions will appear here</p>
-                  </div>
-                )}
-              </motion.div>
-
-              {/* Stock & Alerts Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Out of Stock */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                      <XCircle className="w-6 h-6 text-red-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">Out of Stock</h3>
-                      <p className="text-sm text-gray-500">{outOfStockProducts} products</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {products.filter(p => (p.stock || 0) === 0).map(product => (
-                      <div key={product.id} className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
-                        <span className="text-sm font-medium text-gray-900 truncate flex-1">{product.name}</span>
-                        <span className="text-xs text-red-600 font-semibold">0 left</span>
-                      </div>
-                    ))}
-                    {outOfStockProducts === 0 && (
-                      <p className="text-center text-gray-400 py-4 text-sm">All products in stock!</p>
-                    )}
-                  </div>
-                </motion.div>
-
-                {/* Low Stock */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-yellow-100 rounded-lg">
-                      <AlertTriangle className="w-6 h-6 text-yellow-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">Low Stock</h3>
-                      <p className="text-sm text-gray-500">{lowStockProducts} products</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) < 10).map(product => (
-                      <div key={product.id} className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
-                        <span className="text-sm font-medium text-gray-900 truncate flex-1">{product.name}</span>
-                        <span className="text-xs text-yellow-600 font-semibold">{product.stock} left</span>
-                      </div>
-                    ))}
-                    {lowStockProducts === 0 && (
-                      <p className="text-center text-gray-400 py-4 text-sm">No low stock alerts</p>
-                    )}
-                  </div>
-                </motion.div>
-
-                {/* Featured Products */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100"
-                >
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 bg-amber-100 rounded-lg">
-                      <Star className="w-6 h-6 text-amber-600 fill-current" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">Featured</h3>
-                      <p className="text-sm text-gray-500">{featuredProducts} products</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {products.filter(p => p.featured).map(product => (
-                      <div key={product.id} className="flex items-center justify-between p-2 bg-amber-50 rounded-lg">
-                        <span className="text-sm font-medium text-gray-900 truncate flex-1">{product.name}</span>
-                        <span className="text-xs text-amber-600 font-semibold">${product.price}</span>
-                      </div>
-                    ))}
-                    {featuredProducts === 0 && (
-                      <p className="text-center text-gray-400 py-4 text-sm">No featured products</p>
-                    )}
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Summary Stats */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-lg p-6 text-white"
-              >
-                <h3 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <CheckCircle className="w-8 h-8" />
-                  Inventory Summary
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div>
-                    <p className="text-amber-100 text-sm mb-1">Average Product Price</p>
-                    <p className="text-3xl font-bold">
-                      ${products.length > 0 ? (products.reduce((sum, p) => sum + p.price, 0) / products.length).toFixed(2) : '0'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-amber-100 text-sm mb-1">Total Stock Units</p>
-                    <p className="text-3xl font-bold">
-                      {products.reduce((sum, p) => sum + (p.stock || 0), 0).toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-amber-100 text-sm mb-1">Stock Health</p>
-                    <p className="text-3xl font-bold">
-                      {products.length > 0 ? Math.round(((products.length - lowStockProducts - outOfStockProducts) / products.length) * 100) : 0}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-amber-100 text-sm mb-1">Products/Category</p>
-                    <p className="text-3xl font-bold">
-                      {categories.length > 0 ? (products.length / categories.length).toFixed(1) : '0'}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
+            }
+          >
+            {activeTab === 'dashboard' && <DashboardTab />}
+            {activeTab === 'products' && <ProductsTab />}
+            {activeTab === 'categories' && <CategoriesTab />}
+            {activeTab === 'analytics' && <AnalyticsTab />}
+          </Suspense>
         </AnimatePresence>
       </main>
 
@@ -2589,6 +1332,7 @@ const AdminDashboard: React.FC = () => {
       </AnimatePresence>
 
     </div>
+    </AdminContext.Provider>
   );
 };
 
