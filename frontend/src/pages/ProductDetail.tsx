@@ -16,8 +16,8 @@ import {
   Heart,
   Share2,
   Check,
-  Truck,
-  RefreshCw,
+  Award,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   ZoomIn,
@@ -434,21 +434,21 @@ export default function ProductDetail() {
               </p>
             </motion.div>
 
-            {/* Features */}
+            {/* Trust Highlights */}
             <motion.div
               variants={itemVariants}
               className="space-y-2 sm:space-y-3"
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <Truck className="w-5 sm:w-6 h-5 sm:h-6 text-amber-600 flex-shrink-0" />
+                <Award className="w-5 sm:w-6 h-5 sm:h-6 text-amber-600 flex-shrink-0" />
                 <span className="text-xs sm:text-base text-gray-700 font-medium">
-                  Free shipping on orders over $50
+                  Handcrafted with premium-grade materials
                 </span>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
-                <RefreshCw className="w-5 sm:w-6 h-5 sm:h-6 text-amber-600 flex-shrink-0" />
+                <ShieldCheck className="w-5 sm:w-6 h-5 sm:h-6 text-amber-600 flex-shrink-0" />
                 <span className="text-xs sm:text-base text-gray-700 font-medium">
-                  30-day returns
+                  Built to last — backed by our quality warranty
                 </span>
               </div>
             </motion.div>
@@ -565,8 +565,8 @@ export default function ProductDetail() {
               className="pt-4 sm:pt-6 border-t border-gray-200 grid grid-cols-3 gap-2 sm:gap-4 text-center text-xs sm:text-sm text-gray-600"
             >
               <div>✓ 100% Authentic</div>
-              <div>✓ Secure Checkout</div>
-              <div>✓ Expert Support</div>
+              <div>✓ Custom Sizes Available</div>
+              <div>✓ Dedicated Support</div>
             </motion.div>
           </motion.div>
         </div>
