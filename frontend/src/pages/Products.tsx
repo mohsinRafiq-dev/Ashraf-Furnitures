@@ -579,10 +579,13 @@ export default function Products() {
                     onMouseLeave={() => setHoveredProductId(null)}
                     className="group"
                   >
-                    <div className="h-full bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col group hover:-translate-y-2">
-                      {/* Image Container */}
-                      <div className="relative w-full h-64 sm:h-80 lg:h-96 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100">
-                        {/* Wishlist Button - Outside overlay so it stays visible */}
+                    <div
+                      onClick={() => product.id && navigate(`/product/${product.id}`)}
+                      className="h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 cursor-pointer flex flex-col group hover:-translate-y-1"
+                    >
+                      {/* Image Container — square aspect, contain so the whole product is visible */}
+                      <div className="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-amber-50/60 to-orange-50/40">
+                        {/* Wishlist Button */}
                         {product.id && (
                           <div className="absolute top-2 sm:top-3 left-2 sm:left-3 z-40 pointer-events-auto">
                             <WishlistButton
@@ -598,9 +601,9 @@ export default function Products() {
                           <OptimizedImage
                             src={product.images[0].url}
                             alt={product.images[0].alt || product.name}
-                            className={`w-full h-full object-cover transition-transform duration-500 ${
+                            className={`w-full h-full object-contain p-4 transition-transform duration-500 ${
                               hoveredProductId === product.id
-                                ? "scale-110"
+                                ? "scale-105"
                                 : "scale-100"
                             }`}
                           />
@@ -630,99 +633,72 @@ export default function Products() {
                           </div>
                         )}
 
-                        {/* Modern Hover Overlay - Stacked Layout */}
+                        {/* Hover Overlay — single Quick View action */}
                         {hoveredProductId === product.id &&
                           product.images &&
                           product.images.length > 0 &&
                           product.stock > 0 && (
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center justify-end gap-3 p-4 backdrop-blur-sm z-30">
+                            <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 z-30 pointer-events-none">
                               <button
-                                onClick={() => {
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setQuickViewProduct(product);
                                   setQuickViewImageIndex(0);
                                   setQuickViewZoom(1);
                                   setShowQuickView(true);
                                   document.body.style.overflow = "hidden";
                                 }}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg hover:scale-105 active:scale-95"
+                                className="pointer-events-auto w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/95 backdrop-blur text-gray-900 font-semibold text-sm rounded-xl hover:bg-white transition-all shadow-lg"
                               >
-                                <Eye className="w-5 h-5" />
+                                <Eye className="w-4 h-4" />
                                 Quick View
-                              </button>
-                              <button
-                                onClick={() =>
-                                  navigate(`/product/${product.id}`)
-                                }
-                                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
-                              >
-                                <ShoppingCart className="w-5 h-5" />
-                                View Details
                               </button>
                             </div>
                           )}
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 p-3 sm:p-5 flex flex-col justify-between">
+                      <div className="flex-1 p-4 sm:p-5 flex flex-col gap-3">
                         {/* Title */}
-                        <div>
-                          <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-amber-600 transition-colors">
-                            {product.name}
-                          </h3>
+                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-amber-600 transition-colors">
+                          {product.name}
+                        </h3>
+
+                        {/* Price + tiny rating row */}
+                        <div className="flex items-center justify-between gap-3">
+                          <PriceOrInquiry
+                            productName={product.name}
+                            price={product.price}
+                            hidePrice={product.hidePrice}
+                            variant="card"
+                          />
+                          {product.rating > 0 && (
+                            <span className="inline-flex items-center gap-1 text-xs text-gray-600">
+                              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                              <span className="font-semibold">{product.rating.toFixed(1)}</span>
+                            </span>
+                          )}
                         </div>
 
-                        {/* Rating */}
-                        {product.rating && (
-                          <div className="mt-3">
-                            <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`w-3 sm:w-4 h-3 sm:h-4 ${
-                                      i < Math.floor(product.rating)
-                                        ? "fill-amber-400 text-amber-400"
-                                        : "text-gray-300"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-xs sm:text-sm text-gray-600">
-                                {product.rating.toFixed(1)} ({product.reviews}{" "}
-                                reviews)
-                              </span>
-                            </div>
-                          </div>
-                        )}
+                        {/* Stock pill */}
+                        <span
+                          className={`inline-flex w-fit items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+                            product.stock > 0
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-red-50 text-red-700 border border-red-200"
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              product.stock > 0 ? "bg-green-500" : "bg-red-500"
+                            }`}
+                          />
+                          {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                        </span>
 
-                        {/* Price and Add to Cart - Modern Layout */}
-                        <div className="mt-4 space-y-3">
-                          {/* Price or "Ask Price" CTA */}
-                          <div className="flex items-baseline gap-2">
-                            <PriceOrInquiry
-                              productName={product.name}
-                              price={product.price}
-                              hidePrice={product.hidePrice}
-                              variant="card"
-                            />
-                          </div>
-
-                          {/* Stock Status */}
-                          <div>
-                            <span
-                              className={`text-xs sm:text-sm font-semibold ${
-                                product.stock > 0
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }`}
-                            >
-                              {product.stock > 0
-                                ? `${product.stock} in stock`
-                                : "Out of stock"}
-                            </span>
-                          </div>
-
-                          {/* Action Button(s) */}
+                        {/* Single action */}
+                        <div className="mt-auto pt-1">
                           {product.hidePrice ? (
                             <button
                               type="button"
@@ -731,10 +707,10 @@ export default function Products() {
                                 sendProductInquiry(product.name, product.price, { showPrice: false });
                               }}
                               disabled={product.stock === 0}
-                              className="w-full p-2 sm:p-3 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm sm:text-base transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                              className="w-full py-2.5 bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow"
                               title="Ask price on WhatsApp"
                             >
-                              <WhatsAppIcon className="w-5 sm:w-6 h-5 sm:h-6" />
+                              <WhatsAppIcon className="w-5 h-5" />
                               Contact for Price
                             </button>
                           ) : (
@@ -742,26 +718,27 @@ export default function Products() {
                               <button
                                 type="button"
                                 disabled={product.stock === 0}
-                                className="flex-1 p-2 sm:p-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-semibold text-sm transition-all"
                               >
-                                <ShoppingCart className="w-4 sm:w-5 h-4 sm:h-5 inline mr-2" />
+                                <ShoppingCart className="w-4 h-4 inline mr-1.5" />
                                 Add to Cart
                               </button>
                               <button
                                 type="button"
-                                onClick={() => sendProductInquiry(product.name, product.price)}
-                                className="p-2 sm:p-3 bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  sendProductInquiry(product.name, product.price);
+                                }}
+                                className="p-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl transition-all"
                                 title="Order via WhatsApp"
                               >
-                                <WhatsAppIcon className="w-5 sm:w-6 h-5 sm:h-6" />
+                                <WhatsAppIcon className="w-5 h-5" />
                               </button>
                             </div>
                           )}
                         </div>
                       </div>
-
-                      {/* Bottom Accent */}
-                      <div className="h-0.5 bg-gradient-to-r from-amber-400 via-orange-500 to-transparent" />
                     </div>
                   </motion.div>
                 ))}

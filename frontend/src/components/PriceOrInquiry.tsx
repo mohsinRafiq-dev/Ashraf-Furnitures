@@ -6,15 +6,20 @@ interface PriceOrInquiryProps {
   productName: string;
   price?: number | null;
   hidePrice?: boolean;
-  /** Visual variant — "card" for compact tiles, "detail" for the product page. */
+  /** Visual variant — "card" is a quiet label, "detail" is a full button. */
   variant?: "card" | "detail";
   className?: string;
 }
 
 /**
- * Renders the product price OR a "Contact for Price" WhatsApp CTA when the
- * admin has flagged the product as `hidePrice`. Centralises this branch so
- * grids, cards, detail pages, search results and wishlist stay consistent.
+ * Decides what to show in the "price slot" on a product card or detail page.
+ *
+ * - When the price is visible, prints the formatted amount.
+ * - When the admin has hidden the price:
+ *     • `variant="card"` → quiet "Price on Request" label (no button).
+ *       The card's primary CTA below handles the WhatsApp action.
+ *     • `variant="detail"` → full WhatsApp "Contact for Price" button
+ *       (detail page has room for a prominent CTA at the price slot).
  */
 export function PriceOrInquiry({
   productName,
@@ -37,6 +42,19 @@ export function PriceOrInquiry({
     );
   }
 
+  // Card variant: quiet inline label, no button — primary CTA handles WhatsApp.
+  if (variant === "card") {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 text-sm sm:text-base font-semibold text-amber-700 ${className}`}
+      >
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+        Price on Request
+      </span>
+    );
+  }
+
+  // Detail variant: full WhatsApp button.
   return (
     <button
       type="button"
@@ -45,15 +63,11 @@ export function PriceOrInquiry({
         e.stopPropagation();
         sendProductInquiry(productName, price ?? null, { showPrice: false });
       }}
-      className={`inline-flex items-center gap-2 rounded-xl font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 transition-all hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow ${
-        variant === "detail"
-          ? "px-5 py-3 text-base"
-          : "px-3 py-2 text-xs sm:text-sm"
-      } ${className}`}
+      className={`inline-flex items-center gap-2 rounded-xl font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 transition-all hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow px-5 py-3 text-base ${className}`}
       aria-label={`Contact us on WhatsApp for the price of ${productName}`}
     >
-      <MessageCircle className={variant === "detail" ? "w-5 h-5" : "w-4 h-4"} />
-      <span>{variant === "detail" ? "Contact for Price" : "Ask Price"}</span>
+      <MessageCircle className="w-5 h-5" />
+      <span>Contact for Price</span>
     </button>
   );
 }

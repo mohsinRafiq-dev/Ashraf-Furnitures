@@ -1,11 +1,9 @@
 import { useState, memo } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Button } from "./ui/Button";
 import { useCartStore } from "../store";
 import { WishlistButton } from "./WishlistButton";
 import { OptimizedImage } from "./OptimizedImage";
-import { Eye, ShoppingCart } from "lucide-react";
+import { Eye, ShoppingCart, Star } from "lucide-react";
 import { formatPrice } from "../utils/formatPrice";
 import { sendProductInquiry } from "../utils/whatsapp";
 import { WhatsAppIcon } from "./WhatsAppIcon";
@@ -43,7 +41,6 @@ const ProductCard = ({
   product,
   onQuickView,
 }: ProductCardProps) => {
-  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const addToCart = useCartStore((state) => state.addItem);
@@ -79,55 +76,30 @@ const ProductCard = ({
     }
   };
 
-  const renderRating = () => {
-    return (
-      <div className="flex items-center gap-2">
-        <div className="flex gap-0.5">
-          {[...Array(5)].map((_, i) => (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ delay: i * 0.05 }}
-              className={`text-sm ${
-                i < Math.floor(rating) ? "text-amber-400" : "text-gray-300"
-              }`}
-            >
-              ★
-            </motion.span>
-          ))}
-        </div>
-        <span className="text-sm text-gray-600">
-          {rating.toFixed(1)} ({reviewCount})
-        </span>
-      </div>
-    );
-  };
 
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer h-full flex flex-col group hover:scale-[1.02] hover:-translate-y-1.5"
+      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 cursor-pointer h-full flex flex-col group hover:-translate-y-1"
     >
-      {/* Image Container */}
-      <motion.div
-        className="relative w-full h-80 sm:h-96 bg-gray-200 overflow-hidden"
+      {/* Image — square aspect, contain so the whole product is visible */}
+      <div
+        className="relative w-full aspect-square bg-gradient-to-br from-amber-50/60 to-orange-50/40 overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Main Image */}
         <OptimizedImage
           src={image}
           alt={name}
-          className={`w-full h-full object-cover transition-transform duration-500 ${
-            isHovered ? "scale-110" : "scale-100"
+          className={`w-full h-full object-contain p-4 transition-transform duration-500 ${
+            isHovered ? "scale-105" : "scale-100"
           }`}
         />
 
         {/* Discount Badge */}
         {discount > 0 && (
           <div className="absolute top-3 right-3 z-10">
-            <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+            <div className="bg-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold">
               -{discount}%
             </div>
           </div>
@@ -142,75 +114,42 @@ const ProductCard = ({
           className="absolute top-3 left-3 z-20"
         />
 
-        {/* Stock Status Badge */}
+        {/* Out of Stock veil */}
         {!inStock && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-            <span className="text-white font-bold text-lg">Out of Stock</span>
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] flex items-center justify-center">
+            <span className="px-3 py-1 bg-gray-900/80 text-white text-sm font-semibold rounded-full">
+              Out of Stock
+            </span>
           </div>
         )}
 
-        {/* Modern Hover Overlay - Stacked Layout */}
+        {/* Quick View on hover */}
         {isHovered && inStock && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col items-center justify-end gap-3 p-4 backdrop-blur-sm"
-          >
-            <motion.button
-              onClick={() => onQuickView?.(product)}
-              initial={{ scale: 0.8, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white text-gray-900 font-bold rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-lg"
+          <div className="absolute inset-x-0 bottom-0 p-3 pointer-events-none">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickView?.(product);
+              }}
+              className="pointer-events-auto w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/95 backdrop-blur text-gray-900 font-semibold text-sm rounded-xl hover:bg-white transition-all shadow-lg"
             >
-              <Eye className="w-5 h-5" />
+              <Eye className="w-4 h-4" />
               Quick View
-            </motion.button>
-            <motion.button
-              onClick={() => navigate(`/product/${id}`)}
-              initial={{ scale: 0.8, opacity: 0, y: 10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold rounded-xl hover:shadow-lg transition-all duration-200"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              View Details
-            </motion.button>
-          </motion.div>
+            </button>
+          </div>
         )}
-      </motion.div>
+      </div>
 
-      {/* Content Container */}
-      <div className="flex-1 p-5 flex flex-col justify-between">
-        {/* Product Name */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h3 className="text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-amber-600 transition-colors">
-            {name}
-          </h3>
-        </motion.div>
+      {/* Content */}
+      <div className="flex-1 p-4 sm:p-5 flex flex-col gap-3">
+        {/* Title */}
+        <h3 className="text-sm sm:text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-amber-600 transition-colors">
+          {name}
+        </h3>
 
-        {/* Rating */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ delay: 0.15 }}
-          className="mt-3"
-        >
-          {renderRating()}
-        </motion.div>
-
-        {/* Price and Add to Cart - Modern Layout */}
-        <div className="mt-4 space-y-3">
-          {/* Price Section */}
+        {/* Price + tiny rating */}
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-baseline gap-2">
             <PriceOrInquiry
               productName={name}
@@ -219,33 +158,45 @@ const ProductCard = ({
               variant="card"
             />
             {!hidePrice && originalPrice && originalPrice > price && (
-              <span className="text-sm text-gray-500 line-through">
+              <span className="text-xs text-gray-500 line-through">
                 {formatPrice(originalPrice)}
               </span>
             )}
           </div>
+          {rating > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs text-gray-600 flex-shrink-0">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+              <span className="font-semibold">{rating.toFixed(1)}</span>
+              {reviewCount > 0 && (
+                <span className="text-gray-400">({reviewCount})</span>
+              )}
+            </span>
+          )}
+        </div>
 
-          {/* Action Buttons */}
+        {/* Action(s) */}
+        <div className="mt-auto pt-1">
           {hidePrice ? (
-            <Button
+            <button
+              type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 sendProductInquiry(name, price, { showPrice: false });
               }}
-              className="w-full py-2.5 rounded-xl font-semibold bg-green-500 hover:bg-green-600 text-white border-none transition-all duration-200 flex items-center justify-center gap-2"
-              size="sm"
+              disabled={!inStock}
+              className="w-full py-2.5 rounded-xl font-semibold bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow"
               title="Ask price on WhatsApp"
             >
               <WhatsAppIcon className="w-5 h-5" />
               Contact for Price
-            </Button>
+            </button>
           ) : (
             <div className="flex gap-2">
               <Button
                 onClick={handleAddToCart}
                 disabled={!inStock || isAdding}
                 variant={inStock ? "primary" : "secondary"}
-                className="flex-1 py-2.5 rounded-xl font-semibold transition-all duration-200"
+                className="flex-1 py-2.5 rounded-xl font-semibold transition-all"
                 size="sm"
               >
                 {isAdding ? (
@@ -259,11 +210,10 @@ const ProductCard = ({
                   "Out of Stock"
                 )}
               </Button>
-
               <Button
                 onClick={() => sendProductInquiry(name, price)}
                 variant="secondary"
-                className="py-2.5 px-4 rounded-xl font-semibold bg-green-500 hover:bg-green-600 text-white border-none transition-all duration-200"
+                className="py-2.5 px-3 rounded-xl bg-green-500 hover:bg-green-600 text-white border-none transition-all"
                 size="sm"
                 title="Order via WhatsApp"
               >
@@ -273,16 +223,6 @@ const ProductCard = ({
           )}
         </div>
       </div>
-
-      {/* In Stock Indicator */}
-      {inStock && (
-        <motion.div
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          transition={{ delay: 0.3 }}
-          className="h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 origin-left"
-        />
-      )}
     </div>
   );
 };
