@@ -191,7 +191,7 @@ export default function AnalyticsTab() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-amber-600">
-                    ${((product.stock || 0) * product.price).toLocaleString()}
+                    {formatPrice((product.stock || 0) * product.price)}
                   </p>
                   <p className="text-xs text-gray-500">{product.stock} units</p>
                 </div>
@@ -223,7 +223,7 @@ export default function AnalyticsTab() {
                     <span className="font-semibold text-gray-900">{cat.name}</span>
                     <div className="text-right">
                       <span className="font-bold text-purple-600">
-                        ${cat.value.toLocaleString()}
+                        {formatPrice(cat.value)}
                       </span>
                       <span className="text-xs text-gray-500 ml-2">
                         ({cat.count} items)
@@ -241,7 +241,7 @@ export default function AnalyticsTab() {
                       {percentage.toFixed(1)}% of total
                     </span>
                     <span className="text-xs text-gray-500">
-                      Avg: ${cat.count > 0 ? (cat.value / cat.count).toFixed(2) : "0.00"}
+                      Avg: {cat.count > 0 ? formatPrice(Math.round(cat.value / cat.count)) : formatPrice(0)}
                     </span>
                   </div>
                 </div>
@@ -463,7 +463,7 @@ export default function AnalyticsTab() {
                     {product.name}
                   </span>
                   <span className="text-xs text-amber-600 font-semibold">
-                    ${product.price}
+                    {formatPrice(product.price)}
                   </span>
                 </div>
               ))}
