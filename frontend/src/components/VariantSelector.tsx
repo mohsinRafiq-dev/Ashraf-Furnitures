@@ -73,8 +73,8 @@ const VariantSelector = ({
                   {option.label}
                   {option.priceModifier ? (
                     <span className="text-xs ml-1 opacity-70">
-                      {option.priceModifier > 0 ? "+" : ""}$
-                      {option.priceModifier.toFixed(2)}
+                      {option.priceModifier > 0 ? "+" : "-"}Rs.{" "}
+                      {Math.abs(option.priceModifier).toLocaleString("en-PK")}
                     </span>
                   ) : null}
                 </motion.button>

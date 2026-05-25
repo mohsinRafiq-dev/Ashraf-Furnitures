@@ -486,12 +486,13 @@ export default function AnalyticsTab() {
           <div>
             <p className="text-amber-100 text-sm mb-1">Average Product Price</p>
             <p className="text-3xl font-bold">
-              $
               {products.length > 0
-                ? (
-                    products.reduce((sum, p) => sum + p.price, 0) / products.length
-                  ).toFixed(2)
-                : "0"}
+                ? formatPrice(
+                    Math.round(
+                      products.reduce((sum, p) => sum + p.price, 0) / products.length
+                    )
+                  )
+                : formatPrice(0)}
             </p>
           </div>
           <div>

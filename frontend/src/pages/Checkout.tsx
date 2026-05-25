@@ -58,7 +58,7 @@ export default function Checkout() {
 
   const agreeTerms = watch("agreeTerms");
   const totalPrice = getTotalPrice();
-  const shippingCost = totalPrice > 100 ? 0 : 9.99;
+  const shippingCost = totalPrice > 10000 ? 0 : 500;
   const taxRate = 0.08;
   const tax = totalPrice * taxRate;
   const grandTotal = totalPrice + shippingCost + tax;
@@ -665,13 +665,13 @@ export default function Checkout() {
                   </span>
                 </div>
 
-                {totalPrice > 100 && (
+                {totalPrice > 10000 && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-2.5 sm:p-3 mt-3 sm:mt-4">
                     <p className="text-xs sm:text-sm text-green-700 font-semibold">
                       ✓ Free Shipping Applied!
                     </p>
                     <p className="text-xs text-green-600">
-                      Orders over $100 qualify for free shipping
+                      Free delivery on orders over Rs. 10,000
                     </p>
                   </div>
                 )}

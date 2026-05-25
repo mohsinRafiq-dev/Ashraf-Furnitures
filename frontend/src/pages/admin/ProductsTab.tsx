@@ -16,6 +16,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useAdmin } from "./AdminContext";
+import { formatPrice } from "../../utils/formatPrice";
 
 export default function ProductsTab() {
   const {
@@ -290,7 +291,7 @@ export default function ProductsTab() {
                   <p className="text-xs text-gray-400 mb-3">SKU: {product.sku}</p>
                 )}
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-2xl font-bold text-amber-600">${product.price}</p>
+                  <p className="text-2xl font-bold text-amber-600">{formatPrice(product.price)}</p>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
                       (product.stock || 0) === 0
@@ -388,7 +389,7 @@ export default function ProductsTab() {
                       )}
                     </div>
                     <p className="text-2xl sm:text-3xl font-bold text-amber-600 flex-shrink-0">
-                      ${product.price}
+                      {formatPrice(product.price)}
                     </p>
                   </div>
 
