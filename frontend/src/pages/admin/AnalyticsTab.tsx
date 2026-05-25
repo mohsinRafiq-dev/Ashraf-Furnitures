@@ -15,6 +15,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useAdmin } from "./AdminContext";
+import { formatPrice } from "../../utils/formatPrice";
 
 export default function AnalyticsTab() {
   const {
@@ -146,7 +147,7 @@ export default function AnalyticsTab() {
               Value
             </span>
           </div>
-          <p className="text-3xl font-bold mb-1">${totalRevenue.toLocaleString()}</p>
+          <p className="text-3xl font-bold mb-1">{formatPrice(totalRevenue)}</p>
           <p className="text-green-100 text-sm">Inventory Value</p>
         </div>
 

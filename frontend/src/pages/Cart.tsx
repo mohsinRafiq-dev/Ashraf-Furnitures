@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { formatPrice } from "../utils/formatPrice";
 
 export default function Cart() {
   const [cartItems] = React.useState([]);
@@ -39,7 +40,7 @@ export default function Cart() {
                   </p>
                 </div>
                 <div className="text-lg sm:text-xl font-bold text-gray-900 flex-shrink-0">
-                  ${item.price}
+                  {formatPrice(item.price)}
                 </div>
               </div>
             ))}

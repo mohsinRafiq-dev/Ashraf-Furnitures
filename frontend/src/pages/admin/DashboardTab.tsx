@@ -17,6 +17,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useAdmin } from "./AdminContext";
+import { formatPrice } from "../../utils/formatPrice";
 
 export default function DashboardTab() {
   const {
@@ -53,7 +54,7 @@ export default function DashboardTab() {
     },
     {
       label: "Total Revenue",
-      value: `$${totalRevenue.toLocaleString()}`,
+      value: formatPrice(totalRevenue),
       icon: DollarSign,
       color: "from-green-500 to-green-600",
       trend: "+23%",
@@ -226,7 +227,7 @@ export default function DashboardTab() {
                   </div>
                 </div>
                 <span className="text-sm font-bold text-amber-600">
-                  ${cat.value.toLocaleString()}
+                  {formatPrice(cat.value)}
                 </span>
               </div>
             ))}
@@ -280,10 +281,10 @@ export default function DashboardTab() {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-amber-600">
-                    ${(product.price * (product.stock || 0)).toLocaleString()}
+                    {formatPrice(product.price * (product.stock || 0))}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {product.stock} × ${product.price}
+                    {product.stock} × {formatPrice(product.price)}
                   </p>
                 </div>
               </div>
@@ -331,7 +332,7 @@ export default function DashboardTab() {
                   <p className="text-sm text-gray-500">{product.category}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-amber-600">${product.price}</p>
+                  <p className="font-bold text-amber-600">{formatPrice(product.price)}</p>
                   <p className="text-sm text-gray-500">Stock: {product.stock || 0}</p>
                 </div>
               </div>

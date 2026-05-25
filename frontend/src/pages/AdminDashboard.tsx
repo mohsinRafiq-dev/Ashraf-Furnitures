@@ -1166,16 +1166,17 @@ const AdminDashboard: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setProductHidePrice((v) => !v)}
-                    aria-pressed={productHidePrice ? 'true' : 'false'}
+                    role="switch"
+                    aria-checked={productHidePrice ? 'true' : 'false'}
                     aria-label="Toggle hide price"
                     title={productHidePrice ? 'Price is hidden — click to show' : 'Price is shown — click to hide'}
-                    className={`relative h-7 w-12 rounded-full transition-colors flex-shrink-0 ${
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors flex-shrink-0 p-0.5 ${
                       productHidePrice ? 'bg-amber-500' : 'bg-gray-300'
                     }`}
                   >
                     <span
-                      className={`absolute top-1 h-5 w-5 bg-white rounded-full shadow transition-transform ${
-                        productHidePrice ? 'translate-x-6' : 'translate-x-1'
+                      className={`inline-block h-5 w-5 bg-white rounded-full shadow transform transition-transform ${
+                        productHidePrice ? 'translate-x-5' : 'translate-x-0'
                       }`}
                     />
                   </button>
@@ -1187,17 +1188,17 @@ const AdminDashboard: React.FC = () => {
                       Price {productHidePrice ? '(optional — hidden)' : '*'}
                     </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-sm">Rs.</span>
                       <input
                         type="number"
                         inputMode="decimal"
                         value={productPrice}
                         onChange={(e) => setProductPrice(e.target.value)}
-                        className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base disabled:bg-gray-100 disabled:text-gray-400"
+                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-base disabled:bg-gray-100 disabled:text-gray-400"
                         disabled={productHidePrice}
-                        placeholder={productHidePrice ? 'Not shown to customers' : '0.00'}
+                        placeholder={productHidePrice ? 'Not shown to customers' : '0'}
                         min="0"
-                        step="0.01"
+                        step="1"
                       />
                     </div>
                   </div>

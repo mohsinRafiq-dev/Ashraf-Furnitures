@@ -5,6 +5,7 @@ import { useWishlistStore } from "../store/wishlistStore";
 import { Heart, ShoppingCart, ArrowLeft, X } from "lucide-react";
 import { useToastStore } from "../components/Toast";
 import { useCartStore } from "../store";
+import { formatPrice } from "../utils/formatPrice";
 
 export default function Wishlist() {
   const navigate = useNavigate();
@@ -167,7 +168,7 @@ export default function Wishlist() {
 
                   <div className="flex items-center justify-between mt-auto mb-4">
                     <div className="text-2xl font-bold text-amber-600">
-                      {item.price > 0 ? `$${item.price.toFixed(2)}` : (
+                      {item.price > 0 ? formatPrice(item.price) : (
                         <span className="text-sm font-semibold text-green-600">
                           Contact for Price
                         </span>
