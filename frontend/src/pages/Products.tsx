@@ -577,12 +577,10 @@ export default function Products() {
                     }}
                     onMouseEnter={() => product.id && setHoveredProductId(product.id)}
                     onMouseLeave={() => setHoveredProductId(null)}
-                    className="group"
+                    onClick={() => product.id && navigate(`/product/${product.id}`)}
+                    className="group cursor-pointer"
                   >
-                    <div
-                      onClick={() => product.id && navigate(`/product/${product.id}`)}
-                      className="h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 cursor-pointer flex flex-col group hover:-translate-y-1"
-                    >
+                    <div className="h-full bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 flex flex-col group hover:-translate-y-1">
                       {/* Image Container — square aspect, contain so the whole product is visible */}
                       <div className="relative w-full aspect-square overflow-hidden bg-gradient-to-br from-amber-50/60 to-orange-50/40">
                         {/* Wishlist Button */}
