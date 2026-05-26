@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   getProductsChunk,
+  getCachedFirstProductsChunk,
   Product as FirebaseProduct,
   ProductFilters,
 } from "../services/firebase/productService";
@@ -58,12 +59,49 @@ const getSortFilterFromSearch = (
 export default function Products() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [products, setProducts] = useState<FirebaseProduct[]>([]);
+
+  // Read filters from the URL on first render so we can hit the persistent
+  // cache with the right key before any state is set.
+  const initialFiltersKey = useMemo(() => {
+    const category = getCategoryFilterFromSearch(searchParams);
+    const sort = getSortFilterFromSearch(searchParams);
+    const featured = searchParams.get("featured") === "true";
+    return {
+      category: category === "all" ? undefined : category,
+      sort,
+      featured: featured ? true : undefined,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Pick a page size early too (mirrors the useMemo below) so the cache key
+  // matches what the chunk service writes.
+  const initialPageSize = useMemo(() => {
+    const nav = navigator as Navigator & {
+      connection?: { effectiveType?: string };
+      deviceMemory?: number;
+    };
+    const connectionType = nav.connection?.effectiveType || "4g";
+    const deviceMemory = nav.deviceMemory || 4;
+    const isSmallScreen = window.innerWidth < 768;
+    if (connectionType === "2g" || connectionType === "slow-2g" || deviceMemory <= 2) return 6;
+    if (connectionType === "3g" || isSmallScreen) return 9;
+    return 12;
+  }, []);
+
+  const cachedFirst = useMemo(
+    () => getCachedFirstProductsChunk(initialPageSize, initialFiltersKey),
+    [initialPageSize, initialFiltersKey]
+  );
+
+  const [products, setProducts] = useState<FirebaseProduct[]>(
+    () => cachedFirst?.products ?? []
+  );
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedFirst); // skip skeleton on cache hit
   const [loadingMore, setLoadingMore] = useState(false);
   const [prefetching, setPrefetching] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(cachedFirst?.hasMore ?? true);
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [prefetchedProducts, setPrefetchedProducts] = useState<FirebaseProduct[]>([]);
   const [prefetchedLastDoc, setPrefetchedLastDoc] = useState<any>(null);

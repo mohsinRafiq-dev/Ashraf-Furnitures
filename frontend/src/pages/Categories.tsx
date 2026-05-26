@@ -1,26 +1,20 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { getCategoriesChunk, refreshCategoryProductCounts } from "../services/firebase/categoryService";
+import {
+  getCategoriesChunk,
+  getCachedFirstCategoriesChunk,
+  refreshCategoryProductCounts,
+} from "../services/firebase/categoryService";
 import { OptimizedImage } from "../components/OptimizedImage";
 import SEO from "../components/SEO";
 import { Loader, Sparkles } from "lucide-react";
 
 export default function Categories() {
   const navigate = useNavigate();
-  const [displayedCategories, setDisplayedCategories] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [prefetching, setPrefetching] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [lastDoc, setLastDoc] = useState<any>(null);
-  const [prefetchedCategories, setPrefetchedCategories] = useState<any[]>([]);
-  const [prefetchedLastDoc, setPrefetchedLastDoc] = useState<any>(null);
-  const [prefetchedHasMore, setPrefetchedHasMore] = useState(false);
-  const [countsRepairAttempted, setCountsRepairAttempted] = useState(false);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const loaderRef = useRef<HTMLDivElement>(null);
 
+  // Compute device-aware page sizes once, before state init so we can use
+  // them as the cache lookup key.
   const { INITIAL_LOAD, LOAD_MORE } = useMemo(() => {
     const nav = navigator as Navigator & {
       connection?: { effectiveType?: string };
@@ -41,6 +35,28 @@ export default function Categories() {
 
     return { INITIAL_LOAD: 8, LOAD_MORE: 8 };
   }, []);
+
+  // Lazy-init from the persistent cache so the page paints instantly on
+  // repeat visits. We still kick off a background fetch to refresh.
+  const cachedFirst = useMemo(
+    () => getCachedFirstCategoriesChunk(INITIAL_LOAD),
+    [INITIAL_LOAD]
+  );
+
+  const [displayedCategories, setDisplayedCategories] = useState<any[]>(
+    () => cachedFirst?.categories ?? []
+  );
+  const [loading, setLoading] = useState(!cachedFirst); // skip skeleton if cache hit
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [prefetching, setPrefetching] = useState(false);
+  const [hasMore, setHasMore] = useState(cachedFirst?.hasMore ?? true);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [prefetchedCategories, setPrefetchedCategories] = useState<any[]>([]);
+  const [prefetchedLastDoc, setPrefetchedLastDoc] = useState<any>(null);
+  const [prefetchedHasMore, setPrefetchedHasMore] = useState(false);
+  const [countsRepairAttempted, setCountsRepairAttempted] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchCategories();

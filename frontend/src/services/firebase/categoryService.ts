@@ -27,7 +27,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { generateSlug } from './productService';
-import { cache, CacheTTL, generateCacheKey } from '../../utils/cache';
+import { cache, CacheTTL, generateCacheKey, persistentCache } from '../../utils/cache';
 
 // ==================== Types ====================
 
@@ -174,6 +174,9 @@ export const getCategories = async (filters: CategoryFilters = {}): Promise<Cate
 /**
  * Fetch categories in chunks for fast progressive loading on the Categories page.
  * Uses Firestore cursor pagination to avoid loading the full collection at once.
+ *
+ * The first page (lastDoc === null) is persisted to localStorage so repeat
+ * visits paint instantly while a fresh fetch happens in the background.
  */
 export const getCategoriesChunk = async (
   pageSize = 6,
@@ -197,11 +200,38 @@ export const getCategoriesChunk = async (
 
   const newLastDoc = pageDocs.length > 0 ? pageDocs[pageDocs.length - 1] : lastDoc;
 
-  return {
+  const response = {
     categories,
     lastDoc: newLastDoc,
     hasMore,
   };
+
+  // Persist only the first-page response — that's the one the Categories
+  // page hits on every visit. Strip the lastDoc snapshot because it isn't
+  // JSON-serializable (it holds a Firestore reference).
+  if (!lastDoc) {
+    persistentCache.set(
+      `categories:chunk:${pageSize}`,
+      { categories, hasMore },
+      CacheTTL.LONG
+    );
+  }
+
+  return response;
+};
+
+/**
+ * Read the persisted first-page category chunk synchronously (for instant paint).
+ * Caller should still call getCategoriesChunk() in the background to refresh.
+ */
+export const getCachedFirstCategoriesChunk = (
+  pageSize = 6
+): { categories: Category[]; hasMore: boolean; isStale: boolean } | undefined => {
+  const entry = persistentCache.getEntry<{ categories: Category[]; hasMore: boolean }>(
+    `categories:chunk:${pageSize}`
+  );
+  if (!entry) return undefined;
+  return { ...entry.data, isStale: entry.isStale };
 };
 
 /**

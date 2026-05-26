@@ -30,7 +30,7 @@ import {
   increment
 } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { cache, CacheTTL, generateCacheKey } from '../../utils/cache';
+import { cache, CacheTTL, generateCacheKey, persistentCache } from '../../utils/cache';
 
 // ==================== Types ====================
 
@@ -436,7 +436,13 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<Product
 /**
  * Fetch products in chunks for fast progressive loading.
  * Uses Firestore cursor pagination to avoid loading too many products at once.
+ *
+ * The first page (lastDoc === null) is persisted to localStorage so repeat
+ * visits paint instantly while a fresh fetch happens in the background.
  */
+const filtersToKey = (filters: ProductChunkFilters): string =>
+  `${filters.category ?? "all"}|${filters.featured ?? "any"}|${filters.sort ?? "newest"}`;
+
 export const getProductsChunk = async (
   pageSize = 12,
   lastDoc: QueryDocumentSnapshot<DocumentData> | null = null,
@@ -457,6 +463,14 @@ export const getProductsChunk = async (
 
     const newLastDoc = pageDocs.length > 0 ? pageDocs[pageDocs.length - 1] : lastDoc;
 
+    if (!lastDoc) {
+      persistentCache.set(
+        `products:chunk:${pageSize}:${filtersToKey(filters)}`,
+        { products, hasMore },
+        CacheTTL.LONG
+      );
+    }
+
     return {
       products,
       lastDoc: newLastDoc,
@@ -470,6 +484,20 @@ export const getProductsChunk = async (
     console.warn('Falling back to client-side product sorting for filtered chunk query.', error);
     return getProductsChunkWithFallback(productsRef, pageSize, lastDoc, filters);
   }
+};
+
+/**
+ * Read the persisted first-page products chunk synchronously (for instant paint).
+ */
+export const getCachedFirstProductsChunk = (
+  pageSize = 12,
+  filters: ProductChunkFilters = {}
+): { products: Product[]; hasMore: boolean; isStale: boolean } | undefined => {
+  const entry = persistentCache.getEntry<{ products: Product[]; hasMore: boolean }>(
+    `products:chunk:${pageSize}:${filtersToKey(filters)}`
+  );
+  if (!entry) return undefined;
+  return { ...entry.data, isStale: entry.isStale };
 };
 
 /**
@@ -563,6 +591,8 @@ export const createProduct = async (productData: Omit<Product, 'id' | 'createdAt
   await adjustCategoryProductCount(product.category, 1);
   cache.invalidatePattern('products');
   cache.invalidatePattern('categories');
+  persistentCache.invalidatePattern('products:chunk');
+  persistentCache.invalidatePattern('categories:chunk');
   
   return product;
 };
@@ -630,6 +660,8 @@ export const updateProduct = async (productId: string, updates: Partial<Product>
 
   cache.invalidatePattern('products');
   cache.invalidatePattern('categories');
+  persistentCache.invalidatePattern('products:chunk');
+  persistentCache.invalidatePattern('categories:chunk');
   
   return product;
 };
@@ -649,6 +681,8 @@ export const deleteProduct = async (productId: string): Promise<void> => {
 
   cache.invalidatePattern('products');
   cache.invalidatePattern('categories');
+  persistentCache.invalidatePattern('products:chunk');
+  persistentCache.invalidatePattern('categories:chunk');
 };
 
 /**
@@ -685,6 +719,8 @@ export const bulkDeleteProducts = async (productIds: string[]): Promise<void> =>
 
   cache.invalidatePattern('products');
   cache.invalidatePattern('categories');
+  persistentCache.invalidatePattern('products:chunk');
+  persistentCache.invalidatePattern('categories:chunk');
 };
 
 /**

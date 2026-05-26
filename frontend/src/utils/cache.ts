@@ -119,6 +119,109 @@ setInterval(() => {
 }, 10 * 60 * 1000);
 
 /**
+ * Persistent cache backed by localStorage.
+ *
+ * The in-memory cache above resets on every page reload, which makes the
+ * "first load" feel slow even when the user has been here before. The
+ * persistent layer survives reloads and gives us a stale-while-revalidate
+ * pattern: pages can paint instantly with stale data, then refresh from
+ * Firestore in the background.
+ */
+
+const LS_PREFIX = "af:cache:";
+const LS_VERSION = "v1"; // bump to invalidate all stored entries
+
+interface PersistedEntry<T> {
+  v: string;
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+export const persistentCache = {
+  get<T>(key: string): T | undefined {
+    try {
+      const raw = localStorage.getItem(LS_PREFIX + key);
+      if (!raw) return undefined;
+      const entry: PersistedEntry<T> = JSON.parse(raw);
+      if (entry.v !== LS_VERSION) {
+        localStorage.removeItem(LS_PREFIX + key);
+        return undefined;
+      }
+      if (Date.now() - entry.timestamp > entry.ttl) {
+        // Expired but still return it for stale-while-revalidate consumers.
+        // The boolean flag is exposed via getEntry below.
+        return entry.data;
+      }
+      return entry.data;
+    } catch {
+      return undefined;
+    }
+  },
+
+  getEntry<T>(key: string): { data: T; isStale: boolean } | undefined {
+    try {
+      const raw = localStorage.getItem(LS_PREFIX + key);
+      if (!raw) return undefined;
+      const entry: PersistedEntry<T> = JSON.parse(raw);
+      if (entry.v !== LS_VERSION) {
+        localStorage.removeItem(LS_PREFIX + key);
+        return undefined;
+      }
+      return {
+        data: entry.data,
+        isStale: Date.now() - entry.timestamp > entry.ttl,
+      };
+    } catch {
+      return undefined;
+    }
+  },
+
+  set<T>(key: string, data: T, ttl: number = CacheTTL.LONG): void {
+    try {
+      const entry: PersistedEntry<T> = {
+        v: LS_VERSION,
+        data,
+        timestamp: Date.now(),
+        ttl,
+      };
+      localStorage.setItem(LS_PREFIX + key, JSON.stringify(entry));
+    } catch {
+      // Quota exceeded or storage disabled — silently drop. The in-memory
+      // cache still works.
+    }
+  },
+
+  invalidatePattern(pattern: string): void {
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(LS_PREFIX) && k.includes(pattern)) {
+          keys.push(k);
+        }
+      }
+      keys.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* noop */
+    }
+  },
+
+  clear(): void {
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(LS_PREFIX)) keys.push(k);
+      }
+      keys.forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* noop */
+    }
+  },
+};
+
+/**
  * Cache TTL presets
  */
 export const CacheTTL = {
