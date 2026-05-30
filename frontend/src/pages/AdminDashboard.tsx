@@ -43,9 +43,33 @@ import {
   Category
 } from '../services/firebase/categoryService';
 import { getProductAnalytics } from '../services/firebase/analyticsService';
+import {
+  uploadImage,
+  deleteImageByUrl,
+} from '../services/firebase/storageService';
 import { cache } from '../utils/cache';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
+
+/**
+ * Convert a `data:image/jpeg;base64,...` URL produced by the cropper into a
+ * File that we can hand to Firebase Storage's uploadImage().
+ */
+const dataUrlToFile = async (
+  dataUrl: string,
+  filename = 'cropped.jpg'
+): Promise<File> => {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type || 'image/jpeg' });
+};
+
+/** True when the form holds a freshly-cropped image that still needs upload. */
+const isDataUrl = (s: string): boolean => !!s && s.startsWith('data:');
+
+/** True when the form holds an already-uploaded image URL (Firebase Storage). */
+const isHttpUrl = (s: string): boolean =>
+  !!s && (s.startsWith('http://') || s.startsWith('https://'));
 
 type TabType = 'dashboard' | 'products' | 'categories' | 'analytics';
 
