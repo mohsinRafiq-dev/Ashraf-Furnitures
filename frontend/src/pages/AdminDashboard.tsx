@@ -381,13 +381,42 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
-    // Close modal immediately and roll the network call into the background
-    // so saving feels instant. We refresh from Firestore after the write
-    // resolves (the service also invalidates its own cache).
+    // Close modal immediately and roll the network calls into the background
+    // so saving feels instant.
     setShowProductModal(false);
-    const toastId = toast.loading(editingProduct?.id ? 'Updating product...' : 'Creating product...');
+    const toastId = toast.loading(
+      isDataUrl(productImage)
+        ? 'Uploading image...'
+        : editingProduct?.id
+        ? 'Updating product...'
+        : 'Creating product...'
+    );
 
     try {
+      // Image strategy
+      // 1. data:image/jpeg;... → freshly cropped, upload to Firebase Storage,
+      //    then store only the returned URL on the Firestore doc.
+      // 2. https://… → unchanged, keep as-is.
+      // 3. "" → no image, store an empty array.
+      const previousImageUrl =
+        editingProduct?.images?.[0] && typeof editingProduct.images[0] !== 'string'
+          ? editingProduct.images[0].url
+          : '';
+
+      let finalImageUrl = '';
+      if (isDataUrl(productImage)) {
+        const file = await dataUrlToFile(productImage, 'product.jpg');
+        const itemId = editingProduct?.id || `new-${Date.now()}`;
+        const uploaded = await uploadImage({ folder: 'products', itemId, file });
+        finalImageUrl = uploaded.url;
+        toast.loading(
+          editingProduct?.id ? 'Updating product...' : 'Creating product...',
+          { id: toastId }
+        );
+      } else if (isHttpUrl(productImage)) {
+        finalImageUrl = productImage;
+      }
+
       const parsedPrice = productPrice.trim() === '' ? 0 : Number(productPrice);
       const parsedStock = productStock.trim() === '' ? 0 : Number(productStock);
 
@@ -398,7 +427,9 @@ const AdminDashboard: React.FC = () => {
         category: productCategory,
         stock: Number.isFinite(parsedStock) ? parsedStock : 0,
         sku: productSku,
-        images: productImage ? [{ url: productImage, alt: productName, isPrimary: true }] : [],
+        images: finalImageUrl
+          ? [{ url: finalImageUrl, alt: productName, isPrimary: true }]
+          : [],
         featured: productFeatured,
         hidePrice: productHidePrice,
         rating: editingProduct?.rating || 0,
@@ -412,6 +443,18 @@ const AdminDashboard: React.FC = () => {
         await createProduct(productData as Omit<Product, 'id' | 'createdAt' | 'updatedAt'>);
         toast.success('Product created!', { id: toastId });
       }
+
+      // Best-effort cleanup of the previous Storage image if we replaced it.
+      if (
+        previousImageUrl &&
+        previousImageUrl !== finalImageUrl &&
+        isHttpUrl(previousImageUrl)
+      ) {
+        deleteImageByUrl(previousImageUrl).catch((err) =>
+          console.warn('Old product image cleanup failed:', err)
+        );
+      }
+
       await loadData(false);
     } catch (error) {
       console.error('Error saving product:', error);
