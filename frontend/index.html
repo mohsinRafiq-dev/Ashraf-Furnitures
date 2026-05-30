@@ -72,7 +72,8 @@
     <link rel="preconnect" href="https://www.google.com" />
     <link rel="preconnect" href="https://maps.gstatic.com" crossorigin />
     
-    <!-- Preload critical assets -->
+    <!-- Preload critical assets — hero is the LCP element, mark it high priority -->
+    <link rel="preload" href="/hero-new.png" as="image" fetchpriority="high" />
     <link rel="preload" href="/Asset 5.png" as="image" />
     <link rel="preload" href="/Mini.png" as="image" />
 

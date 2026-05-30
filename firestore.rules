@@ -95,6 +95,27 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     
+    // ==================== Inquiries (Contact-for-Price / Custom Orders) ====================
+    match /inquiries/{inquiryId} {
+      // Public can log new inquiries (fires when "Contact for Price" is clicked)
+      allow create: if true;
+
+      // Only admins can read and manage status
+      allow read, update: if isAdmin() && isValidEmail();
+
+      // No delete — keep the full lead history
+      allow delete: if false;
+    }
+
+    // ==================== Testimonials ====================
+    match /testimonials/{testimonialId} {
+      // Public read for the home page carousel
+      allow read: if true;
+
+      // Only admins can write
+      allow create, update, delete: if isAdmin() && isValidEmail();
+    }
+
     // ==================== Audit Logs ====================
     match /auditLogs/{logId} {
       // Anyone can create audit logs (system logging)

@@ -61,7 +61,10 @@ export function PriceOrInquiry({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        sendProductInquiry(productName, price ?? null, { showPrice: false });
+        sendProductInquiry(productName, price ?? null, {
+          showPrice: false,
+          source: "detail",
+        });
       }}
       className={`inline-flex items-center gap-2 rounded-xl font-semibold text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 transition-all hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow px-5 py-3 text-base ${className}`}
       aria-label={`Contact us on WhatsApp for the price of ${productName}`}

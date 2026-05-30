@@ -6,6 +6,7 @@ import {
   Package,
   FolderOpen,
   BarChart3,
+  MessageCircle,
   X,
   Save,
   LogOut,
@@ -25,6 +26,7 @@ const DashboardTab = lazy(() => import('./admin/DashboardTab'));
 const ProductsTab = lazy(() => import('./admin/ProductsTab'));
 const CategoriesTab = lazy(() => import('./admin/CategoriesTab'));
 const AnalyticsTab = lazy(() => import('./admin/AnalyticsTab'));
+const InquiriesTab = lazy(() => import('./admin/InquiriesTab'));
 
 import { AdminContext, type AdminContextValue } from './admin/AdminContext';
 import {
@@ -71,7 +73,7 @@ const isDataUrl = (s: string): boolean => !!s && s.startsWith('data:');
 const isHttpUrl = (s: string): boolean =>
   !!s && (s.startsWith('http://') || s.startsWith('https://'));
 
-type TabType = 'dashboard' | 'products' | 'categories' | 'analytics';
+type TabType = 'dashboard' | 'products' | 'categories' | 'analytics' | 'inquiries';
 
 type WebVitalName = 'LCP' | 'CLS' | 'INP' | 'FCP' | 'TTFB';
 type WebVitalRating = 'good' | 'needs-improvement' | 'poor';
@@ -757,6 +759,7 @@ const AdminDashboard: React.FC = () => {
 
   const navItems = [
     { id: 'dashboard' as TabType, icon: LayoutDashboard, label: 'Dashboard' },
+    { id: 'inquiries' as TabType, icon: MessageCircle, label: 'Inquiries' },
     { id: 'products' as TabType, icon: Package, label: 'Products' },
     { id: 'categories' as TabType, icon: FolderOpen, label: 'Categories' },
     { id: 'analytics' as TabType, icon: BarChart3, label: 'Analytics' },
@@ -1119,6 +1122,7 @@ const AdminDashboard: React.FC = () => {
             {activeTab === 'products' && <ProductsTab />}
             {activeTab === 'categories' && <CategoriesTab />}
             {activeTab === 'analytics' && <AnalyticsTab />}
+            {activeTab === 'inquiries' && <InquiriesTab />}
           </Suspense>
         </AnimatePresence>
       </main>

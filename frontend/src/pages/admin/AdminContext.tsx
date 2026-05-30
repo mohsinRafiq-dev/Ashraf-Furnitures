@@ -10,7 +10,12 @@ import { createContext, useContext } from "react";
 import type { Product } from "../../services/firebase/productService";
 import type { Category } from "../../services/firebase/categoryService";
 
-export type TabType = "dashboard" | "products" | "categories" | "analytics";
+export type TabType =
+  | "dashboard"
+  | "products"
+  | "categories"
+  | "analytics"
+  | "inquiries";
 
 export type ProductSortField = "name" | "price" | "stock" | "date";
 export type ProductSortOrder = "asc" | "desc";

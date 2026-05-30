@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { WhatsAppIcon } from "../components/WhatsAppIcon";
 import { TikTokIcon } from "../components/TikTokIcon";
+import { prefetchRoute } from "../hooks/useRoutePrefetch";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -318,6 +319,8 @@ function Header({
                 to="/products"
                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:text-amber-600 hover:bg-amber-100 transition-all duration-200 group"
                 onClick={() => setMobileMenuOpen(false)}
+                onMouseEnter={() => prefetchRoute("products")}
+                onFocus={() => prefetchRoute("products")}
               >
                 <div className="p-2.5 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 group-hover:from-amber-200 group-hover:to-orange-200 transition-all">
                   <Package className="w-5 h-5 text-amber-600 group-hover:text-amber-700" />
@@ -331,6 +334,8 @@ function Header({
                 to="/categories"
                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:text-amber-600 hover:bg-amber-100 transition-all duration-200 group"
                 onClick={() => setMobileMenuOpen(false)}
+                onMouseEnter={() => prefetchRoute("categories")}
+                onFocus={() => prefetchRoute("categories")}
               >
                 <div className="p-2.5 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 group-hover:from-amber-200 group-hover:to-orange-200 transition-all">
                   <LayoutGrid className="w-5 h-5 text-amber-600 group-hover:text-amber-700" />
@@ -344,6 +349,8 @@ function Header({
                 to="/search"
                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:text-amber-600 hover:bg-amber-100 transition-all duration-200 group"
                 onClick={() => setMobileMenuOpen(false)}
+                onMouseEnter={() => prefetchRoute("search")}
+                onFocus={() => prefetchRoute("search")}
               >
                 <div className="p-2.5 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 group-hover:from-amber-200 group-hover:to-orange-200 transition-all">
                   <Search className="w-5 h-5 text-amber-600 group-hover:text-amber-700" />
@@ -357,6 +364,8 @@ function Header({
                 to="/about"
                 className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:text-amber-600 hover:bg-amber-100 transition-all duration-200 group"
                 onClick={() => setMobileMenuOpen(false)}
+                onMouseEnter={() => prefetchRoute("about")}
+                onFocus={() => prefetchRoute("about")}
               >
                 <div className="p-2.5 rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 group-hover:from-amber-200 group-hover:to-orange-200 transition-all">
                   <Info className="w-5 h-5 text-amber-600 group-hover:text-amber-700" />

@@ -519,7 +519,11 @@ export default function ProductDetail() {
                 <motion.button
                   onClick={() => {
                     trackProductView(productId || "", product.name, "add_to_cart");
-                    sendProductInquiry(product.name, product.price, { showPrice: false });
+                    sendProductInquiry(product.name, product.price, {
+                      showPrice: false,
+                      source: "detail",
+                      productId,
+                    });
                   }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -546,7 +550,12 @@ export default function ProductDetail() {
                     <span className="sm:hidden">Add</span>({quantity})
                   </motion.button>
                   <motion.button
-                    onClick={() => sendProductInquiry(product.name, product.price)}
+                    onClick={() =>
+                      sendProductInquiry(product.name, product.price, {
+                        source: "detail",
+                        productId,
+                      })
+                    }
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className="px-3 sm:px-6 py-2.5 sm:py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-1 sm:gap-2 shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl text-xs sm:text-base"

@@ -4,6 +4,7 @@
  */
 
 import { formatPrice } from './formatPrice';
+import { logInquiry, type InquirySource } from '../services/firebase/inquiryService';
 
 // WhatsApp Business Number (Update this with your actual number)
 const WHATSAPP_NUMBER = '923457571471'; // Format: Country code + number (no + or spaces)
@@ -24,7 +25,11 @@ interface OrderItem {
 export const sendProductInquiry = (
   productName: string,
   price?: number | null,
-  options: { showPrice?: boolean } = {}
+  options: {
+    showPrice?: boolean;
+    source?: InquirySource;
+    productId?: string | null;
+  } = {}
 ) => {
   const showPrice =
     options.showPrice ?? (typeof price === 'number' && price > 0);
@@ -32,6 +37,13 @@ export const sendProductInquiry = (
   const message = showPrice && typeof price === 'number'
     ? `Hi, I'm interested in:\n\n📦 *${productName}*\n💰 Price: ${formatPrice(price)}\n\nCan you please provide more details?`
     : `Hi, I'm interested in:\n\n📦 *${productName}*\n\nCan you please share the price and availability?`;
+
+  // Fire-and-forget — never blocks the WhatsApp tab from opening.
+  logInquiry({
+    productId: options.productId ?? null,
+    productName,
+    source: options.source ?? 'card',
+  });
 
   openWhatsApp(message);
 };

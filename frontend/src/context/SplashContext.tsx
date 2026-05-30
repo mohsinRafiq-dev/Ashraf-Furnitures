@@ -8,25 +8,34 @@ interface SplashContextType {
 
 const SplashContext = createContext<SplashContextType | undefined>(undefined);
 
-const SPLASH_SHOWN_KEY = 'splash_shown';
+const SPLASH_SHOWN_KEY = 'splash_shown_v1';
+// Show again at most once every 24h to remind returning users of the brand
+// without nagging same-day visitors.
+const SPLASH_TTL_MS = 24 * 60 * 60 * 1000;
+
+const shouldShowSplash = (): boolean => {
+  try {
+    const lastShown = localStorage.getItem(SPLASH_SHOWN_KEY);
+    if (!lastShown) return true;
+    const elapsed = Date.now() - Number(lastShown);
+    return Number.isNaN(elapsed) || elapsed > SPLASH_TTL_MS;
+  } catch {
+    return true;
+  }
+};
 
 export function SplashProvider({ children }: { children: React.ReactNode }) {
-  // Check if splash was already shown in this session
-  const [showSplash, setShowSplash] = useState(() => {
-    const wasShown = sessionStorage.getItem(SPLASH_SHOWN_KEY);
-    return wasShown !== 'true';
-  });
-  // If splash was already shown, mark it as complete immediately
-  const [splashComplete, setSplashComplete] = useState(() => {
-    const wasShown = sessionStorage.getItem(SPLASH_SHOWN_KEY);
-    return wasShown === 'true';
-  });
+  const [showSplash, setShowSplash] = useState(shouldShowSplash);
+  const [splashComplete, setSplashComplete] = useState(() => !shouldShowSplash());
 
   const completeSplash = useCallback(() => {
     setShowSplash(false);
     setSplashComplete(true);
-    // Mark splash as shown in this session
-    sessionStorage.setItem(SPLASH_SHOWN_KEY, 'true');
+    try {
+      localStorage.setItem(SPLASH_SHOWN_KEY, String(Date.now()));
+    } catch {
+      /* private mode, ignore */
+    }
   }, []);
 
   return (
