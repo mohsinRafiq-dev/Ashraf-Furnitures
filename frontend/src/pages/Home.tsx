@@ -17,6 +17,11 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useCategoriesQuery, useFeaturedProductsQuery } from "../services/firebase/queries";
+import {
+  getTestimonials,
+  getCachedTestimonials,
+  type Testimonial,
+} from "../services/firebase/testimonialService";
 import { useSplash } from "../context/SplashContext";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
@@ -48,50 +53,86 @@ const avatar = (initials: string, bg: string) =>
     `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='32' fill='${bg}'/><text x='50%' y='54%' font-family='system-ui,sans-serif' font-size='24' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'>${initials}</text></svg>`
   )}`;
 
-const testimonials = [
+// Used only when the testimonials Firestore collection is empty (e.g. fresh
+// install). Once the admin adds real customer quotes, they take over.
+const FALLBACK_TESTIMONIALS: Array<Testimonial & { image: string }> = [
   {
-    id: 1,
-    name: "Sarah Johnson",
-    role: "Interior Designer",
+    id: "fallback-1",
+    name: "Verified Customer",
+    role: "Karachi",
     content:
-      "The quality of furniture from Ashraf Furnitures is exceptional. Every piece I've purchased has been delivered on time and in perfect condition. Highly recommend!",
+      "Beautiful craftsmanship — the finish and build quality exceeded my expectations.",
     rating: 5,
-    image: avatar("SJ", "%23d97706"),
+    image: avatar("AF", "%23d97706"),
   },
   {
-    id: 2,
-    name: "Michael Chen",
-    role: "Home Owner",
+    id: "fallback-2",
+    name: "Verified Customer",
+    role: "Lahore",
     content:
-      "Amazing selection and great prices. The customer service team helped me find the perfect sofa for my living room. Will definitely shop here again!",
+      "Custom dining set delivered exactly to my measurements. Highly recommend.",
     rating: 5,
-    image: avatar("MC", "%23ea580c"),
+    image: avatar("AF", "%23ea580c"),
   },
   {
-    id: 3,
-    name: "Emma Davis",
-    role: "Architect",
+    id: "fallback-3",
+    name: "Verified Customer",
+    role: "Islamabad",
     content:
-      "Best furniture store I've worked with. Their product range is diverse and the quality is consistently high. My clients love their purchases!",
+      "Friendly team on WhatsApp and the sofa arrived ahead of schedule.",
     rating: 5,
-    image: avatar("ED", "%23b45309"),
-  },
-  {
-    id: 4,
-    name: "James Wilson",
-    role: "Business Owner",
-    content:
-      "Furnishing our office was seamless. Fast delivery, excellent build quality, and their team was very professional. Great investment!",
-    rating: 5,
-    image: avatar("JW", "%23c2410c"),
+    image: avatar("AF", "%23b45309"),
   },
 ];
+
+const initialsFor = (name: string) =>
+  name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "AF";
+
+const PALETTE = ["%23d97706", "%23ea580c", "%23b45309", "%23c2410c"];
+
+const toDisplayTestimonial = (t: Testimonial, idx: number) => ({
+  id: t.id ?? `t-${idx}`,
+  name: t.name,
+  role: t.role,
+  content: t.content,
+  rating: Math.max(1, Math.min(5, Math.round(t.rating ?? 5))),
+  image: t.avatarUrl || avatar(initialsFor(t.name), PALETTE[idx % PALETTE.length]),
+});
 
 export default function Home() {
   const navigate = useNavigate();
   const { splashComplete } = useSplash();
   const shouldReduceMotion = useReducedMotion();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+
+  // Testimonials: hydrate from cache for instant paint, refresh from Firestore
+  // in the background. Falls back to FALLBACK_TESTIMONIALS when the
+  // collection is empty.
+  const [remoteTestimonials, setRemoteTestimonials] = useState<Testimonial[]>(
+    () => getCachedTestimonials() ?? []
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    getTestimonials().then((list) => {
+      if (!cancelled) setRemoteTestimonials(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const testimonials = useMemo(() => {
+    const source =
+      remoteTestimonials.length > 0 ? remoteTestimonials : FALLBACK_TESTIMONIALS;
+    return source.map((t, i) => toDisplayTestimonial(t as Testimonial, i));
+  }, [remoteTestimonials]);
 
   const { data: categoriesResponse, isLoading: loadingCategories } =
     useCategoriesQuery({ sort: "name-asc", limit: 50 });
@@ -128,16 +169,26 @@ export default function Home() {
     });
   }, [productsResponse]);
 
-  // Auto-rotate testimonials
+  // Auto-rotate testimonials. Dependency on length so the timer adapts when
+  // the Firestore fetch swaps the source array in.
   useEffect(() => {
+    if (testimonials.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [testimonials.length]);
+
+  // Guard against `currentTestimonial` pointing past the end when the source
+  // array shrinks (fallback → real, real with fewer entries, etc.).
+  useEffect(() => {
+    if (currentTestimonial >= testimonials.length) {
+      setCurrentTestimonial(0);
+    }
+  }, [currentTestimonial, testimonials.length]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 overflow-hidden">
+    <div className="min-h-screen bg-stone-50 overflow-hidden">
       <SEO
         title="Premium Furniture Collection"
         description="Explore our curated furniture selection for quality and style. Transform your space with premium sofas, dining tables, bedroom sets, office furniture, and more from Ashraf Furnitures."
@@ -164,26 +215,65 @@ export default function Home() {
       />
 
       {/* Trust Section */}
-      <section className="relative py-8 sm:py-12 lg:py-16 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
+      <section className="relative py-8 sm:py-12 lg:py-16 px-3 sm:px-6 lg:px-8 bg-stone-50">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {[
-              { Icon: Award, title: "Handcrafted Quality", desc: "Built to last — premium craftsmanship" },
-              { Icon: Wrench, title: "Made-to-Order", desc: "Custom sizes & finishes available" },
-              { Icon: ShieldCheck, title: "Warranty & Support", desc: "Limited warranty & aftercare" },
-            ].map(({ Icon, title, desc }) => (
-              <div
+              {
+                Icon: Award,
+                title: "Handcrafted Quality",
+                desc: "Built to last — premium craftsmanship",
+                href: "/about",
+              },
+              {
+                Icon: Wrench,
+                title: "Made-to-Order",
+                desc: "Custom sizes & finishes — get a quote",
+                href: "/custom-order",
+                accent: true,
+              },
+              {
+                Icon: ShieldCheck,
+                title: "Warranty & Support",
+                desc: "Limited warranty & aftercare",
+                href: "/about",
+              },
+            ].map(({ Icon, title, desc, href, accent }) => (
+              <a
                 key={title}
-                className="flex items-center gap-4 p-4 sm:p-6 rounded-xl bg-white/60 backdrop-blur-sm border border-amber-200/30 hover:border-amber-400/50 hover:-translate-y-1 transition-all"
+                href={href}
+                className={`flex items-center gap-4 p-4 sm:p-6 rounded-xl backdrop-blur-sm border transition-all hover:-translate-y-1 ${
+                  accent
+                    ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white border-amber-500 shadow-lg hover:shadow-xl"
+                    : "bg-white/60 border-amber-200/30 hover:border-amber-400/50"
+                }`}
               >
-                <div className="flex-shrink-0 p-3 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg">
-                  <Icon className="w-6 h-6 text-amber-600" />
+                <div
+                  className={`flex-shrink-0 p-3 rounded-lg ${
+                    accent
+                      ? "bg-white/20"
+                      : "bg-gradient-to-br from-amber-100 to-orange-100"
+                  }`}
+                >
+                  <Icon className={`w-6 h-6 ${accent ? "text-white" : "text-amber-600"}`} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base">{title}</h3>
-                  <p className="text-xs sm:text-sm text-gray-600">{desc}</p>
+                  <h3
+                    className={`font-semibold text-sm sm:text-base ${
+                      accent ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    {title}
+                  </h3>
+                  <p
+                    className={`text-xs sm:text-sm ${
+                      accent ? "text-amber-50" : "text-gray-600"
+                    }`}
+                  >
+                    {desc}
+                  </p>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -194,7 +284,7 @@ export default function Home() {
         variants={shouldReduceMotion ? staticVariants : containerVariants}
         initial="hidden"
         animate={splashComplete ? "visible" : "hidden"}
-        className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100"
+        className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-stone-50"
       >
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
@@ -252,7 +342,7 @@ export default function Home() {
       </motion.section>
 
       {/* Testimonials */}
-      <section className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
+      <section className="relative py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 bg-stone-50">
         <div className="max-w-6xl mx-auto relative z-10">
           <motion.div
             variants={shouldReduceMotion ? staticVariants : sectionHeaderVariants}
@@ -368,7 +458,7 @@ export default function Home() {
       </section>
 
       {/* Newsletter */}
-      <section className="relative py-12 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
+      <section className="relative py-12 sm:py-16 lg:py-20 px-3 sm:px-6 lg:px-8 overflow-hidden bg-stone-50">
         <div className="max-w-4xl mx-auto relative z-10 text-center">
           <div className="space-y-4 sm:space-y-6">
             <h3 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold bg-gradient-to-r from-amber-700 via-orange-600 to-amber-700 bg-clip-text text-transparent">

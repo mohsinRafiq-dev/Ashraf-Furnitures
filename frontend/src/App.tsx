@@ -20,6 +20,7 @@ const CategoryDetail = React.lazy(() => import("./pages/CategoryDetail"));
 const ProductDetail = React.lazy(() => import("./pages/ProductDetail"));
 const Search = React.lazy(() => import("./pages/Search"));
 const Cart = React.lazy(() => import("./pages/Cart"));
+const CustomOrder = React.lazy(() => import("./pages/CustomOrder"));
 const Wishlist = React.lazy(() => import("./pages/Wishlist"));
 const Checkout = React.lazy(() => import("./pages/Checkout"));
 const Login = React.lazy(() => import("./pages/Login"));
@@ -109,6 +110,7 @@ function AppContent() {
                   <Route path="/product/:productId" element={<ProductDetail />} />
                   <Route path="/search" element={<Search />} />
                   <Route path="/cart" element={<Cart />} />
+                  <Route path="/custom-order" element={<CustomOrder />} />
                   <Route path="/wishlist" element={<Wishlist />} />
                   <Route path="/checkout" element={<Checkout />} />
                   <Route path="/login" element={<Login />} />

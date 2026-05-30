@@ -18,8 +18,65 @@ import {
 } from "lucide-react";
 import { useAdmin } from "./AdminContext";
 import { formatPrice } from "../../utils/formatPrice";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import {
+  migrateProductImages,
+  migrateCategoryImages,
+  type MigrationProgress,
+} from "../../services/firebase/imageMigration";
+import { Upload } from "lucide-react";
 
 export default function DashboardTab() {
+  const [migrating, setMigrating] = useState(false);
+  const [migrationProgress, setMigrationProgress] = useState<MigrationProgress | null>(null);
+
+  const runMigration = async () => {
+    if (migrating) return;
+    if (
+      !confirm(
+        "Migrate all products + categories with base64 images to Firebase Storage? Safe to re-run."
+      )
+    )
+      return;
+
+    setMigrating(true);
+    setMigrationProgress(null);
+    const toastId = toast.loading("Scanning products...");
+
+    try {
+      const productResult = await migrateProductImages((p) =>
+        setMigrationProgress({ ...p, scanned: p.scanned })
+      );
+      toast.loading("Scanning categories...", { id: toastId });
+      const categoryResult = await migrateCategoryImages((p) =>
+        setMigrationProgress({
+          scanned: productResult.scanned + p.scanned,
+          migrated: productResult.migrated + p.migrated,
+          skipped: productResult.skipped + p.skipped,
+          failed: productResult.failed + p.failed,
+          failures: [...productResult.failures, ...p.failures],
+        })
+      );
+
+      const totalMigrated = productResult.migrated + categoryResult.migrated;
+      const totalFailed = productResult.failed + categoryResult.failed;
+      toast.success(
+        totalMigrated === 0
+          ? "Already up to date — nothing to migrate."
+          : `Migrated ${totalMigrated} image${totalMigrated === 1 ? "" : "s"}${
+              totalFailed ? ` (${totalFailed} failed)` : ""
+            }.`,
+        { id: toastId }
+      );
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Migration failed: ${err?.message || "unknown error"}`, { id: toastId });
+    } finally {
+      setMigrating(false);
+    }
+  };
+
   const {
     products,
     totalProducts,
@@ -100,6 +157,36 @@ export default function DashboardTab() {
             <p className="text-gray-500 text-sm">{stat.label}</p>
           </motion.div>
         ))}
+      </div>
+
+      {/* Legacy Image Migration */}
+      <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex-shrink-0 p-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+          <Upload className="w-6 h-6" />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-bold text-gray-900">Move legacy images to Storage</h3>
+          <p className="text-sm text-gray-600 mt-0.5">
+            Products + categories saved before the Storage migration still have
+            base64 images embedded in Firestore. Run once to upload them, shrink
+            the docs, and speed up the storefront.
+          </p>
+          {migrationProgress && (
+            <p className="text-xs text-gray-700 mt-2 font-mono">
+              scanned: {migrationProgress.scanned} · migrated:{" "}
+              {migrationProgress.migrated} · skipped: {migrationProgress.skipped} ·
+              failed: {migrationProgress.failed}
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={runMigration}
+          disabled={migrating}
+          className="self-start inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold rounded-xl shadow-md hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition-all"
+        >
+          {migrating ? "Migrating..." : "Run Migration"}
+        </button>
       </div>
 
       {/* Quick Actions & Stats Row */}

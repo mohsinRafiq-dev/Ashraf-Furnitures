@@ -37,7 +37,7 @@ export default function MainLayout({ children }: LayoutProps) {
   const handleMobileMenuToggle = useCallback((open: boolean) => setMobileMenuOpen(open), []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
+    <div className="flex flex-col min-h-screen bg-stone-50">
       {/* Header */}
       <MemoizedHeader
         mobileMenuOpen={mobileMenuOpen}
@@ -141,37 +141,36 @@ function Header({
               </motion.button>
             </Link>
 
-            {/* Cart Button - Premium Style */}
-            <motion.button
-              onClick={onCartClick}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative p-2.5 text-gray-700 group transition-all duration-200"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-100/30 to-orange-100/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-              <svg
-                className="w-6 h-6 text-amber-600 group-hover:text-amber-700 transition-colors relative z-10"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {/* Cart Button — only shown when there are items in the cart.
+                Storefront is contact-for-price first; the cart is only used
+                by the small number of products with a visible price. */}
+            {cartItems > 0 && (
+              <motion.button
+                onClick={onCartClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative p-2.5 text-gray-700 group transition-all duration-200"
+                aria-label="Open cart"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              {cartItems > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-gradient-to-br from-red-500 to-red-600 rounded-full shadow-lg"
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-100/30 to-orange-100/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                <svg
+                  className="w-6 h-6 text-amber-600 group-hover:text-amber-700 transition-colors relative z-10"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
+                <span className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-gradient-to-br from-red-500 to-red-600 rounded-full shadow-lg">
                   {cartItems}
-                </motion.span>
-              )}
-            </motion.button>
+                </span>
+              </motion.button>
+            )}
 
             {/* Mobile Menu Button */}
             <motion.button
@@ -226,29 +225,31 @@ function Header({
 
           {/* Mobile Action Buttons */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={onCartClick}
-              className="relative p-2 text-gray-700 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-200 group"
-            >
-              <svg
-                className="w-5 h-5 group-hover:scale-110 transition-transform"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            {cartItems > 0 && (
+              <button
+                type="button"
+                onClick={onCartClick}
+                aria-label="Open cart"
+                className="relative p-2 text-gray-700 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all duration-200 group"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-              {cartItems > 0 && (
+                <svg
+                  className="w-5 h-5 group-hover:scale-110 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
+                </svg>
                 <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg animate-pulse">
                   {cartItems}
                 </span>
-              )}
-            </button>
+              </button>
+            )}
 
             {/* Mobile Wishlist Button */}
             <Link
@@ -407,7 +408,7 @@ function Footer() {
   };
 
   return (
-    <footer className="relative mt-20 overflow-hidden bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
+    <footer className="relative mt-20 overflow-hidden bg-stone-50">
       {/* Animated floating elements */}
       <motion.div
         className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-200/40 to-orange-200/40 rounded-full blur-3xl"

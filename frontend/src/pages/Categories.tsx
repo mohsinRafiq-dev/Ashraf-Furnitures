@@ -474,7 +474,7 @@ export default function Categories() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="relative bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 overflow-hidden"
+          className="relative bg-stone-50 py-12 sm:py-16 lg:py-24 px-3 sm:px-6 lg:px-8 overflow-hidden"
         >
           {/* Static decorative orbs */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-amber-200/40 to-orange-200/30 rounded-full blur-3xl pointer-events-none" />

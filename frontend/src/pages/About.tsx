@@ -176,7 +176,7 @@ const About: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 overflow-x-hidden">
+    <div className="min-h-screen bg-stone-50 overflow-x-hidden">
       {/* SEO Optimization */}
       <SEO
         title="About Us - Our Story & Mission"
