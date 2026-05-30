@@ -283,18 +283,37 @@ const AdminDashboard: React.FC = () => {
       return;
     }
 
-    // Close the modal first; refresh from Firestore in the background.
     setShowCategoryModal(false);
     const toastId = toast.loading(
-      editingCategory?.id ? 'Updating category...' : 'Creating category...'
+      isDataUrl(categoryImage)
+        ? 'Uploading image...'
+        : editingCategory?.id
+        ? 'Updating category...'
+        : 'Creating category...'
     );
 
     try {
+      const previousImageUrl = editingCategory?.image || '';
+
+      let finalImageUrl = '';
+      if (isDataUrl(categoryImage)) {
+        const file = await dataUrlToFile(categoryImage, 'category.jpg');
+        const itemId = editingCategory?.id || `new-${Date.now()}`;
+        const uploaded = await uploadImage({ folder: 'categories', itemId, file });
+        finalImageUrl = uploaded.url;
+        toast.loading(
+          editingCategory?.id ? 'Updating category...' : 'Creating category...',
+          { id: toastId }
+        );
+      } else if (isHttpUrl(categoryImage)) {
+        finalImageUrl = categoryImage;
+      }
+
       const categoryData: Partial<Category> = {
         name: categoryName,
         description: categoryDescription,
         color: categoryColor,
-        image: categoryImage,
+        image: finalImageUrl,
       };
 
       if (editingCategory?.id) {
@@ -304,6 +323,17 @@ const AdminDashboard: React.FC = () => {
         await createCategory(categoryData as Omit<Category, 'id' | 'createdAt' | 'updatedAt'>);
         toast.success('Category created!', { id: toastId });
       }
+
+      if (
+        previousImageUrl &&
+        previousImageUrl !== finalImageUrl &&
+        isHttpUrl(previousImageUrl)
+      ) {
+        deleteImageByUrl(previousImageUrl).catch((err) =>
+          console.warn('Old category image cleanup failed:', err)
+        );
+      }
+
       await loadData(false);
     } catch (error) {
       console.error('Error saving category:', error);
