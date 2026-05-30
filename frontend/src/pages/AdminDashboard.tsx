@@ -345,7 +345,17 @@ const AdminDashboard: React.FC = () => {
     if (!confirm('Delete this category?')) return;
 
     try {
+      const target = categories.find((c) => c.id === categoryId);
+      const imageUrl = target?.image || '';
+
       await deleteCategory(categoryId);
+
+      if (imageUrl && isHttpUrl(imageUrl)) {
+        deleteImageByUrl(imageUrl).catch((err) =>
+          console.warn('Category image cleanup failed:', err)
+        );
+      }
+
       toast.success('Category deleted');
       await loadData();
     } catch (error) {
@@ -496,7 +506,21 @@ const AdminDashboard: React.FC = () => {
     if (!confirm('Delete this product?')) return;
 
     try {
+      // Capture image URL before the doc is gone so we can clean Storage.
+      const target = products.find((p) => p.id === productId);
+      const imageUrl =
+        target?.images?.[0] && typeof target.images[0] !== 'string'
+          ? target.images[0].url
+          : '';
+
       await deleteProduct(productId);
+
+      if (imageUrl && isHttpUrl(imageUrl)) {
+        deleteImageByUrl(imageUrl).catch((err) =>
+          console.warn('Product image cleanup failed:', err)
+        );
+      }
+
       toast.success('Product deleted');
       await loadData();
     } catch (error) {
@@ -609,7 +633,23 @@ const AdminDashboard: React.FC = () => {
     if (!confirm(`Delete ${selectedProducts.length} selected products?`)) return;
 
     try {
-      await Promise.all(selectedProducts.map(id => deleteProduct(id)));
+      // Capture image URLs before docs are deleted so we can clean Storage.
+      const imageUrls = selectedProducts
+        .map((id) => products.find((p) => p.id === id))
+        .map((p) =>
+          p?.images?.[0] && typeof p.images[0] !== 'string' ? p.images[0].url : ''
+        )
+        .filter((url): url is string => isHttpUrl(url));
+
+      await Promise.all(selectedProducts.map((id) => deleteProduct(id)));
+
+      // Best-effort: fire-and-forget Storage cleanup (don't block the user).
+      imageUrls.forEach((url) =>
+        deleteImageByUrl(url).catch((err) =>
+          console.warn('Bulk image cleanup failed:', err)
+        )
+      );
+
       toast.success(`${selectedProducts.length} products deleted`);
       setSelectedProducts([]);
       await loadData();
