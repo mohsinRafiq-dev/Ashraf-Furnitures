@@ -89,17 +89,34 @@ export default function Categories() {
       setLastDoc(response.lastDoc);
       setHasMore(response.hasMore);
 
-      // One-time self-heal for old/stale category counts.
-      const allZero = (response.categories || []).length > 0 &&
+      // Self-heal stale productCount fields, but at most ONCE per browser
+      // (was running on every page load and doing an N+1 query that took
+      // multiple seconds — that's the main reason this page felt slow).
+      const REPAIR_KEY = "af:categoriesCountRepaired";
+      const alreadyRepaired =
+        typeof sessionStorage !== "undefined" && sessionStorage.getItem(REPAIR_KEY) === "1";
+
+      const allZero =
+        (response.categories || []).length > 0 &&
         (response.categories || []).every((c: any) => (c.productCount || 0) === 0);
 
-      if (allZero && !countsRepairAttempted) {
+      if (allZero && !alreadyRepaired && !countsRepairAttempted) {
         setCountsRepairAttempted(true);
-        await refreshCategoryProductCounts();
-        const repaired = await getCategoriesChunk(INITIAL_LOAD, null);
-        setDisplayedCategories(repaired.categories || []);
-        setLastDoc(repaired.lastDoc);
-        setHasMore(repaired.hasMore);
+        try {
+          sessionStorage.setItem(REPAIR_KEY, "1");
+        } catch {
+          /* private mode, ignore */
+        }
+        // Fire and forget — don't block the render path. The repaired counts
+        // will show up on the next visit.
+        refreshCategoryProductCounts()
+          .then(() => getCategoriesChunk(INITIAL_LOAD, null))
+          .then((repaired) => {
+            setDisplayedCategories(repaired.categories || []);
+            setLastDoc(repaired.lastDoc);
+            setHasMore(repaired.hasMore);
+          })
+          .catch((err) => console.warn("Category count self-heal failed:", err));
       }
 
       if (response.lastDoc && response.hasMore) {
@@ -191,18 +208,6 @@ export default function Categories() {
   //     },
   //   },
   // };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.3,
-        ease: "easeOut",
-      },
-    },
-  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -305,154 +310,79 @@ export default function Categories() {
             />
           </motion.div>
           {loading ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-12"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-              >
-                <Loader className="w-10 h-10 text-amber-600" />
-              </motion.div>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="text-gray-600 mt-3 text-base"
-              >
-                Loading categories...
-              </motion.p>
-            </motion.div>
+            // Skeleton grid — appears instantly, no animation delay
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 px-3 sm:px-6 lg:px-8 w-full">
+              {Array.from({ length: INITIAL_LOAD }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-full bg-white rounded-3xl overflow-hidden shadow-md border border-amber-100/50 flex flex-col"
+                >
+                  <div className="w-full h-40 sm:h-48 lg:h-56 bg-gradient-to-br from-amber-100/40 to-orange-100/40 animate-pulse" />
+                  <div className="p-4 sm:p-5 space-y-3">
+                    <div className="h-5 w-3/4 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-3 w-full bg-gray-100 rounded animate-pulse" />
+                    <div className="h-10 w-full bg-amber-50 rounded-lg animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 px-3 sm:px-6 lg:px-8 w-full">
                 {displayedCategories.length > 0 ? (
-                  displayedCategories.map((category, index) => (
-                    <motion.div
-                      key={category._id || category.name}
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                      transition={{ delay: index * 0.05 }}
-                      className="group h-full"
-                      onMouseEnter={() =>
-                        setHoveredId(category._id || category.name)
-                      }
+                  displayedCategories.map((category) => {
+                    const id = category._id || category.name;
+                    const isHover = hoveredId === id;
+                    return (
+                    <div
+                      key={id}
+                      onMouseEnter={() => setHoveredId(id)}
                       onMouseLeave={() => setHoveredId(null)}
                       onClick={() =>
                         navigate(
                           `/products?category=${encodeURIComponent(category.name)}`
                         )
                       }
+                      className="group h-full bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col border border-amber-100/50 hover:-translate-y-2"
                     >
-                    <motion.div
-                      whileHover={{ y: -12, scale: 1.02 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 20,
-                      }}
-                      className="h-full bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all cursor-pointer flex flex-col border border-amber-100/50"
-                    >
-                      {/* Image Container with Overlay */}
-                      <div className="relative w-full h-40 sm:h-48 lg:h-56 overflow-hidden bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                        {/* Background Gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-amber-100/20 to-orange-100/20 z-10" />
-
+                      {/* Image */}
+                      <div className="relative w-full h-40 sm:h-48 lg:h-56 overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
                         {category.image ? (
-                          <motion.div
-                            className="w-full h-full absolute inset-0"
-                            animate={{
-                              scale:
-                                hoveredId === (category._id || category.name)
-                                  ? 1.2
-                                  : 1,
-                              filter:
-                                hoveredId === (category._id || category.name)
-                                  ? "blur(4px)"
-                                  : "blur(0px)",
-                            }}
-                            transition={{ duration: 0.4 }}
-                          >
-                            <OptimizedImage
-                              src={category.image}
-                              alt={category.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </motion.div>
+                          <OptimizedImage
+                            src={category.image}
+                            alt={category.name}
+                            className={`w-full h-full object-cover transition-transform duration-500 ${
+                              isHover ? "scale-110" : "scale-100"
+                            }`}
+                          />
                         ) : (
-                          <div className="text-4xl sm:text-5xl lg:text-6xl relative z-20">
-                            🛋️
-                          </div>
+                          <div className="text-5xl sm:text-6xl">🛋️</div>
                         )}
 
-                        {/* Blur Overlay on Hover */}
-                        {hoveredId === (category._id || category.name) &&
-                          category.image && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-30"
-                            >
-                              <motion.div
-                                initial={{ y: 10, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                transition={{ delay: 0.1 }}
-                                className="text-center px-2"
-                              >
-                                <p className="text-white text-sm sm:text-lg font-bold flex items-center gap-1 sm:gap-2 justify-center flex-wrap">
-                                  Explore
-                                  <motion.svg
-                                    className="w-4 sm:w-5 h-4 sm:h-5 flex-shrink-0"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    animate={{ x: [0, 4, 0] }}
-                                    transition={{
-                                      duration: 1.5,
-                                      repeat: Infinity,
-                                    }}
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M9 5l7 7-7 7"
-                                    />
-                                  </motion.svg>
-                                </p>
-                                <p className="text-amber-300 text-xs sm:text-sm font-semibold mt-1">
-                                  Browse collection →
-                                </p>
-                              </motion.div>
-                            </motion.div>
-                          )}
-
-                        {/* Top Left Accent Line */}
-                        <motion.div
-                          initial={{ scaleX: 0, opacity: 0 }}
-                          animate={{ scaleX: 1, opacity: 1 }}
-                          transition={{ delay: 0.2, duration: 0.6 }}
-                          className="absolute top-0 left-0 h-1 w-1/3 bg-gradient-to-r from-amber-400 to-transparent origin-left z-20"
-                        />
+                        {/* Hover overlay — single CSS transition, no framer-motion */}
+                        {category.image && (
+                          <div
+                            className={`absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center transition-opacity duration-200 ${
+                              isHover ? "opacity-100" : "opacity-0 pointer-events-none"
+                            }`}
+                          >
+                            <div className="text-center px-2">
+                              <p className="text-white text-sm sm:text-lg font-bold">
+                                Explore →
+                              </p>
+                              <p className="text-amber-300 text-xs sm:text-sm font-semibold mt-1">
+                                Browse collection
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Content Container */}
+                      {/* Content */}
                       <div className="px-3 sm:px-6 py-4 sm:py-5 flex-1 flex flex-col bg-white">
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          whileInView={{ opacity: 1 }}
-                          transition={{ delay: 0.1 }}
-                          viewport={{ once: true }}
-                        >
-                          <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
-                            {category.name}
-                          </h3>
-                        </motion.div>
+                        <h3 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
+                          {category.name}
+                        </h3>
 
                         {category.description && (
                           <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 line-clamp-2">
@@ -460,8 +390,7 @@ export default function Categories() {
                           </p>
                         )}
 
-                        {/* Product Count Badge */}
-                        <div className="inline-flex items-center gap-2 mt-auto w-full px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-amber-100/80 to-orange-100/80 rounded-lg border border-amber-200/50 cursor-pointer transition-all hover:shadow-md hover:scale-[1.02] flex-wrap">
+                        <div className="inline-flex items-center gap-2 mt-auto w-full px-3 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-amber-100/80 to-orange-100/80 rounded-lg border border-amber-200/50 transition-all hover:shadow-md flex-wrap">
                           <span className="text-amber-600 font-bold text-sm sm:text-base tabular-nums">
                             {category.productCount || 0}
                           </span>
@@ -483,12 +412,9 @@ export default function Categories() {
                           </svg>
                         </div>
                       </div>
-
-                      {/* Bottom Gradient Accent */}
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-400 via-orange-500 to-transparent" />
-                    </motion.div>
-                  </motion.div>
-                ))
+                    </div>
+                    );
+                  })
               ) : (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
