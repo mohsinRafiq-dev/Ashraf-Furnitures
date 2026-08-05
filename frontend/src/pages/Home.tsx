@@ -22,6 +22,12 @@ import {
   getCachedTestimonials,
   type Testimonial,
 } from "../services/firebase/testimonialService";
+import {
+  getGoogleReviews,
+  getCachedGoogleReviews,
+  type GoogleReview,
+  type GoogleReviewsResult,
+} from "../services/googleReviewsService";
 import { useSplash } from "../context/SplashContext";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 
@@ -96,13 +102,35 @@ const initialsFor = (name: string) =>
 
 const PALETTE = ["%23d97706", "%23ea580c", "%23b45309", "%23c2410c"];
 
-const toDisplayTestimonial = (t: Testimonial, idx: number) => ({
+interface DisplayTestimonial {
+  id: string;
+  name: string;
+  role: string;
+  content: string;
+  rating: number;
+  image: string;
+  /** Set for Google reviews only — links the author back to their review. */
+  reviewUrl?: string;
+}
+
+const toDisplayTestimonial = (t: Testimonial, idx: number): DisplayTestimonial => ({
   id: t.id ?? `t-${idx}`,
   name: t.name,
   role: t.role,
   content: t.content,
   rating: Math.max(1, Math.min(5, Math.round(t.rating ?? 5))),
   image: t.avatarUrl || avatar(initialsFor(t.name), PALETTE[idx % PALETTE.length]),
+});
+
+/** Google reviews carry their own avatar and a required link back to Google. */
+const fromGoogleReview = (r: GoogleReview, idx: number): DisplayTestimonial => ({
+  id: r.id,
+  name: r.name,
+  role: r.relativeTime,
+  content: r.content,
+  rating: Math.max(1, Math.min(5, Math.round(r.rating || 5))),
+  image: r.avatarUrl || avatar(initialsFor(r.name), PALETTE[idx % PALETTE.length]),
+  reviewUrl: r.reviewUrl,
 });
 
 export default function Home() {
@@ -118,6 +146,12 @@ export default function Home() {
     () => getCachedTestimonials() ?? []
   );
 
+  // Live Google reviews are the preferred source; hydrate from cache first so a
+  // repeat visit paints real quotes without waiting on the SDK.
+  const [googleReviews, setGoogleReviews] = useState<GoogleReviewsResult>(
+    () => getCachedGoogleReviews() ?? { reviews: [] }
+  );
+
   useEffect(() => {
     let cancelled = false;
     getTestimonials().then((list) => {
@@ -128,11 +162,28 @@ export default function Home() {
     };
   }, []);
 
-  const testimonials = useMemo(() => {
+  // Deferred until the splash clears so loading the Maps SDK never competes
+  // with the initial paint.
+  useEffect(() => {
+    if (!splashComplete) return;
+    let cancelled = false;
+    getGoogleReviews().then((result) => {
+      if (!cancelled && result.reviews.length > 0) setGoogleReviews(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [splashComplete]);
+
+  // Priority: live Google reviews > curated Firestore quotes > placeholders.
+  const testimonials = useMemo<DisplayTestimonial[]>(() => {
+    if (googleReviews.reviews.length > 0) {
+      return googleReviews.reviews.map(fromGoogleReview);
+    }
     const source =
       remoteTestimonials.length > 0 ? remoteTestimonials : FALLBACK_TESTIMONIALS;
     return source.map((t, i) => toDisplayTestimonial(t as Testimonial, i));
-  }, [remoteTestimonials]);
+  }, [googleReviews, remoteTestimonials]);
 
   const { data: categoriesResponse, isLoading: loadingCategories } =
     useCategoriesQuery({ sort: "name-asc", limit: 50 });
@@ -361,10 +412,40 @@ export default function Home() {
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
               What Our Customers Say
             </h2>
-            <p className="text-sm sm:text-base lg:text-lg text-gray-600 max-w-2xl mx-auto">
-              Join thousands of satisfied customers who have transformed their
-              spaces with our furniture
-            </p>
+            {googleReviews.reviews.length > 0 ? (
+              <p className="text-sm sm:text-base lg:text-lg text-gray-600 max-w-2xl mx-auto">
+                {googleReviews.rating != null && (
+                  <>
+                    Rated{" "}
+                    <span className="font-semibold text-gray-900">
+                      {googleReviews.rating.toFixed(1)}
+                    </span>{" "}
+                    out of 5
+                    {googleReviews.totalReviews != null &&
+                      ` from ${googleReviews.totalReviews.toLocaleString()} reviews`}{" "}
+                  </>
+                )}
+                on Google
+                {googleReviews.placeUrl && (
+                  <>
+                    {" — "}
+                    <a
+                      href={googleReviews.placeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-amber-700 hover:underline"
+                    >
+                      read them all
+                    </a>
+                  </>
+                )}
+              </p>
+            ) : (
+              <p className="text-sm sm:text-base lg:text-lg text-gray-600 max-w-2xl mx-auto">
+                Join thousands of satisfied customers who have transformed their
+                spaces with our furniture
+              </p>
+            )}
           </motion.div>
 
           <div className="relative">
@@ -394,11 +475,25 @@ export default function Home() {
                   className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-amber-300"
                   loading="lazy"
                   decoding="async"
+                  // Google profile photos 403 when a Referer is sent, and the
+                  // browser then blocks the non-image response via ORB.
+                  referrerPolicy="no-referrer"
                 />
                 <div>
-                  <p className="font-semibold text-gray-900 text-sm sm:text-base">
-                    {testimonials[currentTestimonial].name}
-                  </p>
+                  {testimonials[currentTestimonial].reviewUrl ? (
+                    <a
+                      href={testimonials[currentTestimonial].reviewUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-gray-900 text-sm sm:text-base hover:text-amber-700 hover:underline"
+                    >
+                      {testimonials[currentTestimonial].name}
+                    </a>
+                  ) : (
+                    <p className="font-semibold text-gray-900 text-sm sm:text-base">
+                      {testimonials[currentTestimonial].name}
+                    </p>
+                  )}
                   <p className="text-xs sm:text-sm text-gray-600">
                     {testimonials[currentTestimonial].role}
                   </p>
