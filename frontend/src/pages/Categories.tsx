@@ -10,6 +10,24 @@ import { OptimizedImage } from "../components/OptimizedImage";
 import SEO from "../components/SEO";
 import { Loader, Sparkles } from "lucide-react";
 
+/**
+ * Stable identity for a category row. The service returns Firestore's `id`;
+ * `_id` is only kept as a fallback for older cached payloads. Falling through
+ * to `name` is a last resort — names are not guaranteed unique.
+ */
+const categoryKey = (category: any): string =>
+  category?.id || category?._id || category?.name;
+
+/**
+ * Chunked pagination can hand back a row we already hold (a stale cursor, or a
+ * cache-primed list racing the first fetch). Appending blind renders the same
+ * category twice, so reconcile on identity instead.
+ */
+const appendUnique = (prev: any[], incoming: any[]): any[] => {
+  const seen = new Set(prev.map(categoryKey));
+  return [...prev, ...incoming.filter((c) => !seen.has(categoryKey(c)))];
+};
+
 export default function Categories() {
   const navigate = useNavigate();
 
@@ -139,7 +157,7 @@ export default function Categories() {
       setLoadingMore(true);
 
       if (prefetchedCategories.length > 0) {
-        setDisplayedCategories(prev => [...prev, ...prefetchedCategories]);
+        setDisplayedCategories(prev => appendUnique(prev, prefetchedCategories));
         setLastDoc(prefetchedLastDoc);
         setHasMore(prefetchedHasMore);
 
@@ -152,7 +170,7 @@ export default function Categories() {
         }
       } else {
         const response = await getCategoriesChunk(LOAD_MORE, lastDoc);
-        setDisplayedCategories(prev => [...prev, ...(response.categories || [])]);
+        setDisplayedCategories(prev => appendUnique(prev, response.categories || []));
         setLastDoc(response.lastDoc);
         setHasMore(response.hasMore);
 
@@ -331,7 +349,7 @@ export default function Categories() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 px-3 sm:px-6 lg:px-8 w-full">
                 {displayedCategories.length > 0 ? (
                   displayedCategories.map((category) => {
-                    const id = category._id || category.name;
+                    const id = categoryKey(category);
                     const isHover = hoveredId === id;
                     return (
                     <div

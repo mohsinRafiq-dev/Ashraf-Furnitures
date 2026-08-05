@@ -1,0 +1,717 @@
+{
+  "documents": [
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/3wsub2dkKUOtRcJ27S4y",
+      "fields": {
+        "slug": {
+          "stringValue": "ottoman-poufs"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "description": {
+          "stringValue": "Versatile ottomans and poufs for seating and storage"
+        },
+        "name": {
+          "stringValue": "Ottoman & Poufs"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:19.146Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop&q=80"
+        },
+        "color": {
+          "stringValue": "from-red-500 to-pink-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:43.657Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:19.182495Z",
+      "updateTime": "2026-08-05T12:17:43.711120Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/8zkXlEfeJUp2vrmzjffN",
+      "fields": {
+        "productCount": {
+          "integerValue": "0"
+        },
+        "name": {
+          "stringValue": "dsdf"
+        },
+        "description": {
+          "stringValue": "dsfsdf"
+        },
+        "slug": {
+          "stringValue": "dsdf"
+        },
+        "color": {
+          "stringValue": "from-amber-500 to-orange-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:43.724Z"
+        },
+        "createdAt": {
+          "timestampValue": "2026-02-14T14:36:31.114Z"
+        },
+        "image": {
+          "stringValue": ""
+        }
+      },
+      "createTime": "2026-02-14T14:36:31.155564Z",
+      "updateTime": "2026-08-05T12:17:43.788114Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/C0jYg4DE381LYFxgywjZ",
+      "fields": {
+        "slug": {
+          "stringValue": "beds"
+        },
+        "name": {
+          "stringValue": "Beds"
+        },
+        "description": {
+          "stringValue": "Premium beds and bed frames for restful sleep"
+        },
+        "productCount": {
+          "integerValue": "1"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:13.382Z"
+        },
+        "color": {
+          "stringValue": "from-blue-500 to-indigo-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:43.850Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:13.667510Z",
+      "updateTime": "2026-08-05T12:17:43.916466Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/D5JA8ijOv471oYSw0glf",
+      "fields": {
+        "description": {
+          "stringValue": "Storage cabinets for kitchen, living room, and office"
+        },
+        "name": {
+          "stringValue": "Cabinets"
+        },
+        "productCount": {
+          "integerValue": "1"
+        },
+        "slug": {
+          "stringValue": "cabinets"
+        },
+        "color": {
+          "stringValue": "from-yellow-500 to-orange-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:43.930Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:15.247Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:15.286058Z",
+      "updateTime": "2026-08-05T12:17:43.980440Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/EW7uqckOXfp3XtGHoTUv",
+      "fields": {
+        "image": {
+          "stringValue": ""
+        },
+        "createdAt": {
+          "timestampValue": "2026-02-14T14:30:20.003Z"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:43.993Z"
+        },
+        "color": {
+          "stringValue": "from-amber-500 to-orange-600"
+        },
+        "slug": {
+          "stringValue": "beds"
+        },
+        "name": {
+          "stringValue": "beds"
+        },
+        "description": {
+          "stringValue": "beds"
+        },
+        "productCount": {
+          "integerValue": "0"
+        }
+      },
+      "createTime": "2026-02-14T14:30:20.037872Z",
+      "updateTime": "2026-08-05T12:17:44.006065Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/FV6ywlu8MU4i7ToScqD3",
+      "fields": {
+        "color": {
+          "stringValue": "from-purple-500 to-pink-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.019Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:14.382Z"
+        },
+        "description": {
+          "stringValue": "Dining tables, coffee tables, and side tables"
+        },
+        "name": {
+          "stringValue": "Tables"
+        },
+        "productCount": {
+          "integerValue": "2"
+        },
+        "slug": {
+          "stringValue": "tables"
+        }
+      },
+      "createTime": "2026-03-12T00:48:14.421676Z",
+      "updateTime": "2026-08-05T12:17:44.064197Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/ImkPj3jwMdhmjMiMD7ZR",
+      "fields": {
+        "slug": {
+          "stringValue": "tv-units"
+        },
+        "name": {
+          "stringValue": "TV Units"
+        },
+        "description": {
+          "stringValue": "Modern TV stands and entertainment centers"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1598300188775-3914c67cfb82?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:14.954Z"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.072Z"
+        },
+        "color": {
+          "stringValue": "from-cyan-500 to-blue-600"
+        }
+      },
+      "createTime": "2026-03-12T00:48:14.996049Z",
+      "updateTime": "2026-08-05T12:17:44.085411Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/LdyqfJVmCk9ifqHYLMdw",
+      "fields": {
+        "slug": {
+          "stringValue": "bar-stools"
+        },
+        "name": {
+          "stringValue": "Bar Stools"
+        },
+        "description": {
+          "stringValue": "Modern bar stools and counter height seating"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1572635148113-b43c0f6d5ff0?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:17.386Z"
+        },
+        "color": {
+          "stringValue": "from-violet-500 to-purple-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.092Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:17.467130Z",
+      "updateTime": "2026-08-05T12:17:44.106312Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/MEbyIs4S7vIDnJwBeIa1",
+      "fields": {
+        "name": {
+          "stringValue": "Shoe Racks"
+        },
+        "description": {
+          "stringValue": "Organized storage solutions for footwear"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "slug": {
+          "stringValue": "shoe-racks"
+        },
+        "color": {
+          "stringValue": "from-amber-600 to-yellow-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.113Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1584996221744-7e830b96f507?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:18.610Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:18.638732Z",
+      "updateTime": "2026-08-05T12:17:44.129565Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/Ox2OaxXvxk5VUr8nP7l5",
+      "fields": {
+        "color": {
+          "stringValue": "from-emerald-500 to-teal-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.136Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1594620302200-9a762244a156?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:16.131Z"
+        },
+        "description": {
+          "stringValue": "Stylish bookcases and shelving units"
+        },
+        "name": {
+          "stringValue": "Bookcases"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "slug": {
+          "stringValue": "bookcases"
+        }
+      },
+      "createTime": "2026-03-12T00:48:16.166473Z",
+      "updateTime": "2026-08-05T12:17:44.184242Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/PgZgfoGlifI67rdu6u15",
+      "fields": {
+        "description": {
+          "stringValue": "Professional desks for home and office workspace"
+        },
+        "name": {
+          "stringValue": "Office Desks"
+        },
+        "productCount": {
+          "integerValue": "1"
+        },
+        "slug": {
+          "stringValue": "office-desks"
+        },
+        "color": {
+          "stringValue": "from-gray-600 to-gray-800"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.192Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:15.818Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:15.880223Z",
+      "updateTime": "2026-08-05T12:17:44.205621Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/QW4HwbvxCGdPcY70ekaK",
+      "fields": {
+        "slug": {
+          "stringValue": "console-tables"
+        },
+        "name": {
+          "stringValue": "Console Tables"
+        },
+        "description": {
+          "stringValue": "Elegant console tables for entryways and hallways"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1611269154421-4e27233ac5c7?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:18.890Z"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.212Z"
+        },
+        "color": {
+          "stringValue": "from-sky-500 to-blue-600"
+        }
+      },
+      "createTime": "2026-03-12T00:48:18.897013Z",
+      "updateTime": "2026-08-05T12:17:44.253650Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/SnlbyISxmxKNgJvE7BXy",
+      "fields": {
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:16.417Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop&q=80"
+        },
+        "color": {
+          "stringValue": "from-fuchsia-500 to-pink-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.261Z"
+        },
+        "slug": {
+          "stringValue": "nightstands"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "name": {
+          "stringValue": "Nightstands"
+        },
+        "description": {
+          "stringValue": "Bedside tables and nightstands"
+        }
+      },
+      "createTime": "2026-03-12T00:48:16.453056Z",
+      "updateTime": "2026-08-05T12:17:44.302145Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/Uk658t64BP9xMcURwTnh",
+      "fields": {
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:12.976Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&h=800&fit=crop&q=80"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.309Z"
+        },
+        "color": {
+          "stringValue": "from-amber-500 to-orange-600"
+        },
+        "slug": {
+          "stringValue": "sofas"
+        },
+        "productCount": {
+          "integerValue": "2"
+        },
+        "name": {
+          "stringValue": "Sofas"
+        },
+        "description": {
+          "stringValue": "Comfortable sofas and couches for your living room"
+        }
+      },
+      "createTime": "2026-03-12T00:48:13.014247Z",
+      "updateTime": "2026-08-05T12:17:44.341416Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/W4AMaBTKJQKwn79xzvgR",
+      "fields": {
+        "productCount": {
+          "integerValue": "0"
+        },
+        "description": {
+          "stringValue": "fsdsdf"
+        },
+        "name": {
+          "stringValue": "sfsd"
+        },
+        "slug": {
+          "stringValue": "sfsd"
+        },
+        "color": {
+          "stringValue": "#d99308"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.348Z"
+        },
+        "createdAt": {
+          "timestampValue": "2026-02-14T17:41:19.187Z"
+        },
+        "image": {
+          "stringValue": ""
+        }
+      },
+      "createTime": "2026-02-14T17:41:19.223962Z",
+      "updateTime": "2026-08-05T12:17:44.359550Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/XV91VMKkxeOZGT5G5OcG",
+      "fields": {
+        "slug": {
+          "stringValue": "dressers"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "name": {
+          "stringValue": "Dressers"
+        },
+        "description": {
+          "stringValue": "Elegant dressers and chest of drawers"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:15.535Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=1200&h=800&fit=crop&q=80"
+        },
+        "color": {
+          "stringValue": "from-indigo-500 to-purple-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.366Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:15.567244Z",
+      "updateTime": "2026-08-05T12:17:44.408117Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/XovTsNAIp8g32WMm0Af8",
+      "fields": {
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:17.104Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1200&h=800&fit=crop&q=80"
+        },
+        "color": {
+          "stringValue": "from-lime-500 to-green-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.417Z"
+        },
+        "slug": {
+          "stringValue": "benches"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "name": {
+          "stringValue": "Benches"
+        },
+        "description": {
+          "stringValue": "Versatile benches for entryways and dining"
+        }
+      },
+      "createTime": "2026-03-12T00:48:17.136017Z",
+      "updateTime": "2026-08-05T12:17:44.457008Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/ZChiXXh5xqoG9PCxljzz",
+      "fields": {
+        "description": {
+          "stringValue": "Decorative wall and floor mirrors"
+        },
+        "name": {
+          "stringValue": "Mirrors"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "slug": {
+          "stringValue": "mirrors"
+        },
+        "color": {
+          "stringValue": "from-slate-500 to-gray-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.465Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1618220179428-22790b461013?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:18.317Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:18.350248Z",
+      "updateTime": "2026-08-05T12:17:44.503652Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/b00Nt6BLyXi2KvC5jLiP",
+      "fields": {
+        "productCount": {
+          "integerValue": "1"
+        },
+        "name": {
+          "stringValue": "Chairs"
+        },
+        "description": {
+          "stringValue": "Stylish chairs for dining, office, and living spaces"
+        },
+        "slug": {
+          "stringValue": "chairs"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.511Z"
+        },
+        "color": {
+          "stringValue": "from-green-500 to-teal-600"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:14.091Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1503602642458-232111445657?w=1200&h=800&fit=crop&q=80"
+        }
+      },
+      "createTime": "2026-03-12T00:48:14.130992Z",
+      "updateTime": "2026-08-05T12:17:44.547785Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/capPI7R2DXr0e6IyKE6z",
+      "fields": {
+        "color": {
+          "stringValue": "from-orange-500 to-red-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.555Z"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:16.704Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1586158291800-2665f07bba79?w=1200&h=800&fit=crop&q=80"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "description": {
+          "stringValue": "Comfortable recliners for relaxation"
+        },
+        "name": {
+          "stringValue": "Recliners"
+        },
+        "slug": {
+          "stringValue": "recliners"
+        }
+      },
+      "createTime": "2026-03-12T00:48:16.733355Z",
+      "updateTime": "2026-08-05T12:17:44.596401Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/gQW50GZWzA6bryXMKstf",
+      "fields": {
+        "slug": {
+          "stringValue": "wardrobes"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "description": {
+          "stringValue": "Spacious wardrobes and closet solutions"
+        },
+        "name": {
+          "stringValue": "Wardrobes"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:14.672Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=1200&h=800&fit=crop&q=80"
+        },
+        "color": {
+          "stringValue": "from-rose-500 to-red-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.603Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:14.701608Z",
+      "updateTime": "2026-08-05T12:17:44.615200Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/hsk7IpnI4IuUnT7Yef0y",
+      "fields": {
+        "slug": {
+          "stringValue": "outdoor-furniture"
+        },
+        "description": {
+          "stringValue": "Weather-resistant outdoor and patio furniture"
+        },
+        "name": {
+          "stringValue": "Outdoor Furniture"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:17.998Z"
+        },
+        "color": {
+          "stringValue": "from-teal-500 to-cyan-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.621Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:18.066693Z",
+      "updateTime": "2026-08-05T12:17:44.659238Z"
+    },
+    {
+      "name": "projects/furniture-mart-10426/databases/(default)/documents/categories/kb7Wvweo8FjeHxtuj2ZN",
+      "fields": {
+        "name": {
+          "stringValue": "Kids Furniture"
+        },
+        "description": {
+          "stringValue": "Fun and safe furniture for children's rooms"
+        },
+        "productCount": {
+          "integerValue": "0"
+        },
+        "slug": {
+          "stringValue": "kids-furniture"
+        },
+        "color": {
+          "stringValue": "from-pink-500 to-rose-600"
+        },
+        "updatedAt": {
+          "timestampValue": "2026-08-05T12:17:44.668Z"
+        },
+        "image": {
+          "stringValue": "https://images.unsplash.com/photo-1616628188540-14bbe1c27bc8?w=1200&h=800&fit=crop&q=80"
+        },
+        "createdAt": {
+          "timestampValue": "2026-03-12T00:48:17.718Z"
+        }
+      },
+      "createTime": "2026-03-12T00:48:17.748213Z",
+      "updateTime": "2026-08-05T12:17:44.680220Z"
+    }
+  ]
+}

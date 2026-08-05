@@ -56,6 +56,20 @@ const getSortFilterFromSearch = (
     : "newest";
 };
 
+/**
+ * Chunked pagination can hand back a product we already hold — a re-fired
+ * observer, a stale cursor, or a cache-primed list racing the first fetch.
+ * Appending blind renders the same card twice and trips React's key warning,
+ * so reconcile on document id instead.
+ */
+const appendUniqueProducts = <T extends { id?: string }>(
+  prev: T[],
+  incoming: T[]
+): T[] => {
+  const seen = new Set(prev.map((p) => p.id));
+  return [...prev, ...incoming.filter((p) => !seen.has(p.id))];
+};
+
 export default function Products() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,6 +115,17 @@ export default function Products() {
   const [loading, setLoading] = useState(!cachedFirst); // skip skeleton on cache hit
   const [loadingMore, setLoadingMore] = useState(false);
   const [prefetching, setPrefetching] = useState(false);
+  // Same reasoning as prefetchingRef below: `loadingMore` is read inside
+  // loadMoreProducts' closure, so two invocations fired before React commits
+  // the state both pass the guard and append the same chunk twice.
+  const loadingMoreRef = useRef(false);
+  // Re-entrancy guard for prefetching. Deliberately a ref, not the state
+  // above: `prefetchNextProducts` feeds `fetchInitialProducts`, which feeds the
+  // effect that calls it. Putting the guard in the dep array makes every
+  // prefetch churn those identities and refire the effect — an endless
+  // fetch loop that only shows up once there are enough products for
+  // `hasMore` to be true. The state is kept purely to drive the spinner.
+  const prefetchingRef = useRef(false);
   const [hasMore, setHasMore] = useState(cachedFirst?.hasMore ?? true);
   const [lastDoc, setLastDoc] = useState<any>(null);
   const [prefetchedProducts, setPrefetchedProducts] = useState<FirebaseProduct[]>([]);
@@ -217,9 +242,10 @@ export default function Products() {
   };
 
   const prefetchNextProducts = useCallback(async (cursor: any, hasMoreFlag: boolean) => {
-    if (!cursor || !hasMoreFlag || prefetching) return;
+    if (!cursor || !hasMoreFlag || prefetchingRef.current) return;
 
     try {
+      prefetchingRef.current = true;
       setPrefetching(true);
       const response = await getProductsChunk(LOAD_MORE, cursor, activeFilters);
       setPrefetchedProducts(response.products || []);
@@ -231,9 +257,10 @@ export default function Products() {
       setPrefetchedLastDoc(null);
       setPrefetchedHasMore(false);
     } finally {
+      prefetchingRef.current = false;
       setPrefetching(false);
     }
-  }, [prefetching, LOAD_MORE, activeFilters]);
+  }, [LOAD_MORE, activeFilters]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -275,13 +302,14 @@ export default function Products() {
   }, [prefetchNextProducts, INITIAL_LOAD, activeFilters]);
 
   const loadMoreProducts = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMoreRef.current || !hasMore) return;
 
     try {
+      loadingMoreRef.current = true;
       setLoadingMore(true);
 
       if (prefetchedProducts.length > 0) {
-        setProducts((prev) => [...prev, ...prefetchedProducts]);
+        setProducts((prev) => appendUniqueProducts(prev, prefetchedProducts));
         setLastDoc(prefetchedLastDoc);
         setHasMore(prefetchedHasMore);
 
@@ -294,7 +322,7 @@ export default function Products() {
         }
       } else {
         const response = await getProductsChunk(LOAD_MORE, lastDoc, activeFilters);
-        setProducts((prev) => [...prev, ...(response.products || [])]);
+        setProducts((prev) => appendUniqueProducts(prev, response.products || []));
         setLastDoc(response.lastDoc);
         setHasMore(response.hasMore);
 
@@ -306,6 +334,7 @@ export default function Products() {
       console.error("Failed to load more products:", error);
       setHasMore(false);
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
   }, [

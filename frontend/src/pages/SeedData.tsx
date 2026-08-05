@@ -1,298 +1,251 @@
-import { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+/**
+ * Catalog reseed tool (admin only).
+ *
+ * Wipes every product, removes categories that are not part of the curated
+ * catalog, then rewrites all 20 categories and 100 products from
+ * `data/catalogSeed.ts`.
+ *
+ * This runs in the browser deliberately: Firestore rules require an
+ * authenticated admin for writes, and the admin signs in with Google, so the
+ * logged-in session is the only practical way to authorise the writes without
+ * handing a service-account key around.
+ *
+ * Destructive. Requires typing a confirmation phrase before it will run.
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { useAuthStore } from '../store/authStore';
+import { SEED_CATEGORIES, SEED_PRODUCTS } from '../data/catalogSeed';
 
-const categories = [
-  {
-    name: "Sofas",
-    slug: "sofas",
-    description: "Comfortable sofas and couches for your living room",
-    color: "from-amber-500 to-orange-600",
-    image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Beds",
-    slug: "beds",
-    description: "Premium beds and bed frames for restful sleep",
-    color: "from-blue-500 to-indigo-600",
-    image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Chairs",
-    slug: "chairs",
-    description: "Stylish chairs for dining, office, and living spaces",
-    color: "from-green-500 to-teal-600",
-    image: "https://images.unsplash.com/photo-1503602642458-232111445657?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Tables",
-    slug: "tables",
-    description: "Dining tables, coffee tables, and side tables",
-    color: "from-purple-500 to-pink-600",
-    image: "https://images.unsplash.com/photo-1617806118233-18e1de247200?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Wardrobes",
-    slug: "wardrobes",
-    description: "Spacious wardrobes and closet solutions",
-    color: "from-rose-500 to-red-600",
-    image: "https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "TV Units",
-    slug: "tv-units",
-    description: "Modern TV stands and entertainment centers",
-    color: "from-cyan-500 to-blue-600",
-    image: "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Cabinets",
-    slug: "cabinets",
-    description: "Storage cabinets for kitchen, living room, and office",
-    color: "from-yellow-500 to-orange-600",
-    image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Dressers",
-    slug: "dressers",
-    description: "Elegant dressers and chest of drawers",
-    color: "from-indigo-500 to-purple-600",
-    image: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Office Desks",
-    slug: "office-desks",
-    description: "Professional desks for home and office workspace",
-    color: "from-gray-600 to-gray-800",
-    image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Bookcases",
-    slug: "bookcases",
-    description: "Stylish bookcases and shelving units",
-    color: "from-emerald-500 to-teal-600",
-    image: "https://images.unsplash.com/photo-1594620302200-9a762244a156?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Nightstands",
-    slug: "nightstands",
-    description: "Bedside tables and nightstands",
-    color: "from-fuchsia-500 to-pink-600",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Recliners",
-    slug: "recliners",
-    description: "Comfortable recliners for relaxation",
-    color: "from-orange-500 to-red-600",
-    image: "https://images.unsplash.com/photo-1586158291800-2665f07bba79?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Benches",
-    slug: "benches",
-    description: "Versatile benches for entryways and dining",
-    color: "from-lime-500 to-green-600",
-    image: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Bar Stools",
-    slug: "bar-stools",
-    description: "Modern bar stools and counter height seating",
-    color: "from-violet-500 to-purple-600",
-    image: "https://images.unsplash.com/photo-1550581190-9c1c48d21d6c?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Kids Furniture",
-    slug: "kids-furniture",
-    description: "Fun and safe furniture for children's rooms",
-    color: "from-pink-500 to-rose-600",
-    image: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Outdoor Furniture",
-    slug: "outdoor-furniture",
-    description: "Weather-resistant outdoor and patio furniture",
-    color: "from-teal-500 to-cyan-600",
-    image: "https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Mirrors",
-    slug: "mirrors",
-    description: "Decorative wall and floor mirrors",
-    color: "from-slate-500 to-gray-600",
-    image: "https://images.unsplash.com/photo-1618220179428-22790b461013?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Shoe Racks",
-    slug: "shoe-racks",
-    description: "Organized storage solutions for footwear",
-    color: "from-amber-600 to-yellow-600",
-    image: "https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Console Tables",
-    slug: "console-tables",
-    description: "Elegant console tables for entryways and hallways",
-    color: "from-sky-500 to-blue-600",
-    image: "https://images.unsplash.com/photo-1611269154421-4e27233ac5c7?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  },
-  {
-    name: "Ottoman & Poufs",
-    slug: "ottoman-poufs",
-    description: "Versatile ottomans and poufs for seating and storage",
-    color: "from-red-500 to-pink-600",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop&q=80",
-    productCount: 0
-  }
-];
+const CONFIRM_PHRASE = 'RESEED';
 
-const products = [
-  {
-    name: "Modern Sofa Set",
-    slug: "modern-sofa-set",
-    description: "3-seater comfortable modern sofa with premium fabric",
-    price: 899.99,
-    category: "Sofas",
-    stock: 15,
-    sku: "SOF-001",
-    featured: true,
-    rating: 4.5,
-    reviews: 24,
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&h=600&fit=crop",
-        alt: "Modern Sofa",
-        isPrimary: true
-      }
-    ],
-    variants: [],
-    specifications: [
-      { key: "Material", value: "Premium Fabric" },
-      { key: "Dimensions", value: "200cm x 90cm x 85cm" }
-    ]
-  },
-  {
-    name: "Queen Size Bed",
-    slug: "queen-size-bed",
-    description: "Elegant queen size bed with upholstered headboard",
-    price: 1299.99,
-    category: "Beds",
-    stock: 8,
-    sku: "BED-001",
-    featured: true,
-    rating: 4.8,
-    reviews: 36,
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=600&fit=crop",
-        alt: "Queen Bed",
-        isPrimary: true
-      }
-    ],
-    variants: [],
-    specifications: [
-      { key: "Size", value: "Queen" },
-      { key: "Material", value: "Wood & Fabric" }
-    ]
-  }
-];
+interface Counts {
+  categories: number;
+  products: number;
+}
 
 export default function SeedData() {
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const { user, isAdmin } = useAuthStore();
+  const [counts, setCounts] = useState<Counts | null>(null);
+  const [confirm, setConfirm] = useState('');
+  const [running, setRunning] = useState(false);
+  const [log, setLog] = useState<string[]>([]);
+  const [done, setDone] = useState(false);
 
-  const seedCategories = async () => {
-    setLoading(true);
-    setMessage('');
+  const append = useCallback((line: string) => {
+    setLog((prev) => [...prev, line]);
+  }, []);
+
+  const refreshCounts = useCallback(async () => {
     try {
-      for (const category of categories) {
-        await addDoc(collection(db, 'categories'), {
-          ...category,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-      }
-      setMessage(`✅ Successfully added ${categories.length} categories!`);
-    } catch (error: any) {
-      setMessage(`❌ Error: ${error.message}`);
-    } finally {
-      setLoading(false);
+      const [cats, prods] = await Promise.all([
+        getDocs(collection(db, 'categories')),
+        getDocs(collection(db, 'products')),
+      ]);
+      setCounts({ categories: cats.size, products: prods.size });
+    } catch (err) {
+      append(`Could not read current counts: ${(err as Error).message}`);
     }
-  };
+  }, [append]);
 
-  const seedProducts = async () => {
-    setLoading(true);
-    setMessage('');
+  useEffect(() => {
+    void refreshCounts();
+  }, [refreshCounts]);
+
+  const reseed = async () => {
+    setRunning(true);
+    setDone(false);
+    setLog([]);
+
     try {
-      for (const product of products) {
+      // ---- 1. Delete every product -------------------------------------
+      append('Reading existing products…');
+      const existingProducts = await getDocs(collection(db, 'products'));
+      append(`Deleting ${existingProducts.size} products…`);
+      let deleted = 0;
+      for (const d of existingProducts.docs) {
+        await deleteDoc(doc(db, 'products', d.id));
+        deleted += 1;
+        if (deleted % 10 === 0) append(`  …${deleted}/${existingProducts.size}`);
+      }
+      append(`Deleted ${deleted} products.`);
+
+      // ---- 2. Reconcile categories -------------------------------------
+      append('Reading existing categories…');
+      const existingCats = await getDocs(collection(db, 'categories'));
+      const wanted = new Map(SEED_CATEGORIES.map((c) => [c.name, c]));
+      const seen = new Set<string>();
+
+      let updatedCats = 0;
+      let removedCats = 0;
+
+      for (const d of existingCats.docs) {
+        const name = (d.data().name as string) ?? '';
+        const target = wanted.get(name);
+
+        if (!target || seen.has(name)) {
+          // Not in the curated catalog, or a duplicate of one we already kept.
+          await deleteDoc(doc(db, 'categories', d.id));
+          removedCats += 1;
+          append(`  removed category "${name || d.id}"`);
+          continue;
+        }
+
+        // Keep the document id so anything referencing it stays valid.
+        await updateDoc(doc(db, 'categories', d.id), {
+          ...target,
+          updatedAt: serverTimestamp(),
+        });
+        seen.add(name);
+        updatedCats += 1;
+      }
+
+      let createdCats = 0;
+      for (const [name, cat] of wanted) {
+        if (seen.has(name)) continue;
+        await addDoc(collection(db, 'categories'), {
+          ...cat,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        createdCats += 1;
+        append(`  created category "${name}"`);
+      }
+      append(
+        `Categories: ${updatedCats} updated, ${createdCats} created, ${removedCats} removed.`
+      );
+
+      // ---- 3. Insert the catalog ---------------------------------------
+      append(`Adding ${SEED_PRODUCTS.length} products…`);
+      let added = 0;
+      for (const product of SEED_PRODUCTS) {
         await addDoc(collection(db, 'products'), {
           ...product,
           createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          updatedAt: serverTimestamp(),
         });
+        added += 1;
+        if (added % 10 === 0) append(`  …${added}/${SEED_PRODUCTS.length}`);
       }
-      setMessage(`✅ Successfully added ${products.length} products!`);
-    } catch (error: any) {
-      setMessage(`❌ Error: ${error.message}`);
+      append(`Added ${added} products.`);
+
+      append('Done.');
+      setDone(true);
+      await refreshCounts();
+    } catch (err) {
+      append(`FAILED: ${(err as Error).message}`);
     } finally {
-      setLoading(false);
+      setRunning(false);
+      setConfirm('');
     }
   };
 
+  const authorised = Boolean(user) && isAdmin();
+  const canRun = authorised && !running && confirm.trim() === CONFIRM_PHRASE;
+
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-6">Seed Firestore Database</h1>
-        
-        <div className="space-y-4">
-          <button
-            onClick={seedCategories}
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            {loading ? 'Adding...' : `Add ${categories.length} Categories`}
-          </button>
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-8">
+      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Reseed Catalog</h1>
+        <p className="text-sm text-gray-600 mb-6">
+          Replaces the entire product catalog with {SEED_CATEGORIES.length}{' '}
+          categories and {SEED_PRODUCTS.length} curated products.
+        </p>
 
-          <button
-            onClick={seedProducts}
-            disabled={loading}
-            className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 disabled:opacity-50"
-          >
-            {loading ? 'Adding...' : `Add ${products.length} Products`}
-          </button>
-        </div>
-
-        {message && (
-          <div className={`mt-6 p-4 rounded-lg ${message.includes('❌') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-            {message}
+        {!authorised && (
+          <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 text-sm">
+            <p className="font-semibold mb-2">
+              Not authorised — Firestore will reject the writes.
+            </p>
+            {/* Spell out which check failed; "sign in as admin" alone is not
+                actionable when the role, not the session, is the problem. */}
+            <ul className="space-y-1 font-mono text-xs">
+              <li>signed in: {user ? 'yes' : 'NO'}</li>
+              <li>email: {user?.email || '(none)'}</li>
+              <li>role: {user?.role || '(none)'}</li>
+              <li>isAdmin(): {isAdmin() ? 'true' : 'FALSE'}</li>
+            </ul>
+            <p className="mt-2">
+              {!user
+                ? 'Sign in at /login with the admin Google account.'
+                : 'Signed in, but this account has no admin role — its /admins record is missing or inactive.'}
+            </p>
           </div>
         )}
 
-        <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            <strong>Note:</strong> This will add sample data to your Firestore database. 
-            You can access this page at <code className="bg-yellow-100 px-2 py-1 rounded">/seed-data</code>
-          </p>
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              Categories now
+            </p>
+            <p className="text-2xl font-bold text-gray-900">
+              {counts ? counts.categories : '—'}
+              <span className="text-base font-normal text-gray-500">
+                {' '}
+                → {SEED_CATEGORIES.length}
+              </span>
+            </p>
+          </div>
+          <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              Products now
+            </p>
+            <p className="text-2xl font-bold text-gray-900">
+              {counts ? counts.products : '—'}
+              <span className="text-base font-normal text-gray-500">
+                {' '}
+                → {SEED_PRODUCTS.length}
+              </span>
+            </p>
+          </div>
         </div>
+
+        <div className="mb-6 p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-900">
+          <strong>This deletes every existing product.</strong> Categories not in
+          the curated list are deleted too; the rest are updated in place. There
+          is no undo from this page — restore from your backup if needed.
+        </div>
+
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Type <code className="bg-gray-100 px-1.5 py-0.5 rounded">{CONFIRM_PHRASE}</code> to enable:
+        </label>
+        <input
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          disabled={!authorised || running}
+          className="w-full mb-4 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none disabled:bg-gray-100"
+          placeholder={CONFIRM_PHRASE}
+        />
+
+        <button
+          onClick={reseed}
+          disabled={!canRun}
+          className="w-full bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {running ? 'Reseeding…' : 'Wipe and reseed catalog'}
+        </button>
+
+        {log.length > 0 && (
+          <div
+            className={`mt-6 p-4 rounded-lg font-mono text-xs max-h-96 overflow-y-auto ${
+              done ? 'bg-green-50 border border-green-200' : 'bg-gray-900 text-gray-100'
+            }`}
+          >
+            {log.map((line, i) => (
+              <div key={i}>{line}</div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
